@@ -1,0 +1,9 @@
+{
+  "consecutive_model_failures": 0,
+  "consecutive_source_failures": 0,
+  "last_change_detected": "",
+  "last_committed": "2026-07-28T14:42:10Z",
+  "last_run": "2026-07-28T14:42:10Z",
+  "last_violation_signature": "",
+  "runs_total": 1
+}
