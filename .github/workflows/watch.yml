@@ -1,0 +1,56 @@
+name: watch
+
+on:
+  schedule:
+    # Каждые 6 часов. Темп сайта — примерно одна часть в 8-9 дней, поэтому
+    # дрейф расписания GitHub Actions (до ~15 минут) здесь не существует.
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      bootstrap:
+        description: "Записать базовую линию без рассылки разборов"
+        type: boolean
+        default: false
+      verbose:
+        description: "Подробный лог"
+        type: boolean
+        default: false
+
+# Нужно для коммита состояния обратно в репозиторий.
+permissions:
+  contents: write
+
+# Два одновременных прогона подрались бы за push и за журнал доставок.
+# Очередь, а не отмена: прогон, который уже что-то доставил, обязан
+# досохранить журнал.
+concurrency:
+  group: watcher-state
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Коммиты состояния должны попадать в ветку, а не висеть локально.
+          persist-credentials: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Прогон
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          HEALTHCHECK_URL: ${{ secrets.HEALTHCHECK_URL }}
+          BOOTSTRAP: ${{ inputs.bootstrap && '1' || '0' }}
+          VERBOSE: ${{ inputs.verbose && '1' || '0' }}
+        run: python -m watcher.main

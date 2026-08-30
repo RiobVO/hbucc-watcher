@@ -1,0 +1,24 @@
+name: tests
+
+# Тесты гоняются на каждый пуш в основную ветку и на pull request.
+# Прогоны наблюдателя коммитят только файлы в state/ — их этот workflow
+# намеренно игнорирует, иначе каждые 6 часов запускался бы лишний job.
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "state/**"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt pytest
+      - run: python -m pytest tests/ -q
