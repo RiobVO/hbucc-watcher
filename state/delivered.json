@@ -1,13 +1,4 @@
 {
-  "delivered": [
-    {
-      "bid": "b-probe",
-      "event_id": "sha256:probe-event",
-      "kind": "block_added",
-      "messages": 1,
-      "part": 22,
-      "sent_at": "2026-07-28T14:42:36Z"
-    }
-  ],
+  "delivered": [],
   "schema_version": 1
 }
