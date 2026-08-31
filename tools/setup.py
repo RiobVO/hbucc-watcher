@@ -24,10 +24,10 @@ import httpx
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from watcher.config import setup_logging  # noqa: E402
+from watcher.config import Config, setup_logging  # noqa: E402
 
 SECRET_NAMES = (
-    "ANTHROPIC_API_KEY",
+    "OPENAI_API_KEY",
     "TELEGRAM_BOT_TOKEN",
     "TELEGRAM_CHAT_ID",
     "HEALTHCHECK_URL",
@@ -65,30 +65,34 @@ def check_telegram(token: str, chat_id: str) -> bool:
     return True
 
 
-def check_anthropic(api_key: str) -> bool:
-    """Дешёвая проверка ключа: один запрос на подсчёт токенов, без генерации."""
+def check_openai(api_key: str) -> bool:
+    """Проверка ключа и доступности модели из конфига.
+
+    Список моделей бесплатен и не тратит токены, а заодно отвечает на
+    вопрос поважнее живости ключа: доступна ли этому аккаунту именно та
+    модель, которая прописана в config.toml. Ключ, у которого нет доступа
+    к модели, выглядит рабочим ровно до первого настоящего разбора.
+    """
     try:
         with httpx.Client(timeout=20.0) as client:
-            response = client.post(
-                "https://api.anthropic.com/v1/messages/count_tokens",
-                headers={
-                    "x-api-key": api_key,
-                    "anthropic-version": "2023-06-01",
-                    "content-type": "application/json",
-                },
-                json={
-                    "model": "claude-sonnet-5",
-                    "messages": [{"role": "user", "content": "ping"}],
-                },
+            response = client.get(
+                "https://api.openai.com/v1/models",
+                headers={"Authorization": f"Bearer {api_key}"},
             )
     except httpx.HTTPError as exc:
-        print(f"{BAD} Anthropic: сеть недоступна: {exc}")
+        print(f"{BAD} OpenAI: сеть недоступна: {exc}")
         return False
-    if response.status_code == 200:
-        print(f"{OK} Anthropic: ключ рабочий, модель claude-sonnet-5 доступна")
-        return True
-    print(f"{BAD} Anthropic: HTTP {response.status_code} — {response.text[:200]}")
-    return False
+    if response.status_code != 200:
+        print(f"{BAD} OpenAI: HTTP {response.status_code} — {response.text[:200]}")
+        return False
+
+    available = {m["id"] for m in response.json().get("data", [])}
+    wanted = Config.load().get("model", "name")
+    if wanted not in available:
+        print(f"{BAD} OpenAI: ключ рабочий, но модель {wanted} этому аккаунту недоступна")
+        return False
+    print(f"{OK} OpenAI: ключ рабочий, модель {wanted} доступна")
+    return True
 
 
 def check_healthcheck(url: str) -> bool:
@@ -111,12 +115,12 @@ def check_healthcheck(url: str) -> bool:
 def cmd_check() -> int:
     token = ask("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
-    api_key = ask("ANTHROPIC_API_KEY")
+    api_key = ask("OPENAI_API_KEY")
     hc = os.environ.get("HEALTHCHECK_URL", "").strip()
 
     results = [
         check_telegram(token, chat_id),
-        check_anthropic(api_key),
+        check_openai(api_key),
         check_healthcheck(hc),
     ]
     print()

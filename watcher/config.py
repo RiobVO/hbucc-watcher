@@ -48,7 +48,7 @@ class Secrets:
     старте с внятным сообщением, а не через две минуты в момент отправки.
     """
 
-    anthropic_api_key: str
+    openai_api_key: str
     telegram_bot_token: str
     telegram_chat_id: str
     healthcheck_url: str | None
@@ -56,7 +56,7 @@ class Secrets:
     @classmethod
     def from_env(cls) -> "Secrets":
         required = {
-            "ANTHROPIC_API_KEY": None,
+            "OPENAI_API_KEY": None,
             "TELEGRAM_BOT_TOKEN": None,
             "TELEGRAM_CHAT_ID": None,
         }
@@ -84,7 +84,7 @@ class Secrets:
             )
 
         return cls(
-            anthropic_api_key=required["ANTHROPIC_API_KEY"],
+            openai_api_key=required["OPENAI_API_KEY"],
             telegram_bot_token=required["TELEGRAM_BOT_TOKEN"],
             telegram_chat_id=required["TELEGRAM_CHAT_ID"],
             healthcheck_url=healthcheck,
@@ -98,7 +98,7 @@ class Secrets:
         есть доступ к репозиторию.
         """
         return (
-            f"Secrets(anthropic_api_key=<{len(self.anthropic_api_key)} chars>, "
+            f"Secrets(openai_api_key=<{len(self.openai_api_key)} chars>, "
             f"telegram_bot_token=<hidden>, telegram_chat_id=<hidden>, "
             f"healthcheck_url={'set' if self.healthcheck_url else 'unset'})"
         )

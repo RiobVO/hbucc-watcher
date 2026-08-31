@@ -14,8 +14,16 @@ import copy
 
 from conftest import make_block, make_part
 
-from watcher.analyze import Analysis, domain_allowed, build_context, split_links, strict_schema
+from watcher.analyze import (
+    Analysis,
+    build_context,
+    collect_links,
+    domain_allowed,
+    split_links,
+    strict_schema,
+)
 from watcher.detect import BLOCK_ADDED, BLOCK_EDITED, PART_ADDED, Event
+from watcher.original import Original
 
 ALLOWED = ["x.com", "docs.claude.com", "code.claude.com", "claude.com", "support.claude.com"]
 
@@ -129,14 +137,90 @@ def test_disallowed_link_is_mentioned_but_marked_do_not_open(simple_parts):
     assert "https://pastebin.com/raw/abc" in context
 
 
-def test_allowed_link_is_offered_for_verification(simple_parts):
+def test_allowed_link_is_listed(simple_parts):
     block = make_block("Advice with the original post.", heading="Ok")
     block.source_url = "https://x.com/bcherny/status/1"
     event = make_event(BLOCK_ADDED, part_number=1, bid=block.bid, new_block=block)
 
     context = build_context(event, simple_parts, ALLOWED)
-    assert "Разрешено открыть" in context
+    assert "Разрешённые домены" in context
     assert "https://x.com/bcherny/status/1" in context
+
+
+# --------------------------------------------------------------------------
+# Первоисточники: слой 1 собирается кодом до вызова модели
+# --------------------------------------------------------------------------
+
+
+def test_loaded_original_lands_in_context_as_untrusted(simple_parts):
+    """Текст поста обязан приехать в промт — и обязан быть помечен данными."""
+    block = make_block("Advice referencing a post.", heading="Ok")
+    block.source_url = "https://x.com/bcherny/status/1"
+    event = make_event(BLOCK_ADDED, part_number=1, bid=block.bid, new_block=block)
+
+    originals = [
+        Original(
+            url="https://x.com/bcherny/status/1", host="x.com",
+            status="ok", text="1/ I run 5 Claudes in parallel.",
+        )
+    ]
+    context = build_context(event, simple_parts, ALLOWED, originals=originals)
+
+    assert "ПЕРВОИСТОЧНИКИ" in context
+    assert "1/ I run 5 Claudes in parallel." in context
+    marker = context.index("1/ I run 5 Claudes")
+    assert "<untrusted_source" in context[:marker]
+
+
+def test_unreachable_original_is_named_with_its_reason(simple_parts):
+    """Молча потерять слой 1 нельзя: разбор должен знать, что оригинал не читался."""
+    block = make_block("Advice referencing a post.", heading="Ok")
+    block.source_url = "https://x.com/bcherny/status/1"
+    event = make_event(BLOCK_ADDED, part_number=1, bid=block.bid, new_block=block)
+
+    originals = [
+        Original(url="https://x.com/bcherny/status/1", host="x.com", status="unavailable")
+    ]
+    context = build_context(event, simple_parts, ALLOWED, originals=originals)
+
+    assert "Не удалось открыть" in context
+    assert "сервер не ответил" in context
+    assert "оригинал не читался" in context
+
+
+def test_redirect_off_whitelist_is_reported_as_such(simple_parts):
+    block = make_block("Advice.", heading="Ok")
+    block.source_url = "https://x.com/a/status/1"
+    event = make_event(BLOCK_ADDED, part_number=1, bid=block.bid, new_block=block)
+
+    originals = [
+        Original(url="https://x.com/a/status/1", host="x.com", status="redirected_off_whitelist")
+    ]
+    context = build_context(event, simple_parts, ALLOWED, originals=originals)
+    assert "редирект увёл за пределы белого списка" in context
+
+
+def test_refused_domain_stays_visible_with_originals(simple_parts):
+    """Белый список не делает ссылку невидимой и в новой ветке тоже."""
+    block = make_block("Advice with a strange link.", heading="Odd")
+    block.links = ["https://pastebin.com/raw/abc"]
+    event = make_event(BLOCK_ADDED, part_number=1, bid=block.bid, new_block=block)
+
+    originals = [
+        Original(url="https://pastebin.com/raw/abc", host="pastebin.com", status="refused_domain")
+    ]
+    context = build_context(event, simple_parts, ALLOWED, originals=originals)
+    assert "НЕ открывались" in context
+    assert "https://pastebin.com/raw/abc" in context
+
+
+def test_collect_links_keeps_order_and_drops_duplicates(simple_parts):
+    block = make_block("Advice.", heading="Ok")
+    block.source_url = "https://x.com/a/status/1"
+    block.links = ["https://docs.claude.com/p", "https://x.com/a/status/1"]
+    event = make_event(BLOCK_ADDED, part_number=1, bid=block.bid, new_block=block)
+
+    assert collect_links(event) == ["https://x.com/a/status/1", "https://docs.claude.com/p"]
 
 
 def test_injection_flag_reaches_the_prompt(simple_parts):

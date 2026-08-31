@@ -372,10 +372,11 @@ class Runner:
                 analysis = analyze(
                     event,
                     snapshot.parts,
-                    api_key=self.secrets.anthropic_api_key,
+                    api_key=self.secrets.openai_api_key,
                     cfg_model=model_cfg,
                     system_prompt=system_prompt,
                     task_template=task_template,
+                    user_agent=self.cfg.get("source", "user_agent"),
                 )
             except AnalysisFailed as exc:
                 failed.append(f"{event.headline}: разбор не получен — {exc}")
