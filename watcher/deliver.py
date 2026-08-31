@@ -4,24 +4,37 @@
 поля валидированной схемы Analysis, отрендеренные этим модулем. Сырой HTML
 сайта сюда не попадает физически — его нет в объекте разбора.
 
-Два неочевидных ограничения формата, оба вынужденные:
+Три ограничения формата, все вынужденные:
 
   1. parse_mode=HTML, а не MarkdownV2. Экранировать надо три символа
      вместо четырнадцати. Текст пишет модель по материалам чужого сайта —
      чем меньше символов способны сломать сообщение, тем лучше.
 
-  2. HTML-теги допускаются ТОЛЬКО на коротких строках-заголовках, тело
-     разбора идёт без разметки. Это позволяет резать сообщение по границам
-     строк и гарантированно не разорвать тег пополам. Разорванный тег
-     Telegram отвергает целиком — то есть разбор просто не доходит.
+  2. СТРОЧНЫЕ теги (<b>, <i>, <a>, <code>) не пересекают перенос строки.
+     На этом держится безопасность разбиения: резать можно по границам
+     строк, не разрывая тег. Разорванный тег Telegram отвергает целиком —
+     то есть разбор просто не доходит.
+
+  3. БЛОЧНЫЙ тег ровно один: <blockquote expandable>. Он многострочный по
+     своей природе, поэтому chunk() знает про него отдельно — закрывает
+     перед разрывом и открывает заново в следующей части. Раньше
+     многострочные теги были просто запрещены; запрет сняли ради
+     сворачиваемых блоков, но заменили его явной обработкой, а не ничем.
+
+Порядок секций подчинён одному: сверху то, ради чего читатель открыл
+сообщение — стоит ли это его времени, работает ли на Windows и что
+делать. Доказательная часть занимает больше места, но нужна реже, и
+поэтому убрана под сворачиваемые блоки.
 """
 
 from __future__ import annotations
 
 import html
 import logging
+import re
 import time
 from typing import Iterable
+from urllib.parse import urlparse
 
 import httpx
 
@@ -31,6 +44,20 @@ from watcher.detect import Event
 log = logging.getLogger(__name__)
 
 TELEGRAM_HARD_LIMIT = 4096
+
+# Место под служебный префикс «[2/3]» и под закрывающий </blockquote>,
+# который может добавиться на разрыве. Резервируется заранее: иначе на
+# границе лимита то и другое вытолкнет сообщение за 4096 уже после того,
+# как разбиение посчитано.
+_PREFIX_ROOM = 32
+
+_QUOTE_OPEN = re.compile(r"<blockquote(?: expandable)?>")
+_QUOTE_CLOSE = "</blockquote>"
+
+# Модель, работающая с веб-поиском, вставляет цитаты прямо в текст в виде
+# ([домен](https://...)). Сырым текстом это мусор на пол-абзаца. Выкусываем
+# и собираем адреса отдельно, чтобы ни одна ссылка не потерялась.
+_INLINE_CITATION = re.compile(r"\s*\(\[[^\]]+\]\((https?://[^)\s]+)\)\)")
 
 _WINDOWS_LABEL = {
     "works": "работает",
@@ -55,6 +82,45 @@ def esc(text: str) -> str:
     return html.escape(text, quote=False)
 
 
+def strip_citations(text: str) -> tuple[str, list[str]]:
+    """Убрать врезанные в текст markdown-цитаты, вернув их адреса."""
+    found: list[str] = []
+
+    def take(match: re.Match) -> str:
+        found.append(match.group(1))
+        return ""
+
+    return _INLINE_CITATION.sub(take, text).strip(), found
+
+
+def source_label(url: str) -> str:
+    """Короткая подпись вместо простыни URL.
+
+    Шесть строк голых адресов внизу каждого разбора не читаются и не
+    нажимаются. Подпись говорит, куда ведёт ссылка, до нажатия.
+    """
+    parsed = urlparse(url)
+    host = (parsed.hostname or url).removeprefix("www.")
+    tail = [p for p in parsed.path.split("/") if p]
+    if host.endswith("x.com"):
+        return f"пост @{tail[0]}" if tail else "пост в X"
+    if not tail:
+        return host
+    return f"{host.split('.')[0]}: {tail[-1].replace('-', ' ')}"
+
+
+class _Text:
+    """Накопитель: экранирует текст модели и собирает выкушенные ссылки."""
+
+    def __init__(self) -> None:
+        self.citations: list[str] = []
+
+    def __call__(self, raw: str) -> str:
+        cleaned, found = strip_citations(raw)
+        self.citations.extend(found)
+        return esc(cleaned)
+
+
 def render(analysis: Analysis, event: Event) -> str:
     """Собрать текст разбора.
 
@@ -62,88 +128,97 @@ def render(analysis: Analysis, event: Event) -> str:
     промтов в prompts/, а порядок и оформление — правкой этой функции.
     Ни то, ни другое не требует трогать обнаружение, состояние или доставку.
     """
-    lines: list[str] = []
-
-    lines.append(f"<b>{esc(analysis.headline)}</b>")
-    lines.append(esc(event.headline))
-    lines.append("")
-
-    lines.append("<b>ЧТО ЭТО</b>")
-    lines.append(esc(analysis.what_it_is))
-    lines.append("")
-
-    lines.append("<b>КАК РАБОТАЕТ ПО СУТИ</b>")
-    lines.append(esc(analysis.how_it_works))
-    lines.append("")
-
-    lines.append("<b>СЛОИ ДОСТОВЕРНОСТИ</b>")
-    lines.append("Автор оригинала:")
-    lines.append(esc(analysis.layers.original_author))
-    lines.append("")
-    lines.append("Автор фан-сайта дописал:")
-    lines.append(esc(analysis.layers.site_author))
-    lines.append("")
-    lines.append("Официальная документация:")
-    lines.append(esc(analysis.layers.official_docs))
-    lines.append("")
-    lines.append("Мой вывод:")
-    lines.append(esc(analysis.layers.my_conclusion))
-    lines.append("")
-
-    lines.append(f"<b>WINDOWS: {esc(_WINDOWS_LABEL[analysis.windows.status])}</b>")
-    lines.append(esc(analysis.windows.detail))
-    lines.append("")
-
-    lines.append(f"<b>СТОИТ ЛИ ТЕБЕ: {esc(_VERDICT_LABEL[analysis.verdict.worth_it])}</b>")
-    lines.append(esc(analysis.verdict.why))
-    lines.append("")
+    clean = _Text()
+    lines: list[str] = [
+        f"<b>{esc(analysis.headline)}</b>",
+        f"<i>{esc(event.headline)}</i>",
+        "",
+        f"<b>Стоит ли тебе:</b> {_VERDICT_LABEL[analysis.verdict.worth_it]}",
+        clean(analysis.verdict.why),
+        "",
+        f"<b>Windows:</b> {_WINDOWS_LABEL[analysis.windows.status]}",
+        clean(analysis.windows.detail),
+    ]
 
     if analysis.action.strip():
-        lines.append("<b>ЧТО СДЕЛАТЬ</b>")
-        lines.append(esc(analysis.action))
-        lines.append("")
+        lines += ["", "<b>Что сделать</b>", clean(analysis.action)]
+
+    lines += ["", _quote(
+        "Что это и как работает",
+        clean(analysis.what_it_is) + "\n\n" + clean(analysis.how_it_works),
+    )]
+
+    # Слои — своим свёртком, а не внутри общего: это ядро разбора, и до
+    # него должно быть одно нажатие, а не нажатие плюс поиск глазами.
+    lines.append(_quote("Слои достоверности", "\n\n".join([
+        f"<b>Автор оригинала.</b> {clean(analysis.layers.original_author)}",
+        f"<b>Автор сайта дописал.</b> {clean(analysis.layers.site_author)}",
+        f"<b>Документация.</b> {clean(analysis.layers.official_docs)}",
+        f"<b>Мой вывод.</b> {clean(analysis.layers.my_conclusion)}",
+    ])))
 
     if analysis.unconfirmed:
-        lines.append("<b>НЕ ПОДТВЕРЖДЕНО ДОКУМЕНТАЦИЕЙ</b>")
-        lines.extend(f"- {esc(item)}" for item in analysis.unconfirmed)
-        lines.append("")
+        lines.append(_quote(
+            "Не подтверждено документацией",
+            "\n".join(f"— {clean(item)}" for item in analysis.unconfirmed),
+        ))
 
     if analysis.anomalies:
-        # Аномалии идут отдельной секцией и намеренно заметны: это найденные
-        # в чужом тексте обращения к агенту. Читатель должен видеть, что
-        # материал пытался управлять системой, а не только сам разбор.
-        lines.append("<b>АНОМАЛИИ В ИСХОДНОМ ТЕКСТЕ</b>")
-        lines.append("В разбираемом материале найдены инструкции, обращённые к агенту.")
-        lines.append("Они процитированы как факт и не исполнялись:")
-        lines.extend(f"- {esc(item)}" for item in analysis.anomalies)
-        lines.append("")
+        # Аномалии НЕ сворачиваются намеренно: это найденные в чужом тексте
+        # обращения к агенту. Читатель должен видеть, что материал пытался
+        # управлять системой, без дополнительного нажатия.
+        lines += [
+            "",
+            "<b>Аномалии в исходном тексте</b>",
+            "Инструкции, обращённые к агенту. Процитированы, не исполнялись:",
+        ]
+        lines += [f"— {clean(item)}" for item in analysis.anomalies]
 
-    if analysis.sources:
-        lines.append("<b>ИСТОЧНИКИ</b>")
-        lines.extend(esc(url) for url in analysis.sources)
+    urls = list(dict.fromkeys([*analysis.sources, *clean.citations]))
+    if urls:
+        rendered = " · ".join(
+            f'<a href="{esc(u)}">{esc(source_label(u))}</a>' for u in urls
+        )
+        lines += ["", f"<b>Источники:</b> {rendered}"]
 
     return "\n".join(lines).strip()
+
+
+def _quote(title: str, body: str) -> str:
+    """Сворачиваемый блок. Открывающий тег — в начале строки, закрывающий — в конце."""
+    return f"<blockquote expandable><b>{title}</b>\n{body}{_QUOTE_CLOSE}"
 
 
 def chunk(text: str, limit: int) -> list[str]:
     """Разбить сообщение на части, не разрывая строки и теги.
 
-    Режем строго по границам строк. Поскольку теги в render() живут только
-    на коротких строках-заголовках, строка не может содержать незакрытый
-    тег, а значит и часть сообщения не может.
+    Режем строго по границам строк: строчные теги в render() не пересекают
+    перенос, поэтому строка не может содержать незакрытый тег.
 
-    Место под префикс «[2/3] » резервируется заранее: иначе на границе
-    лимита префикс вытолкнул бы сообщение за 4096 символов уже после того,
-    как разбиение посчитано.
+    Отдельно обрабатывается <blockquote>: он многострочный, и разрыв внутри
+    него превратил бы сообщение в отвергнутое Telegram. Поэтому на разрыве
+    блок закрывается, а в следующей части открывается заново тем же тегом —
+    вместе с атрибутом expandable, иначе часть 2 перестала бы сворачиваться.
     """
     if limit >= TELEGRAM_HARD_LIMIT:
         raise ValueError(f"limit={limit} не оставляет запаса под лимит Telegram")
 
-    prefix_room = 12
-    budget = limit - prefix_room
+    budget = limit - _PREFIX_ROOM
     chunks: list[str] = []
     current: list[str] = []
     size = 0
+    open_tag: str | None = None
+
+    def flush() -> None:
+        nonlocal current, size
+        if not current:
+            return
+        body = "\n".join(current)
+        if open_tag:
+            body += _QUOTE_CLOSE
+        chunks.append(body)
+        current = [open_tag] if open_tag else []
+        size = len(open_tag) if open_tag else 0
 
     for line in text.split("\n"):
         # Одиночная строка длиннее бюджета — режем по словам. На практике
@@ -153,14 +228,17 @@ def chunk(text: str, limit: int) -> list[str]:
         for piece in pieces:
             addition = len(piece) + (1 if current else 0)
             if size + addition > budget and current:
-                chunks.append("\n".join(current))
-                current, size = [piece], len(piece)
-            else:
-                current.append(piece)
-                size += addition
+                flush()
+                addition = len(piece) + (1 if current else 0)
+            current.append(piece)
+            size += addition
+            found = _QUOTE_OPEN.search(piece)
+            if found:
+                open_tag = found.group(0)
+            if _QUOTE_CLOSE in piece:
+                open_tag = None
 
-    if current:
-        chunks.append("\n".join(current))
+    flush()
     if not chunks:
         return []
     if len(chunks) == 1:
