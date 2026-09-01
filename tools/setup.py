@@ -91,8 +91,38 @@ def check_openai(api_key: str) -> bool:
     if wanted not in available:
         print(f"{BAD} OpenAI: ключ рабочий, но модель {wanted} этому аккаунту недоступна")
         return False
-    print(f"{OK} OpenAI: ключ рабочий, модель {wanted} доступна")
-    return True
+
+    # Список моделей отдаётся с 200 и при нулевом балансе — проверено. Поэтому
+    # одного его недостаточно: нужен настоящий, пусть и крошечный, запрос на
+    # генерацию. Иначе команда рапортует «ключ рабочий» про мёртвый аккаунт,
+    # а это хуже, чем не проверять вовсе: наблюдатель не вызывает модель на
+    # прогонах без изменений, и кончившаяся квота иначе всплывёт только на
+    # первом настоящем событии.
+    try:
+        with httpx.Client(timeout=30.0) as client:
+            probe = client.post(
+                "https://api.openai.com/v1/responses",
+                headers={"Authorization": f"Bearer {api_key}", "content-type": "application/json"},
+                json={"model": wanted, "input": "ok", "max_output_tokens": 16},
+            )
+    except httpx.HTTPError as exc:
+        print(f"{BAD} OpenAI: сеть недоступна на пробном запросе: {exc}")
+        return False
+
+    if probe.status_code == 200:
+        print(f"{OK} OpenAI: ключ рабочий, модель {wanted} отвечает")
+        return True
+
+    kind = ""
+    try:
+        kind = (probe.json().get("error") or {}).get("code") or ""
+    except ValueError:
+        pass
+    if kind == "insufficient_quota":
+        print(f"{BAD} OpenAI: на аккаунте нет квоты — пополни баланс. Ключ при этом валиден")
+    else:
+        print(f"{BAD} OpenAI: HTTP {probe.status_code} ({kind or 'без кода'}) — {probe.text[:160]}")
+    return False
 
 
 def check_healthcheck(url: str) -> bool:
