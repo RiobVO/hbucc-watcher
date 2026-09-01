@@ -1,0 +1,2156 @@
+{
+  "assumptions": {
+    "last_verified": "2026-07-30T08:20:53Z",
+    "new_parts_appended_at_end": true,
+    "rss_absent": true,
+    "single_document": true
+  },
+  "parts": [
+    {
+      "blocks": [
+        {
+          "bid": "b-1e1b7131",
+          "hash": "sha256:4dfcdf2a8ea29dbe9957f480895dd22590e809b8bb3333f5bd8735f5730ea5be",
+          "heading": "How Boris Cherny Uses Claude Code",
+          "kind": "intro",
+          "links": [
+            "https://github.com/carolinacherry",
+            "https://x.com/bcherny/status/2007179832300581177"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2007179832300581177",
+          "text": "How Boris Cherny Uses Claude Code A fan-made collection by @carolinacherry Boris created Claude Code at Anthropic. When asked how he uses it, he shared 13 practical tips from his daily workflow. His setup is \"surprisingly vanilla\" - proof that CC works great out of the box. @bcherny's January 2, 2026 thread Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-af64c696",
+          "hash": "sha256:770d414c6895e8cf913d27c697c8cc74f06202b72914efa8791259320f3e0f3c",
+          "heading": "Run 5 Claudes in Parallel",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2007179833990885678"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2007179833990885678",
+          "text": "1 Run 5 Claudes in Parallel Boris runs 5 instances of Claude Code simultaneously in his terminal using 5 separate git checkouts of the same repo. He numbers his tabs 1-5 for easy reference and uses system notifications to know when any Claude needs input. Key detail Each tab runs in its own git checkout, so Claude can make changes in parallel without conflicts. Configure iTerm2 notifications to know when any Claude needs attention. ~/repo-1 $ # Tab 1: Working on feature ~/repo-2 $ # Tab 2: Running tests ~/repo-3 $ # Tab 3: Code review ~/repo-4 $ # Tab 4: Debugging ~/repo-5 $ # Tab 5: Documentation ← intro web+mobile →"
+        },
+        {
+          "bid": "b-8f6a6fc4",
+          "hash": "sha256:32d8bfee8f5c346d4bdfecd818d395add23f13fe6a786e79487e8cfb95dff4ee",
+          "heading": "Parallel Web and Mobile Sessions",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2007179836704600237"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2007179836704600237",
+          "text": "2 Parallel Web and Mobile Sessions Beyond the terminal, Boris runs 5-10 additional sessions on claude.ai/code . He fluidly hands off between local and web using the & command or --teleport flag. He also kicks off sessions from his phone via the Claude iOS app in the morning, then picks them up on his computer later. Key commands & - Background a session --teleport - Switch contexts between local and web ← parallel opus →"
+        },
+        {
+          "bid": "b-9f02a3ec",
+          "hash": "sha256:9af03abb6975ecbac02246331611fef88ac4260071db1c4254a0fcacc374fa66",
+          "heading": "Opus 4.5 with Thinking for Everything",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2007179838864666847"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2007179838864666847",
+          "text": "3 Opus 4.5 with Thinking for Everything Boris uses Opus 4.5 with thinking mode for every task. His reasoning: Why Opus over Sonnet \"It's the best coding model I've ever used, and even though it's bigger & slower than Sonnet, since you have to steer it less and it's better at tool use, it is almost always faster than using a smaller model in the end.\" The takeaway: less steering + better tool use = faster overall results , even with a larger model. ← web+mobile CLAUDE.md →"
+        },
+        {
+          "bid": "b-de5f404f",
+          "hash": "sha256:7e8a51d6a0172253cc0af620a11596ad2369ff8e549caf8f20b462071f1f74d4",
+          "heading": "Shared CLAUDE.md Documentation",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2007179840848597422"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2007179840848597422",
+          "text": "4 Shared CLAUDE.md Documentation The team shares a single CLAUDE.md file for the Claude Code repo, checked into git. The whole team contributes multiple times a week. Key practice \"Anytime we see Claude do something incorrectly we add it to the CLAUDE.md, so Claude knows not to do it next time.\" claude-cli $ cat CLAUDE.md # Development Workflow **Always use `bun`, not `npm`.** # 1. Make changes # 2. Typecheck (fast) bun run typecheck # 3. Run tests bun run test -- -t \"test name\" # Single suite bun run test:file -- \"glob\" # Specific files # 4. Lint before committing bun run lint:file -- \"file1.ts\" # Specific files bun run lint # All files # 5. Before creating PR bun run lint:claude && bun run test ← opus @.claude →"
+        },
+        {
+          "bid": "b-0fa6a918",
+          "hash": "sha256:a173f581dafa70d12ce0a32085cc82bd58437743b46aef1414807df17da57961",
+          "heading": "@.claude in Code Reviews",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2007179842928947333"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2007179842928947333",
+          "text": "5 @.claude in Code Reviews During code review, Boris tags @.claude on PRs to add learnings to the CLAUDE.md as part of the PR itself. They use the Claude Code GitHub Action ( /install-github-action ) for this. Boris calls it their version of \"Compounding Engineering\" - inspired by Dan Shipper's concept. // Example PR comment: nit: use a string literal, not ts enum @claude add to CLAUDE.md to never use enums, always prefer literal unions Result Claude automatically updates the CLAUDE.md and commits: \"Prefer `type` over `interface`; **never use `enum`** (use string literal unions instead)\" ← CLAUDE.md plan →"
+        },
+        {
+          "bid": "b-7471ef45",
+          "hash": "sha256:b4142ff78a46b2bf18caaf59abf23a3e2eda49659ce778a95b506f93d4f6711c",
+          "heading": "Start in Plan Mode",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2007179845336527000"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2007179845336527000",
+          "text": "6 Start in Plan Mode Most sessions start in Plan mode (shift+tab twice). Boris iterates on the plan with Claude until it's solid, then switches to auto-accept mode. The workflow Plan mode → Refine plan → Auto-accept edits → Claude 1-shots it > i want to improve progress notification rendering for skills. can you make it look and feel a bit more like subagent progress? ▮▮ plan mode on (shift+tab to cycle) \"A good plan is really important to avoid issues down the line.\" ← @.claude slash →"
+        },
+        {
+          "bid": "b-5ed65ad9",
+          "hash": "sha256:504cf78bffe51ad46be7b6d6533f985b6a0f74721c4e01ae4c570a36be7c2519",
+          "heading": "Slash Commands for Inner Loops",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2007179847949500714"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2007179847949500714",
+          "text": "7 Slash Commands for Inner Loops Boris uses slash commands for workflows he does many times a day . This saves repeated prompting, and Claude can use them too. Commands are checked into git under .claude/commands/ and shared with the team. > /commit-push-pr /commit-push-pr Commit, push, and open a PR Power feature Slash commands can include inline Bash to pre-compute info (like git status) for quick execution without extra model calls. ← plan subagents →"
+        },
+        {
+          "bid": "b-c9746421",
+          "hash": "sha256:6eaa41dd954ed65d6ed5bf470696c24686f0a0c924c327a6f440900cff3babd1",
+          "heading": "Subagents for Common Workflows",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2007179850139000872"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2007179850139000872",
+          "text": "8 Subagents for Common Workflows Boris thinks of subagents as automations for the most common PR workflows : ▼ .claude ▼ agents ↓ build-validator.md ↓ code-architect.md ↓ code-simplifier.md ↓ oncall-guide.md ↓ verify-app.md Examples code-simplifier - Cleans up code after Claude finishes verify-app - Detailed instructions for end-to-end testing ← slash hooks →"
+        },
+        {
+          "bid": "b-7f8e643a",
+          "hash": "sha256:925ae833e0ad426442fca62f02450501df93b8a7ade16f98d6acc3fcbfa11b63",
+          "heading": "PostToolUse Hooks for Formatting",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2007179852047335529"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2007179852047335529",
+          "text": "9 PostToolUse Hooks for Formatting The team uses a PostToolUse hook to auto-format Claude's code. While Claude generates well-formatted code 90% of the time, the hook catches edge cases to prevent CI failures. \"PostToolUse\" : [ { \"matcher\" : \"Write|Edit\" , \"hooks\" : [ { \"type\" : \"command\" , \"command\" : \"bun run format || true\" } ] } ] ← subagents perms →"
+        },
+        {
+          "bid": "b-74a21f6d",
+          "hash": "sha256:44bc64a41b5b695c90092e869c8156c4c9ac18f022451280e1fd6fcd69518435",
+          "heading": "Pre-Allow Safe Permissions",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2007179854077407667"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2007179854077407667",
+          "text": "10 Pre-Allow Safe Permissions Instead of --dangerously-skip-permissions , Boris uses /permissions to pre-allow common safe commands. Most are shared in .claude/settings.json . > /permissions Permissions: Allow Ask Deny Workspace Claude Code won't ask before using allowed tools. ↑ 12. Bash(bq query:*) 13. Bash(bun run build:*) 14. Bash(bun run lint:file:*) 15. Bash(bun run test:*) 16. Bash(bun run test:file:*) 17. Bash(bun run typecheck:*) 18. Bash(bun test:*) 19. Bash(cc:*) 20. Bash(comm:*) > 21. Bash(find:*) ← hooks tools →"
+        },
+        {
+          "bid": "b-c2102352",
+          "hash": "sha256:efeed5b6c281c98193f0bcfc21e3ebf5ed520f64c37f9f83f83224559cbc2cdb",
+          "heading": "Tool Integrations",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2007179856266789204"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2007179856266789204",
+          "text": "11 Tool Integrations Claude Code uses all of Boris's tools autonomously: Searches and posts to Slack (via MCP server) Runs BigQuery queries with bq CLI Grabs error logs from Sentry claude-cli-2 $ cat .mcp.json { \"mcpServers\" : { \"slack\" : { \"type\" : \"http\" , \"url\" : \"https://slack.mcp.anthropic.com/mcp\" } } } ← perms long-run →"
+        },
+        {
+          "bid": "b-79fbe188",
+          "hash": "sha256:94a359b8c3d5789ef2c8bace022aab7cf7dc7391d449366341ce5bb5e19a703d",
+          "heading": "Handle Long-Running Tasks",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2007179858435281082"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2007179858435281082",
+          "text": "12 Handle Long-Running Tasks For very long-running tasks, Boris ensures Claude can work uninterrupted: Options (a) Prompt Claude to verify with a background agent when done (b) Use an agent Stop hook for deterministic checks (c) Use the \"ralph-wiggum\" plugin (community idea by @GeoffreyHuntley) For sandboxed environments, he'll use --permission-mode=dontAsk or --dangerously-skip-permissions to avoid blocks. * Reticulating... (1d 2h 47m · ↓ 2.4m tokens · thinking) > ← tools verify →"
+        },
+        {
+          "bid": "b-6a3985f9",
+          "hash": "sha256:3cff0697b98a74a27c3899b44379494ed2f13803d3333d44307a18801ad7ee94",
+          "heading": "The Most Important Tip: Verification",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2007179861115511237"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2007179861115511237",
+          "text": "13 The Most Important Tip: Verification This is Boris's #1 tip: Key insight \"Probably the most important thing to get great results out of Claude Code - give Claude a way to verify its work. If Claude has that feedback loop, it will 2-3x the quality of the final result.\" For his own changes to claude.ai/code, Claude uses the Claude Chrome extension to open a browser, test UI changes, and iterate until it works perfectly. Verification varies by domain: Bash commands, test suites, simulators, browser testing, etc. The key is giving Claude a way to close the feedback loop. Takeaway Invest in domain-specific verification for optimal performance. Claude tests every single change Boris lands to claude.ai/code. ← long-run back to intro →"
+        }
+      ],
+      "declared_tips": 13,
+      "hash": "sha256:a43ad479524d831d1f6e46809c0c919637166789396a6d22d948824892fe8daa",
+      "id": "part-1",
+      "number": 1,
+      "order": 1,
+      "title": "How Boris Cherny Uses Claude Code",
+      "volume": 1
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-bd7d94b6",
+          "hash": "sha256:0de43b12ebec75cc5ca8d60dcd03db271f3ed02374cabb2102b3454f5d11f571",
+          "heading": "More Tips from Boris Cherny",
+          "kind": "intro",
+          "links": [
+            "https://x.com/bcherny/status/2017742741636321619"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2017742741636321619",
+          "text": "More Tips from Boris Cherny Boris shared 10 more tips on January 31, 2026. These are sourced directly from the Claude Code team - remember, everyone's setup is different. Experiment to see what works for you! @bcherny's January 31, 2026 thread Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-51304160",
+          "hash": "sha256:caf6548324f1bb27677f34b5a930b20f2e004e3ccdb0f2ec76830a053402c646",
+          "heading": "Do More in Parallel",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2017742743125299476"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2017742743125299476",
+          "text": "1 Do More in Parallel Spin up 3-5 git worktrees at once , each running its own Claude session in parallel. It's the single biggest productivity unlock, and the top tip from the team. Why worktrees over checkouts Most of the Claude Code team prefers worktrees - it's the reason @amorriscode built native support for them into the Claude Desktop app! Some people also name their worktrees and set up shell aliases (za, zb, zc) so they can hop between them in one keystroke. Others have a dedicated \"analysis\" worktree that's only for reading logs and running BigQuery. $ git worktree add .claude/worktrees/my-worktree origin/main $ cd .claude/worktrees/my-worktree && claude # Claude Code v2.1.29 # Opus 4.5 · Claude Enterprise # .claude/worktrees/my-worktree ← intro plan →"
+        },
+        {
+          "bid": "b-cab2cd95",
+          "hash": "sha256:fdac862e32cb891cb977fc56fdd96312ef07dd1eea92d24ed4d5d5baf4fd8da2",
+          "heading": "Start Every Complex Task in Plan Mode",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2017742745365057733"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2017742745365057733",
+          "text": "2 Start Every Complex Task in Plan Mode Pour your energy into the plan so Claude can 1-shot the implementation . Don't keep pushing when things go sideways - switch back to plan mode and re-plan. Team patterns One person has one Claude write the plan, then they spin up a second Claude to review it as a staff engineer . Another says the moment something goes sideways, they switch back to plan mode and re-plan. They also explicitly tell Claude to enter plan mode for verification steps, not just for the build . > T ry \"refactor cli.tsx\" ▮▮ plan mode on (shift+Tab to cycle) ← worktrees CLAUDE.md →"
+        },
+        {
+          "bid": "b-1ffcff36",
+          "hash": "sha256:cb687af0c5d4d0cfacf7e1e7fe4fd640493d3002f8959571a0a0bd83ffe076e3",
+          "heading": "Invest in Your CLAUDE.md",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2017742747067945390"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2017742747067945390",
+          "text": "3 Invest in Your CLAUDE.md After every correction, end with: \"Update your CLAUDE.md so you don't make that mistake again.\" Claude is eerily good at writing rules for itself. Key practice Ruthlessly edit your CLAUDE.md over time. Keep iterating until Claude's mistake rate measurably drops. One engineer tells Claude to maintain a notes directory for every task/project , updated after every PR. They then point CLAUDE.md at it. Memory files · /memory └ ~/.claude/CLAUDE.md: 76 tokens └ CLAUDE.md: 4k tokens ← plan skills →"
+        },
+        {
+          "bid": "b-56e2d399",
+          "hash": "sha256:a5cc0a95afac0f20bd65f74732700bf51cf8b0e405edeff31eef6dfa83eae9ea",
+          "heading": "Create Your Own Skills",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2017742748984742078"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2017742748984742078",
+          "text": "4 Create Your Own Skills Create your own skills and commit them to git . Reuse across every project. Tips from the team If you do something more than once a day, turn it into a skill or command Build a /techdebt slash command and run it at the end of every session to find and kill duplicated code Set up a slash command that syncs 7 days of Slack, GDrive, Asana, and GitHub into one context dump Build analytics-engineer-style agents that write dbt models, review code, and test changes in dev ← CLAUDE.md bugs →"
+        },
+        {
+          "bid": "b-61ffec3e",
+          "hash": "sha256:ce6de5194416e79fdd9ee134a6479f6889a4cf1814dbb3246a071b3564796fce",
+          "heading": "Claude Fixes Most Bugs by Itself",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2017742750473720121"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2017742750473720121",
+          "text": "5 Claude Fixes Most Bugs by Itself Enable the Slack MCP , then paste a Slack bug thread into Claude and just say \"fix.\" Zero context switching required. Or, just say \"Go fix the failing CI tests.\" Don't micromanage how. Pro tip Point Claude at docker logs to troubleshoot distributed systems - it's surprisingly capable at this. > fix this https://ant.slack.com/archives/... ● slack - search_public (MCP) (query: \"in:C07VBS...\") Searches for messages in public Slack ch... 'slack_search_public' does NOT generally for user consent to use 'slack_search_p... ← skills prompting →"
+        },
+        {
+          "bid": "b-f2ee2031",
+          "hash": "sha256:8fa5772bb6bd9cf2ef7357ebb678e561cd7bd010f052d846cb38f0bf0f4fdcc1",
+          "heading": "Level Up Your Prompting",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2017742752566632544"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2017742752566632544",
+          "text": "6 Level Up Your Prompting a. Challenge Claude. Say \"Grill me on these changes and don't make a PR until I pass your test.\" Make Claude be your reviewer. Or, say \"Prove to me this works\" and have Claude diff behavior between main and your feature branch. b. After a mediocre fix, say: \"Knowing everything you know now, scrap this and implement the elegant solution.\" c. Write detailed specs and reduce ambiguity before handing work off. The more specific you are, the better the output. Key insight Don't accept the first solution. Push Claude to do better - it usually can. ← bugs terminal →"
+        },
+        {
+          "bid": "b-838cc798",
+          "hash": "sha256:f45171587dd5316bb786a927f42a90cf1f9ad8aa4436670f2cd60b4aafce825f",
+          "heading": "Terminal & Environment Setup",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2017742753971769626"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2017742753971769626",
+          "text": "7 Terminal & Environment Setup The team loves Ghostty ! Multiple people like its synchronized rendering, 24-bit color, and proper unicode support. For easier Claude-juggling, use /statusline to customize your status bar to always show context usage and current git branch. Many of us also color-code and name our terminal tabs, sometimes using tmux - one tab per task/worktree. Voice dictation Use voice dictation. You speak 3x faster than you type, and your prompts get way more detailed as a result. (Hit fn x2 on macOS) ┌──────────────────────────────────────────┐ │ ● ● ● │ 1 ⌘1 │ 2 ● ⌘2 │ 3 ⌘3 │ 4 │ ├──────────────────────────────────────────┤ │ × * Claude Code (node) │ │ │ │ Claude Code v2.1.29 │ │ Opus 4.5 · Claude Enterprise │ │ /code/claude │ └──────────────────────────────────────────┘ ← prompting subagents →"
+        },
+        {
+          "bid": "b-648c9255",
+          "hash": "sha256:73d261e934f3676f71c6cd7317780a7e324b4c5a87bc82aad1607c08f5e6b4fc",
+          "heading": "Use Subagents",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2017742755737555434"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2017742755737555434",
+          "text": "8 Use Subagents a. Append \"use subagents\" to any request where you want Claude to throw more compute at the problem. b. Offload individual tasks to subagents to keep your main agent's context window clean and focused. c. Route permission requests to Opus 4.5 via a hook - let it scan for attacks and auto-approve the safe ones. > use 5 subagents to explore the codebase ● I'll launch 5 explore agents in parallel to... ● Running 5 Explore agents... (ctrl+o to expand) ├─ Explore entry points and startup · 10 t... │ └ Bash: Find CLI or main entry files ├─ Explore React components structure · 14... │ └ Bash: ls -la /Users/boris/code/clau... ├─ Explore tools implementation · 14 tool... │ └ Bash: Find tool implementation files ├─ Explore state management · 13 tool uses │ └ Search: **/screens/REPL.tsx └─ Explore testing infrastructure · 13 to... └ Search: test/mocks/**/*.ts ← terminal data →"
+        },
+        {
+          "bid": "b-a064c0c3",
+          "hash": "sha256:cec6c936e6614aa8ca054ec74c163486f1ff544e5fa9e452d163af77d8c5f5d1",
+          "heading": "Use Claude for Data & Analytics",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2017742757666902374"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2017742757666902374",
+          "text": "9 Use Claude for Data & Analytics Ask Claude Code to use the \"bq\" CLI to pull and analyze metrics on the fly. We have a BigQuery skill checked into the codebase, and everyone on the team uses it for analytics queries directly in Claude Code. Boris's take \"Personally, I haven't written a line of SQL in 6+ months.\" This works for any database that has a CLI, MCP, or API . ← subagents learning →"
+        },
+        {
+          "bid": "b-a68b6670",
+          "hash": "sha256:1f83b73fe6a7aeaa00efb6b06ee3b78f5c2feb54fabe18b92c1470c907b06a35",
+          "heading": "Learning with Claude",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2017742759218794768"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2017742759218794768",
+          "text": "10 Learning with Claude A few tips from the team to use Claude Code for learning: a. Enable the \"Explanatory\" or \"Learning\" output style in /config to have Claude explain the why behind its changes. b. Have Claude generate a visual HTML presentation explaining unfamiliar code. It makes surprisingly good slides! c. Ask Claude to draw ASCII diagrams of new protocols and codebases to help you understand them. d. Build a spaced-repetition learning skill : you explain your understanding, Claude asks follow-ups to fill gaps, stores the result. Key takeaway Claude Code isn't just for writing code - it's a powerful learning tool when you configure it to explain and teach. ← data back to intro →"
+        }
+      ],
+      "declared_tips": 10,
+      "hash": "sha256:a7bf2061e7fb56b1b890d312e2caf92e8bdf884dfae914cf8b79594186e9294a",
+      "id": "part-2",
+      "number": 2,
+      "order": 2,
+      "title": "More Tips from Boris Cherny",
+      "volume": 2
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-c6458d53",
+          "hash": "sha256:a79d860b39168d602c500f47fe1a4f6dc33a6990e997c32f885a3bf0219b91a1",
+          "heading": "Customize Your Claude",
+          "kind": "intro",
+          "links": [
+            "https://x.com/bcherny/status/2021699851499798911"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2021699851499798911",
+          "text": "Customize Your Claude Boris shared 12 more tips on February 11, 2026. This time the theme is customization - hooks, plugins, agents, permissions, and all the ways to make Claude Code your own. @bcherny's February 11, 2026 thread Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-0b649dfa",
+          "hash": "sha256:d55ee54c66e736c4404207d4e0a8e04ad0e7ad7318fb3c81229c7685ca18239a",
+          "heading": "Configure Your Terminal",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2021699859359883608"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2021699859359883608",
+          "text": "1 Configure Your Terminal A few quick settings to make Claude Code feel right in your terminal: Key settings Theme: Run /config to set light/dark mode Notifications: Enable notifications for iTerm2, or use a custom notifs hook Newlines: If you use Claude Code in an IDE terminal, Apple Terminal, Warp, or Alacritty, run /terminal-setup to enable shift+enter for newlines (so you don't need to type \\ ) Vim mode: Run /vim ← intro effort →"
+        },
+        {
+          "bid": "b-28985122",
+          "hash": "sha256:52f11c7aca50add9bd792b3a2432a34557d710d008195a4653c499aa26df59e9",
+          "heading": "Adjust Effort Level",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2021699860869902424"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2021699860869902424",
+          "text": "2 Adjust Effort Level Run /model to pick your preferred effort level: Effort levels Low - less tokens & faster responses Medium - balanced behavior High - more tokens & more intelligence Personally, I use High for everything . ||| High effort (default) ← → to adjust Fast mode is ON and available with Opus 4.6 ← terminal plugins →"
+        },
+        {
+          "bid": "b-217c634e",
+          "hash": "sha256:3e9de62281fe919051cb288409317e84f8a9dc6e6b85b2732428153d6e7fed8d",
+          "heading": "Install Plugins, MCPs, and Skills",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2021699862522364149"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2021699862522364149",
+          "text": "3 Install Plugins, MCPs, and Skills Plugins let you install LSPs (now available for every major language), MCPs, skills, agents, and custom hooks . Install a plugin from the official Anthropic plugin marketplace, or create your own marketplace for your company. Then, check the settings.json into your codebase to auto-add the marketplaces for your team. Getting started Run /plugin to browse and install plugins. ← effort agents →"
+        },
+        {
+          "bid": "b-d72ae7d5",
+          "hash": "sha256:c8373a0d7d5e94301a452cafac7451b5f4697e051d5c583fc30ba2cb8fef1ec5",
+          "heading": "Create Custom Agents",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2021700144039903699"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2021700144039903699",
+          "text": "4 Create Custom Agents To create custom agents, drop .md files in .claude/agents . Each agent can have a custom name, color, tool set, pre-allowed and pre-disallowed tools, permission mode, and model. Pro tip There's a little-known feature that lets you set the default agent used for the main conversation. Just set the \"agent\" field in your settings.json or use the --agent flag. > use the sentry errors agent sentry-errors (Fetch Sentry error logs) Search (pattern: \"sentry\", path: \"src\") +10 more tool uses (ctrl+o to expand) Run /agents to get started. ← plugins permissions →"
+        },
+        {
+          "bid": "b-3ed1e597",
+          "hash": "sha256:d291d371b2488dbc4c007ebb6bf12e921c46689f543bf51c82204f8478625d9e",
+          "heading": "Pre-Approve Common Permissions",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2021700332292911228"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2021700332292911228",
+          "text": "5 Pre-Approve Common Permissions Claude Code uses a sophisticated permission system with a combo of prompt injection detection, static analysis, sandboxing, and human oversight . Out of the box, we pre-approve a small set of safe commands. To pre-approve more, run /permissions and add to the allow and block lists. Check these into your team's settings.json . Wildcard syntax We support full wildcard syntax. Try \"Bash(bun run *)\" or \"Edit(/docs/**)\" > /permissions Permissions: [Allow] Ask Deny 52. Bash(gh issue view:*) 53. Bash(gh pr checks:*) 54. Bash(gh pr comment:*) 55. Bash(gh pr diff:*) 56. Bash(gh pr list:*) ← agents sandbox →"
+        },
+        {
+          "bid": "b-306ff628",
+          "hash": "sha256:b1e00f7e66dc3c72d201421253f9b2d822347377d36996b6f4032cd089cb9595",
+          "heading": "Enable Sandboxing",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2021700506465579443"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2021700506465579443",
+          "text": "6 Enable Sandboxing Opt into Claude Code's open source sandbox runtime to improve safety while reducing permission prompts. Run /sandbox to enable it. Sandboxing runs on your machine, and supports both file and network isolation . Windows support coming soon. Sandbox modes Sandbox BashTool, with auto-allow - commands run in sandbox, auto-approved Sandbox BashTool, with regular permissions - sandbox + normal permission prompts No Sandbox - default behavior ← permissions statusline →"
+        },
+        {
+          "bid": "b-aa850358",
+          "hash": "sha256:9f7c7465a9d7d317ba718ee3fabc589f1bc6b6fb65a9c6317cbb58bbd324478d",
+          "heading": "Add a Status Line",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2021700784019452195"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2021700784019452195",
+          "text": "7 Add a Status Line Custom status lines show up right below the composer, and let you show model, directory, remaining context, cost , and pretty much anything else you want to see while you work. Everyone on the Claude Code team has a different statusline. Use /statusline to get started, to have Claude generate a statusline for you based on your .bashrc / .zshrc . > _ [Opus] 📁 my-app | 🌿 feature/auth █████████ ░░░░░░░░░ 42% | $0.08 | 🕐 7m 3s ← sandbox keybindings →"
+        },
+        {
+          "bid": "b-92df0614",
+          "hash": "sha256:833e3f3d1006e1d9be77c3c545b20470f7f25704334f3671e30d3f59aa29b209",
+          "heading": "Customize Your Keybindings",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2021700883873165435"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2021700883873165435",
+          "text": "8 Customize Your Keybindings Did you know every key binding in Claude Code is customizable ? Run /keybindings to re-map any key. Settings live reload so you can see how it feels immediately. How it works Keybindings are stored in ~/.claude/keybindings.json . Claude can generate the config for you - just describe what you want. ← statusline hooks →"
+        },
+        {
+          "bid": "b-ded83310",
+          "hash": "sha256:6c4f718d1fa2655a145acc84b43f6cd20b6b33817a3efff8b9617beca0ac6f5b",
+          "heading": "Set Up Hooks",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2021701059253874861"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2021701059253874861",
+          "text": "9 Set Up Hooks Hooks are a way to deterministically hook into Claude's lifecycle . Use them to: Use cases Automatically route permission requests to Slack or Opus Nudge Claude to keep going when it reaches the end of a turn (you can even kick off an agent or use a prompt to decide whether Claude should keep going) Pre-process or post-process tool calls, e.g. to add your own logging Ask Claude to add a hook to get started. ← keybindings spinners →"
+        },
+        {
+          "bid": "b-422ee0e4",
+          "hash": "sha256:2ff699704a309dfb028f64622f6220ee98168239d4edf1471ca12673c87a7c8e",
+          "heading": "Customize Your Spinner Verbs",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2021701145023197516"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2021701145023197516",
+          "text": "10 Customize Your Spinner Verbs It's the little things that make CC feel personal. Ask Claude to customize your spinner verbs to add or replace the default list with your own verbs. Check the settings.json into source control to share verbs with your team. > in my settings, make my spinner verbs star trek themed. ● Update (~/.claude/settings.json) ✱ Beaming up... (esc to interrupt) ← hooks output →"
+        },
+        {
+          "bid": "b-376fdad5",
+          "hash": "sha256:da1fe34845c035725f1a04d2ad1333fe0d094cc32258d115acb9b22acc1b1932",
+          "heading": "Use Output Styles",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2021701379409273093"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2021701379409273093",
+          "text": "11 Use Output Styles Run /config and set an output style to have Claude respond using a different tone or format . Recommended styles Explanatory - great when getting familiar with a new codebase, to have Claude explain frameworks and code patterns as it works Learning - have Claude coach you through making code changes Custom - create your own output styles to adjust Claude's voice the way you like ← spinners customize →"
+        },
+        {
+          "bid": "b-f8c93df8",
+          "hash": "sha256:f5ac63e0f950d6c622d5ba5027da2104c282fedb016e520ce9b3792e40ef288a",
+          "heading": "Customize All the Things!",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2021701636075458648"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2021701636075458648",
+          "text": "12 Customize All the Things! Claude Code is built to work great out of the box. When you do customize, check your settings.json into git so your team can benefit, too. We support configuring for your codebase, for a sub-folder, for just yourself, or via enterprise-wide policies . By the numbers Pick a behavior, and it is likely that you can configure it. We support 37 settings and 84 env vars (use the \"env\" field in your settings.json to avoid wrapper scripts). ← output back to intro →"
+        }
+      ],
+      "declared_tips": 12,
+      "hash": "sha256:48cd1f3a5e5a4c0fb22e7a27920ee78d14e267496ccd87910cd3bad47594309f",
+      "id": "part-3",
+      "number": 3,
+      "order": 3,
+      "title": "Customize Your Claude",
+      "volume": 3
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-0a723d6b",
+          "hash": "sha256:62699d55ad068ac37e3ae13501571925e1f3c3f4cc0b2235cd5031355eccf643",
+          "heading": "Built-in Worktree Support",
+          "kind": "intro",
+          "links": [
+            "https://x.com/bcherny/status/2025007393290272904"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2025007393290272904",
+          "text": "Built-in Worktree Support Boris announced built-in git worktree support for Claude Code on February 20, 2026. Agents can now run in parallel without interfering with each other - in CLI, Desktop app, IDE extensions, web, and mobile. @bcherny's February 20, 2026 thread Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-bb8c91b4",
+          "hash": "sha256:c6e540f574301797506b9759592bb49184a8925092c557376605996fcc77d08b",
+          "heading": "Use claude --worktree for Isolation",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2025007394967957720"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2025007394967957720",
+          "text": "1 Use claude --worktree for Isolation To run Claude Code in its own git worktree, just start it with the --worktree option. You can name your worktree , or have Claude name it for you. Use this to run multiple parallel Claude Code sessions in the same git repo, without the code edits clobbering each other. $ claude --worktree my_worktree # You can also pass --tmux to launch in its own Tmux session $ claude --worktree my_worktree --tmux What changed The Claude Code Desktop app has had built-in support for worktrees for a while - now it's in the CLI too. ← intro desktop →"
+        },
+        {
+          "bid": "b-d8398a3b",
+          "hash": "sha256:76f09b42e85edd46bfa3272cf1809a7e5c258052a082c88217416aeaf7529b39",
+          "heading": "Use Worktree Mode in the Desktop App",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2025007396691792100"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2025007396691792100",
+          "text": "2 Use Worktree Mode in the Desktop App If you prefer not to use the terminal, head to the Code tab in the Claude Desktop app and check the worktree checkbox. How to enable Open the Claude Desktop app → Code tab → check the \"worktree\" checkbox. That's it. ← cli subagents →"
+        },
+        {
+          "bid": "b-2f4eb593",
+          "hash": "sha256:5c201d7d9897199fa79df79d4cb91cec99e5e9b8078eab993f626caa10f58189",
+          "heading": "Subagents Now Support Worktrees",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2025007398537380028"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2025007398537380028",
+          "text": "3 Subagents Now Support Worktrees Subagents can also use worktree isolation to do more work in parallel. This is especially powerful for large batched changes and code migrations . To use it, ask Claude to use worktrees for its agents. Available in CLI, Desktop app, IDE extensions, web, and Claude Code mobile app. > Migrate all sync io to async. Batch up the changes, and launch 10 parallel agents with worktree isolation. Make sure each agent tests its changes end to end, then have it put up a PR. ← desktop agents →"
+        },
+        {
+          "bid": "b-df844fb5",
+          "hash": "sha256:ced3e1cb6f01a5baf379796876e94db674b8eeaa38b8062370fa919ad573fbe8",
+          "heading": "Custom Agents Support Git Worktrees",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2025007400235987300"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2025007400235987300",
+          "text": "4 Custom Agents Support Git Worktrees You can also make subagents always run in their own worktree . To do that, just add isolation: worktree to your agent frontmatter. # .claude/agents/worktree-worker.md --- name: worktree-worker model: haiku isolation: worktree --- ← subagents non-git →"
+        },
+        {
+          "bid": "b-4ea5310a",
+          "hash": "sha256:bf767d3632e2b0d4fbc6c9d60e581243a2d255d0b3a5bb4798023939e7b7bb64",
+          "heading": "Also Available for Non-Git Source Control",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2025007401766948935"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2025007401766948935",
+          "text": "5 Also Available for Non-Git Source Control If you're a Mercurial, Perforce, or SVN user, define worktree hooks to benefit from isolation without having to use Git. $ cat .claude/settings.json { ... \"hooks\" : { \"WorktreeCreate\" : [ { \"command\" : \"jj workspace add \\\"$(cat /dev/stdin | jq -r '.name')\\\"\" } ], \"WorktreeRemove\" : [ { \"command\" : \"jj workspace forget \\\"$(cat /dev/stdin | jq -r '.worktree_path')\\\"\" } ] }, ... } ← agents back to intro →"
+        }
+      ],
+      "declared_tips": 5,
+      "hash": "sha256:d52aaf04c24355aafef9e7bf8b71bba1e023a5ea274a681b31e70e6f700b0d80",
+      "id": "part-4",
+      "number": 4,
+      "order": 4,
+      "title": "Built-in Worktree Support",
+      "volume": 4
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-0b1c3414",
+          "hash": "sha256:8a3fff89a0b796cc456a8fd0490f8903c91eee634516e2ec2cfbea65171f78fc",
+          "heading": "Ship to Production",
+          "kind": "intro",
+          "links": [
+            "https://x.com/bcherny/status/2027534984534544489"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2027534984534544489",
+          "text": "Ship to Production Boris announced two new built-in skills for Claude Code on February 27, 2026: /simplify to improve code quality and /batch to automate code migrations in parallel. Combined, these automate much of the work it used to take to shepherd a PR to production and perform parallelizable code migrations. @bcherny's February 27, 2026 thread Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-bb62697f",
+          "hash": "sha256:bd36174e854097a723d4ae24d337f5c9b83ebe502c1f7b4b8931a20a43494963",
+          "heading": "/simplify - Improve Code Quality",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2027534986178662573"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2027534986178662573",
+          "text": "1 /simplify - Improve Code Quality Use parallel agents to improve code quality, tune code efficiency, and ensure CLAUDE.md compliance. Just append /simplify to any prompt. > hey claude make this code change then run /simplify What it does Runs parallel agents that review your changed code for reuse opportunities, quality issues, and efficiency improvements - all in one pass. ← intro /batch →"
+        },
+        {
+          "bid": "b-d2bd53d7",
+          "hash": "sha256:0c081d2fcfe1b51bd5cf8354d06ac9a431f0236bf240e08be48fafae8de9d24d",
+          "heading": "/batch - Parallel Code Migrations",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2027534987462119828"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2027534987462119828",
+          "text": "2 /batch - Parallel Code Migrations Interactively plan out code migrations, then execute in parallel using dozens of agents . Each agent runs with full isolation using git worktrees, testing its work before putting up a PR. > /batch migrate src/ from Solid to React How it works You plan the migration interactively, then /batch fans out the work to parallel agents - each in its own worktree, each testing and creating a PR independently. ← /simplify back to intro →"
+        }
+      ],
+      "declared_tips": 2,
+      "hash": "sha256:140e590bc181d294d27113a6f85c7f12c84ce7c018fbc4cb7f87da22551bf73d",
+      "id": "part-5",
+      "number": 5,
+      "order": 5,
+      "title": "Ship to Production",
+      "volume": 5
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-2796ba73",
+          "hash": "sha256:d9fdbe63abd4d64a99f35c1779824f929a84aa48f348faa10a4cefddd3578d1c",
+          "heading": "Three Features. Four Days.",
+          "kind": "intro",
+          "links": [
+            "https://x.com/bcherny/status/2030193932404150413",
+            "https://x.com/bcherny/status/2031089411820228645",
+            "https://x.com/trq212/status/2031506296697131352"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2030193932404150413",
+          "text": "Three Features. Four Days. /loop lets Claude run recurring tasks for up to 3 days unattended. Code Review dispatches a team of agents on every PR. /btw lets you ask questions mid-task without breaking Claude's flow. @bcherny's March 7, 2026 thread @bcherny's March 9, 2026 thread @trq212's March 10, 2026 thread Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-e899f6d2",
+          "hash": "sha256:ec8c195c2b8fa3995bbe91728b5901acc8c247fdb03ef6535c0a6fd2a6f868fa",
+          "heading": "/loop - Schedule Recurring Tasks",
+          "kind": "tip",
+          "links": [
+            "https://code.claude.com/docs/en/scheduled-tasks"
+          ],
+          "refs_parts": [],
+          "source_url": "https://code.claude.com/docs/en/scheduled-tasks",
+          "text": "1 /loop - Schedule Recurring Tasks Use /loop to schedule recurring tasks for up to 3 days at a time. Claude runs your prompt on an interval, handling long-running workflows autonomously. > /loop babysit all my PRs. Auto-fix build issues and when comments come in, use a worktree agent to fix them > /loop every morning use the Slack MCP to give me a summary of top posts I was tagged in What it does Schedules a prompt to run on a recurring interval. Use it for PR babysitting, Slack summaries, deploy monitoring, or any repeating workflow - running for up to 3 days unattended. ← intro code-review →"
+        },
+        {
+          "bid": "b-d26546e9",
+          "hash": "sha256:e4aa09dea5cab31b302462e2a4c3eb7fccab149facd4ddd0361513b3513ac645",
+          "heading": "Code Review - Agents Hunt for Bugs",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2031089411820228645"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2031089411820228645",
+          "text": "2 Code Review - Agents Hunt for Bugs When a PR opens, Claude dispatches a team of agents to hunt for bugs. Anthropic built it for themselves first - code output per engineer is up 200% this year , and reviews were the bottleneck. Boris personally used it for weeks before launch. It catches real bugs he wouldn't have noticed otherwise. # A PR opens on your repo # Claude Code automatically: # 1. Reads the diff # 2. Dispatches specialized review agents # 3. Posts inline comments on real bugs What it does Automatically reviews every PR with a team of agents. Each agent focuses on a different concern - logic errors, security issues, performance regressions - then posts inline comments directly on the PR. ← /loop /btw →"
+        },
+        {
+          "bid": "b-7870efe4",
+          "hash": "sha256:98c2c745ee21bb257f83a8c0a954535c56f75262d21133000cfbe1910939c0c5",
+          "heading": "/btw - Ask Questions While Claude Works",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2031506296697131352"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2031506296697131352",
+          "text": "3 /btw - Ask Questions While Claude Works A slash command for side-chain conversations while Claude is actively working. Single-turn, no tool calls, but has full context of the conversation. Built by @ErikSchluntz as a side project - 1.5M views on the launch tweet. # Claude is mid-task, refactoring auth middleware... > /btw what does the retry logic do? # Claude responds inline without stopping its work: The retry logic in auth.ts uses exponential backoff with a max of 3 attempts. It catches 401/403 errors and refreshes the token before retrying. What it does Lets you ask a quick question mid-task without interrupting Claude's flow. The response is single-turn with no tool calls, but Claude has full context of what it's working on - so answers are grounded in the current conversation. ← code-review back to intro →"
+        }
+      ],
+      "declared_tips": 3,
+      "hash": "sha256:109c90c4c9d70daaf2ff59b7149df8486bfd7b7768fec4f13767cd05854df056",
+      "id": "part-6",
+      "number": 6,
+      "order": 6,
+      "title": "Three Features. Four Days.",
+      "volume": 6
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-0a4c6421",
+          "hash": "sha256:2caa38f06e3e55618548d99c1489211489b6b2fc37bf4cb3ce39f59690cf2214",
+          "heading": "End of Week Ships",
+          "kind": "intro",
+          "links": [
+            "https://x.com/trq212/status/2032632596572811575"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2032632596572811575",
+          "text": "End of Week Ships The Claude Code team dropped 8 features in one thread: /effort max for deeper reasoning, voice mode for everyone, remote control sessions , setup scripts , session naming , /color , and a new PostCompact hook . @trq212's March 13, 2026 thread Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-02ac94fd",
+          "hash": "sha256:2e526e1991e32ff8b45535d9c7119ccfe2653fbdcf71e618833451da4d480c7e",
+          "heading": "/effort - Max Reasoning Mode",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2032632596572811575"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2032632596572811575",
+          "text": "1 /effort - Max Reasoning Mode Set effort to 'max' and Claude reasons for longer, using as many tokens as needed. Burns through your usage limits faster, so you activate it per session . > /effort max # Four levels available: # low - quick answers, minimal reasoning # medium - balanced (default) # high - deeper reasoning # max - reasons as long as needed What it does Sets the reasoning effort level for the current session. At 'max', Claude thinks longer and uses more tokens per response - useful for hard debugging, architecture decisions, or tricky code where you want Claude to really think it through. ← intro remote →"
+        },
+        {
+          "bid": "b-e7ff8a37",
+          "hash": "sha256:9ba73696bdb4d7b46a42c8373e4ed227f8e09ae64b302c242e072a462c83616f",
+          "heading": "Remote Control - Spawn New Sessions",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2032632597843779861"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2032632597843779861",
+          "text": "2 Remote Control - Spawn New Sessions Run claude remote-control and then spawn a new local session directly from the mobile app. Available on Max, Team, and Enterprise (v2.1.74+). $ claude remote-control # Then open the Claude mobile app # Tap \"Code\" → start a new session # Claude connects to your local machine What it does Lets you start fresh Claude Code sessions from your phone while connected to your local dev environment. Walk away from your desk, think of something, and kick off a task from mobile - Claude runs on your machine. ← /effort voice →"
+        },
+        {
+          "bid": "b-8548e806",
+          "hash": "sha256:c17414dfaef63aea1f6ce462edd467b6a46d7eded5e47767a533d9593f977909",
+          "heading": "Voice Mode - Talk to Claude Code",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2032632599429136753"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2032632599429136753",
+          "text": "3 Voice Mode - Talk to Claude Code Voice mode is now rolled out to 100% of users , including in Claude Code Desktop and Cowork. Sometimes you need somebody to talk to. # In Claude Code Desktop or Cowork: # Click the microphone icon # Talk naturally - Claude hears you and responds 🎙 \"Hey Claude, fix all the bugs in this repo.\" What it does Lets you speak to Claude Code instead of typing. Available in Desktop and Cowork - useful for hands-free coding, dictating complex requirements, or when you think faster than you type. ← remote setup →"
+        },
+        {
+          "bid": "b-3bef0a6c",
+          "hash": "sha256:e8e1e6a15d290d67ea728a45a5ae4768d332b9e875c0ec0a6637007ca591f8b9",
+          "heading": "Setup Scripts - Automate Cloud Environments",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2032632601064907037"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2032632601064907037",
+          "text": "4 Setup Scripts - Automate Cloud Environments Add a setup script in Claude Code on the web and desktop. It runs before Claude Code launches on a cloud environment - install dependencies, configure settings, set env vars. # In \"Update cloud environment\" settings: # Name: apps # Setup script (runs on new session start): #!/bin/bash yarn install What it does Runs a bash script automatically when a new Claude Code session starts on a cloud environment. Skipped when resuming an existing session. Use it to install dependencies, set up configs, or prepare the environment before Claude starts working. ← voice --name →"
+        },
+        {
+          "bid": "b-9683cefc",
+          "hash": "sha256:8c3dc75358403dde7f3dee8bdba992d609b87edf4212f3fdf7e86b52163bb9b8",
+          "heading": "claude --name - Name Your Sessions",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2032632602629386348"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2032632602629386348",
+          "text": "5 claude --name - Name Your Sessions Name your session at launch with the --name flag. Makes it easy to identify sessions when running multiple in parallel. $ claude --name \"auth-refactor\" # Now your session shows up as \"auth-refactor\" # instead of a generic session ID What it does Gives your Claude Code session a human-readable name on start. Especially useful when juggling multiple worktrees or sessions - you can tell at a glance which session is doing what. ← setup auto-name →"
+        },
+        {
+          "bid": "b-fff4116f",
+          "hash": "sha256:f11b3d2f05a1c85d0149f922347143a8027d21656284277ec03c7b3562ded950",
+          "heading": "Auto Session Naming After Plan Mode",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2032632602629386348"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2032632602629386348",
+          "text": "6 Auto Session Naming After Plan Mode After plan mode, Claude will automatically name your session based on what you're working on. No manual naming needed. # Enter plan mode, describe your task: > shift+tab [plan]> Refactor the auth middleware to use JWT # After exiting plan mode, session is auto-named: # Session: \"refactor-auth-jwt\" What it does Claude infers a descriptive session name from your plan mode conversation. Pairs well with claude --name - use --name when you know what you're doing upfront, and let auto-naming handle it when you start by planning. ← --name /color →"
+        },
+        {
+          "bid": "b-49beb6e7",
+          "hash": "sha256:0b95b0e73c0122fb071bb9719a86d1f6f094c0b0cda7fbdb3bc81c523ea8aac9",
+          "heading": "/color - Customize Prompt Color",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2032632602629386348"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2032632602629386348",
+          "text": "7 /color - Customize Prompt Color Change the color of the prompt input with /color . Useful for visually distinguishing sessions when running multiple in parallel. > /color # Pick a color for this session's prompt # Helps tell sessions apart at a glance What it does Sets the color of your prompt input for the current session. When you have 3-5 sessions open in different terminals, color-coding them makes it instantly clear which is which. ← auto-name postcompact →"
+        },
+        {
+          "bid": "b-574190fb",
+          "hash": "sha256:ba26d843a08962356b700ed280e74f5cbadf669a3475030d28b05d037af09273",
+          "heading": "PostCompact Hook - React to Context Compression",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2032632602629386348"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2032632602629386348",
+          "text": "8 PostCompact Hook - React to Context Compression A new hook event: PostCompact . Fires after Claude compresses its conversation context, letting you inject instructions or run commands when compaction happens. # In your hooks config: \"hooks\" : { \"PostCompact\" : [{ \"matcher\" : \"\" , \"hooks\" : [{ \"type\" : \"command\" , \"command\" : \"echo 'Context was compacted'\" }] }] } What it does Fires after Claude compresses its context window. Use it to re-inject critical instructions that might get lost during compaction, log when compaction happens, or trigger any automation you need when the context resets. ← /color back to intro →"
+        }
+      ],
+      "declared_tips": 8,
+      "hash": "sha256:aa4353b385760376bcae62db4d3533f4f9f94d6032bfb774dd0efca570a02e7e",
+      "id": "part-7",
+      "number": 7,
+      "order": 7,
+      "title": "End of Week Ships",
+      "volume": 7
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-1a5c2968",
+          "hash": "sha256:ea24e1bdd3564727d2f30ae6e2492f1058d21054a19a88417b7f0742c2c37f5c",
+          "heading": "New Superpowers",
+          "kind": "intro",
+          "links": [
+            "https://x.com/noahzweben/status/2036129220959805859",
+            "https://x.com/bcherny/status/2036555259997462541",
+            "https://x.com/trq212/status/2036959638646866021"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/noahzweben/status/2036129220959805859",
+          "text": "New Superpowers Auto mode kills permission prompts with built-in safety classifiers, /schedule creates cloud-based recurring jobs that run beyond your laptop, iMessage becomes a channel, and auto-dream keeps your memory clean. @noahzweben's March 23, 2026 post @bcherny's March 24, 2026 post @trq212's March 25, 2026 post Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-93adf400",
+          "hash": "sha256:ebd7e689e2ed3140561bd680a8e96747047cc76a4bb9c7b1ae077ae6dc57386c",
+          "heading": "Auto Mode - A Safer Way to Skip Permissions",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2036555259997462541"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2036555259997462541",
+          "text": "1 Auto Mode - A Safer Way to Skip Permissions Instead of approving every file write and bash command, or skipping permissions entirely with --dangerously-skip-permissions , auto mode lets Claude make permission decisions on your behalf. # Enable auto mode $ claude --enable-auto-mode # Or cycle with shift+tab during a session: # plan mode → auto mode → normal mode How it works Anthropic built and tested classifiers that evaluate each action before it runs. Safe operations (reading files, running tests) get auto-approved. Risky ones (deleting files, force-pushing, running unknown scripts) still get flagged. It's the middle ground between clicking \"approve\" 50 times per session and yolo-ing with no safety net. Boris's take: \"no 👏 more 👏 permission prompts 👏\" ← intro /schedule →"
+        },
+        {
+          "bid": "b-dbdeeacd",
+          "hash": "sha256:43a9ac6ddfc0f3ec1f284daca5ee97b5a2a81cbd42269e4b17e06c87b909704c",
+          "heading": "/schedule - Cloud Jobs from Your Terminal",
+          "kind": "tip",
+          "links": [
+            "https://x.com/noahzweben/status/2036129220959805859"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/noahzweben/status/2036129220959805859",
+          "text": "2 /schedule - Cloud Jobs from Your Terminal Use /schedule to create recurring cloud-based jobs for Claude, directly from the terminal. Unlike /loop (which runs locally for up to 3 days), scheduled jobs run in the cloud - they work even when your laptop is closed. # Schedule a daily docs update $ /schedule a daily job that looks at all PRs shipped since yesterday and update our docs based on the changes. Use the Slack MCP to message #docs-update with the changes Use cases The Anthropic team uses these internally to automatically resolve CI failures, push doc updates, and power automations that need to exist beyond a closed laptop. Think of it as cron jobs, but Claude does the work. ← auto mode iMessage →"
+        },
+        {
+          "bid": "b-60b89985",
+          "hash": "sha256:72903d31413ceb492f4059d0944a3b710cabe0925ef1f8d2edabe7af23989e49",
+          "heading": "iMessage Plugin - Text Claude from Your Phone",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2036959638646866021"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2036959638646866021",
+          "text": "3 iMessage Plugin - Text Claude from Your Phone iMessage is now available as a Claude Code channel . Install the plugin and text Claude like you'd text a friend - from any Apple device. # Install the iMessage plugin $ /plugin install imessage@claude-plugins-official What it does Claude Code becomes a contact in your Messages app. Send it tasks, get responses as iMessages. Works from your iPhone, iPad, or Mac - no terminal needed. Pairs well with remote control sessions for kicking off work from anywhere. ← /schedule memory →"
+        },
+        {
+          "bid": "b-d5bb3882",
+          "hash": "sha256:dd6c1a187dc089a7a4092dd50f1eb9c29ab34d2b7d1de80a41b13ecc0645f50f",
+          "heading": "Auto-Memory & Auto-Dream - Persistent, Self-Cleaning Memory",
+          "kind": "tip",
+          "links": [],
+          "refs_parts": [],
+          "source_url": null,
+          "text": "4 Auto-Memory & Auto-Dream - Persistent, Self-Cleaning Memory Claude Code now has a built-in memory system. Run /memory to configure it. # View and configure memory settings $ /memory # Memory types: # User memory → saved in ~/.claude/CLAUDE.md # Project memory → saved in ./CLAUDE.md # Trigger a dream (memory consolidation) $ /dream Auto-memory When enabled, Claude automatically saves preferences, corrections, and patterns between sessions. No manual CLAUDE.md editing needed - Claude writes the memories for you. Auto-dream As memory accumulates, it can get messy - outdated assumptions, overlapping notes, low-signal entries. Auto-dream runs a subagent that periodically reviews past sessions, keeps what matters, removes what doesn't, and merges insights into cleaner structured memory. The naming maps to how REM sleep consolidates short-term memory into long-term storage. ← iMessage back to intro →"
+        }
+      ],
+      "declared_tips": 4,
+      "hash": "sha256:c55ddafe287477d2019a8af5331437e8dcb408f6c37bdf9ce7362c618f5e179d",
+      "id": "part-8",
+      "number": 8,
+      "order": 8,
+      "title": "New Superpowers",
+      "volume": 10
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-760b7c50",
+          "hash": "sha256:9adb2e88ff4a0556338114a71ead27bd63f3df031964919e83fb5f3cb0134f7f",
+          "heading": "Hidden & Underutilized Features",
+          "kind": "intro",
+          "links": [
+            "https://x.com/bcherny/status/2038454337811386436"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2038454337811386436",
+          "text": "Hidden & Underutilized Features Boris's favorite hidden and under-utilized features in Claude Code. Mobile app , session teleporting, /loop and /schedule , hooks, Cowork Dispatch, Chrome extension, Desktop app, /branch , /btw , worktrees, /batch , --bare , --add-dir , --agent , and /voice . @bcherny's March 29, 2026 thread Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-f9ffeabd",
+          "hash": "sha256:2b2516e26f79e95377e93d0ea59312ab1ebb2b64f5a5233bfaa8986e02d93e13",
+          "heading": "Claude Code Has a Mobile App",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2038454337811386436"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2038454337811386436",
+          "text": "1 Claude Code Has a Mobile App Did you know Claude Code has a mobile app? Boris writes a lot of his code from the iOS app. It's a convenient way to make changes without opening a laptop. How to use it Download the Claude app for iOS/Android, then tap the Code tab on the left. You get a full Claude Code session right from your phone. ← intro teleport →"
+        },
+        {
+          "bid": "b-bc64f6bc",
+          "hash": "sha256:26b6f4448ca9e50b157d8d8b75fc44f8fe93bf61dbe75fbd0db2fe4b263e07d1",
+          "heading": "Move Sessions Between Devices",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2038454339933548804"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2038454339933548804",
+          "text": "2 Move Sessions Between Devices Move sessions back and forth between mobile/web/desktop and terminal. # Continue a cloud session on your machine $ claude --teleport # or $ /teleport # Control a local session from phone/web $ /remote-control Boris's setup \"I have 'Enable Remote Control for all sessions' set in my /config.\" ← mobile loops →"
+        },
+        {
+          "bid": "b-954dfd5c",
+          "hash": "sha256:87f7be0ecde030ab55527cd6ab353f11d7236465e3998616933086494635afcf",
+          "heading": "/loop and /schedule - Automated Workflows",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2038454341884154269"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2038454341884154269",
+          "text": "3 /loop and /schedule - Automated Workflows Two of the most powerful features in Claude Code. Use these to schedule Claude to run automatically at a set interval, for up to a week at a time. # Boris's running loops: $ /loop 5m /babysit # auto-address code review, auto-rebase, shepherd PRs $ /loop 30m /slack-feedback # auto put up PRs for Slack feedback every 30 mins $ /loop /post-merge-sweeper # put up PRs to address missed code review comments $ /loop 1h /pr-pruner # close out stale and unnecessary PRs Pro tip Experiment with turning workflows into skills + loops. It's powerful. ← teleport hooks →"
+        },
+        {
+          "bid": "b-b8dcebd8",
+          "hash": "sha256:1f7c4df1a7d18ad37dd391f22b6bfac94a5cd8e98cc00ccc95a8d9040c032a47",
+          "heading": "Hooks - Deterministic Agent Lifecycle Logic",
+          "kind": "tip",
+          "links": [
+            "https://code.claude.com/docs/en/hooks",
+            "https://x.com/bcherny/status/2038454343519932844"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2038454343519932844",
+          "text": "4 Hooks - Deterministic Agent Lifecycle Logic Use hooks to deterministically run logic as part of the agent lifecycle. Examples Dynamically load in context each time you start Claude ( SessionStart ) Log every bash command the model runs ( PreToolUse ) Route permission prompts to WhatsApp for you to approve/deny ( PermissionRequest ) Poke Claude to keep going whenever it stops ( Stop ) See code.claude.com/docs/en/hooks ← loops dispatch →"
+        },
+        {
+          "bid": "b-ed4b1736",
+          "hash": "sha256:5be666d5370076c349bc58daa7f0dba6b000d91a9639123ac653311fee706c8d",
+          "heading": "Cowork Dispatch",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2038454345419936040"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2038454345419936040",
+          "text": "5 Cowork Dispatch Boris uses Dispatch every day to catch up on Slack and emails, manage files, and do things on his laptop when he's not at a computer. \"When I'm not coding, I'm dispatching.\" What it is Dispatch is a secure remote control for the Claude Desktop app. It can use your MCPs, browser, and computer, with your permission. ← hooks chrome →"
+        },
+        {
+          "bid": "b-053c7167",
+          "hash": "sha256:b6c0d4e42f72a2544a3bc0d59c432593598cd5da1d29077a54cd9efce9c4d295",
+          "heading": "Use the Chrome Extension for Frontend Work",
+          "kind": "tip",
+          "links": [
+            "https://code.claude.com/docs/en/browser",
+            "https://x.com/bcherny/status/2063792263067754658",
+            "https://x.com/bcherny/status/2038454347156398333"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2038454347156398333",
+          "text": "6 Use the Chrome Extension for Frontend Work The most important tip for using Claude Code is: give Claude a way to verify its output . Once you do that, Claude will iterate until the result is great. Think of it like any other engineer: if you ask someone to build a website but they aren't allowed to use a browser, will the result look good? Probably not. But if you give them a browser, they will write code and iterate until it looks good. Boris's workflow \"I use the Chrome extension every time I work on web code. It tends to work more reliably than other similar MCPs.\" Download the extension for Chrome/Edge . Better than Playwright or Chromium MCP for E2E Asked directly whether Claude in Chrome beats Playwright or a Chromium MCP for end-to-end tests, Boris: \"Yes. It's more powerful and more token-efficient.\" The way he wires it into a long autonomous run is to hand verification to a workflow: > use a workflow to test the result e2e in a browser using claude in chrome mcp. Especially look for edge cases and ui issues From Boris's June 2026 \"running Opus autonomously\" thread → ← dispatch desktop →"
+        },
+        {
+          "bid": "b-5e369d84",
+          "hash": "sha256:d051600cab911c2a33a9f4aed54385583118e886f81e171f59003265bc5ee25d",
+          "heading": "Desktop App - Auto Start and Test Web Servers",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2038454348804714642"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2038454348804714642",
+          "text": "7 Desktop App - Auto Start and Test Web Servers Use the Claude Desktop app to have Claude automatically start and test web servers. What it does The Desktop app bundles in the ability for Claude to automatically run your web server and even test it in a built-in browser. You can set up something similar in CLI or VSCode using the Chrome extension, or just use the Desktop app. ← chrome fork →"
+        },
+        {
+          "bid": "b-082901ba",
+          "hash": "sha256:f592993ecf8ae41f3a1c37557823ed086f3136f7be97a778450e422dacd9ca9b",
+          "heading": "Fork Your Session",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2038454350214041740"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2038454350214041740",
+          "text": "8 Fork Your Session People often ask how to fork an existing session. Two ways: # Option 1: From inside your session $ /branch # Option 2: From the CLI $ claude --resume <session-id> --fork-session What happens Claude creates a branched conversation. You're now in the branch. To resume the original, use the session ID it gives you. ← desktop /btw →"
+        },
+        {
+          "bid": "b-840812bb",
+          "hash": "sha256:15e66cf48d2f8cf7f7a3da65298d4e32bec906ab3626a956f7235963f44427d0",
+          "heading": "/btw - Side Queries While Claude Works",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2038454351849787485"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2038454351849787485",
+          "text": "9 /btw - Side Queries While Claude Works Boris uses this all the time to answer quick questions while the agent works. > /btw how do i spell daushund? dachshund - German for \"badger dog\" (dachs = badger, hund = dog). How it works Single-turn, no tool calls, but has full context of the conversation. Claude responds inline without stopping its work. ← fork worktrees →"
+        },
+        {
+          "bid": "b-3a84ae5b",
+          "hash": "sha256:804d4810330429db0095bf53e2ae86f222ccdc74c96512f9b862f17326ff3d56",
+          "heading": "Use Git Worktrees",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2038454353787519164"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2038454353787519164",
+          "text": "10 Use Git Worktrees Claude Code ships with deep support for git worktrees. Worktrees are essential for doing lots of parallel work in the same repository. Boris has dozens of Claudes running at all times. # Start a new session in a worktree $ claude -w # Or check the \"worktree\" checkbox in Desktop app Non-git VCS For non-git VCS users, use the WorktreeCreate hook to add your own logic for worktree creation. ← /btw /batch →"
+        },
+        {
+          "bid": "b-f89add20",
+          "hash": "sha256:08d94a37a161e521fff611274fb881aaec15fc9c757299539f22a5d2092f0825",
+          "heading": "/batch - Fan Out Massive Changesets",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2038454355469484142"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2038454355469484142",
+          "text": "11 /batch - Fan Out Massive Changesets /batch interviews you, then has Claude fan out the work to as many worktree agents as it takes (dozens, hundreds, even thousands) to get it done. Use cases Use it for large code migrations and other kinds of parallelizable work. Each agent runs in its own worktree with full isolation. ← worktrees --bare →"
+        },
+        {
+          "bid": "b-72d90bd3",
+          "hash": "sha256:4ac8743d4b7f5e8c318af3bf6a99ca69fb21691bfdc41724d2ee2fbecc272701",
+          "heading": "--bare - Speed Up SDK Startup by 10x",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2038454357088457168"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2038454357088457168",
+          "text": "12 --bare - Speed Up SDK Startup by 10x By default, when you run claude -p (or the TypeScript or Python SDKs) it searches for local CLAUDE.md's, settings, and MCPs. But for non-interactive usage, most of the time you want to explicitly specify what to load. $ claude -p \"summarize this codebase\" \\ --output-format=stream-json \\ --verbose \\ --bare Why it matters This was a design oversight when the SDK was first built. In a future version, the default will flip to --bare. For now, opt in with the flag to get up to 10x faster startup. ← /batch --add-dir →"
+        },
+        {
+          "bid": "b-e89f5665",
+          "hash": "sha256:403ea18b514b97b30278c2d72e4b806b69d81966602ce7371b485b5ae99d5e44",
+          "heading": "--add-dir - Give Claude Access to More Folders",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2038454359047156203"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2038454359047156203",
+          "text": "13 --add-dir - Give Claude Access to More Folders When working across multiple repositories, Boris usually starts Claude in one repo and uses --add-dir (or /add-dir ) to let Claude see the other repo. This tells Claude about the repo and gives it permissions to work in it. # At launch $ claude --add-dir /path/to/other-repo # During a session > /add-dir /path/to/other-repo Team setup Add \"additionalDirectories\" to your team's settings.json to always load in additional folders when starting Claude Code. ← --bare --agent →"
+        },
+        {
+          "bid": "b-6b8e650e",
+          "hash": "sha256:98bd6af24731d471d3fd3a6ba8e81ee913d8e746153b465a2b713beee5dc15c4",
+          "heading": "--agent - Custom System Prompt & Tools",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2038454360418787764"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2038454360418787764",
+          "text": "14 --agent - Custom System Prompt & Tools Custom agents are a powerful primitive that often gets overlooked. # Define an agent $ cat .claude/agents/ReadOnly.md --- name: ReadOnly description: Read-only agent restricted to the Read tool only color: blue tools: Read --- You are a read-only agent that cannot edit files or run bash. # Launch it $ claude --agent=ReadOnly How it works Define a new agent in .claude/agents , then run claude --agent=<your agent's name> . Each agent can have a custom name, color, tool set, and system prompt. ← --add-dir /voice →"
+        },
+        {
+          "bid": "b-2503f025",
+          "hash": "sha256:cb72b45dfa218a79e1cbd6b6786e8fb7f8ee972e277b4b5ce8431c4999e5b7b1",
+          "heading": "/voice - Voice Input",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2038454362226467112"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2038454362226467112",
+          "text": "15 /voice - Voice Input Fun fact: Boris does most of his coding by speaking to Claude, rather than typing. How to use it CLI: Run /voice then hold the space bar Desktop: Press the voice button iOS: Enable dictation in your iOS settings ← --agent back to intro →"
+        }
+      ],
+      "declared_tips": 15,
+      "hash": "sha256:7ff3dc2c39ecdfbb091007fa42c5403b421c3bd9acf7321342b29e6b264a8c97",
+      "id": "part-9",
+      "number": 9,
+      "order": 9,
+      "title": "Hidden & Underutilized Features",
+      "volume": 11
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-32385afd",
+          "hash": "sha256:e49d7334236dd4cfdbd5ec4ade2d06ed199fab6c4b38709f31e5eb834803ad11",
+          "heading": "New Feature Launches",
+          "kind": "intro",
+          "links": [
+            "https://x.com/claudeai/status/2044095086460309790",
+            "https://x.com/trq212/status/2044548257058328723",
+            "https://x.com/_catwu/status/2044808533905178822"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/claudeai/status/2044095086460309790",
+          "text": "New Feature Launches Fresh out of Anthropic this week. Routines - schedule Claude Code runs or trigger them from GitHub events. Three session management tips from Thariq on the 1M context window: /rewind over correcting, /compact vs /clear , and a one-line env var to dodge context rot. Plus three from Cat on using Opus 4.7 : delegate, full-context briefs, and the new xhigh effort level. @claudeai's April 14, 2026 post @trq212's April 15, 2026 article @_catwu's April 16, 2026 post Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-85893095",
+          "hash": "sha256:5763d5770af9a6e8aee1f503e1a8c4c128cc0460219bb5dc9fec19d401220d53",
+          "heading": "Routines - Scheduled & Event-Driven Claude Code",
+          "kind": "tip",
+          "links": [
+            "https://x.com/claudeai/status/2044095086460309790"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/claudeai/status/2044095086460309790",
+          "text": "1 Routines - Scheduled & Event-Driven Claude Code Claude announced Routines in Claude Code - research preview, Apr 14 2026. Configure a routine once (prompt, repo, connectors), and it runs on a schedule, from an API call, or in response to a GitHub event. Runs on Anthropic infra - no laptop needed. Triggers Schedule - cron expression GitHub event - PR opened/merged, release published, issue opened API - POST to a webhook URL with token Connectors GitHub, Linear - extend with your own. Each routine has its own API endpoint, so you can point alerts, deploy hooks, or internal tools at Claude directly. Example use case: POST an alert payload to the routine's webhook. Claude finds the owning service and posts a triage summary to #oncall. ← intro /rewind →"
+        },
+        {
+          "bid": "b-75fd608e",
+          "hash": "sha256:79166a390cf9244e700b13ca6b6a14537b8573eae2a54bc189fc229bb5cef0f5",
+          "heading": "Rewind Over Correcting",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2044548257058328723"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2044548257058328723",
+          "text": "2 Rewind Over Correcting From Thariq (Apr 15, 2026): the single habit that signals good context management is rewind , not correction. When Claude goes down a wrong path, don't type \"that didn't work, try X instead.\" That keeps the failed attempt in your context and pollutes the window. Instead, rewind and re-prompt with what you learned. # jump back to a previous message, drop everything after it $ /rewind # or in the terminal: double-tap Esc The math Correcting: context = file reads + failed attempt + correction + fix. Rewinding: context = file reads + one informed prompt + fix. You can also use \"summarize from here\" to have Claude summarize its learnings into a handoff message before rewinding - a message from the next iteration of Claude to its past self. ← routines /compact vs /clear →"
+        },
+        {
+          "bid": "b-644dadcf",
+          "hash": "sha256:9576276f12901a38a8e0755c04a764d6365dce5ea8771a345a6eb06d80cd1094",
+          "heading": "/compact vs /clear - Know the Difference",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2044548257058328723"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2044548257058328723",
+          "text": "3 /compact vs /clear - Know the Difference Two ways to shed weight from a long session. They feel similar but behave very differently. /compact - lossy LLM summary Claude summarizes the conversation and replaces the history with that summary. Cheap, keeps momentum, details can be fuzzy. You're trusting Claude to decide what mattered. # steer the compaction with a hint $ /compact focus on the auth refactor, drop the test debugging /clear - hand-written brief You write down what matters (\"we're refactoring the auth middleware, constraint is X, files are A and B, we've ruled out approach Y\") and start clean. More work, but the context is exactly what you decided. Rule of thumb: starting a genuinely new task → new session with /clear . Related task where you still need some context → /compact with a hint. ← /rewind auto-compact →"
+        },
+        {
+          "bid": "b-82f93eed",
+          "hash": "sha256:63ae95032d563593f11306866e37563dc8d987ccb83504100433d44d54897291",
+          "heading": "Lower Your Auto-Compact Threshold",
+          "kind": "tip",
+          "links": [
+            "https://docs.claude.com/en/docs/claude-code/settings",
+            "https://x.com/trq212/status/2044548257058328723"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2044548257058328723",
+          "text": "4 Lower Your Auto-Compact Threshold Context rot - model performance degrading as context grows - kicks in around 300-400k tokens on the 1M context model. You can set your autocompact threshold to force earlier compaction and effectively lower your context window. # 400k is Thariq's recommended compromise $ CLAUDE_CODE_AUTO_COMPACT_WINDOW=400000 claude Why this works Stays below the rot zone while still getting most of the 1M benefit. Context windows are a hard cutoff - when you near the end, you're forced to compact. Forcing it earlier means your compaction happens while the model is still sharp. Pair with proactive /compact <hint> when you feel bad-compact risk (autocompact fires mid-task and summarizes the wrong things). Docs: Claude Code settings ← /compact vs /clear delegate →"
+        },
+        {
+          "bid": "b-f87333d5",
+          "hash": "sha256:44f6a48bae9c29bd18da654582c5e789af99652cf2f55ec2e9d70fa284a8c6eb",
+          "heading": "Delegation over Guidance",
+          "kind": "tip",
+          "links": [
+            "https://x.com/_catwu/status/2044808533905178822"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/_catwu/status/2044808533905178822",
+          "text": "5 Delegation over Guidance From Cat Wu (Apr 16, 2026) on Opus 4.7 in Claude Code: \"The model performs best if you treat it like an engineer you're delegating to, not a pair programmer you're guiding line by line.\" This is a mental model shift. The old workflow: describe a step, watch the output, correct, describe the next step. High interrupt frequency, you're always in the loop. The new workflow Write a crisp brief. Launch Claude. Come back when it's done - or when it asks a real question. Fewer interruptions, more autonomous runs, higher quality output. When Claude asks too many clarifying questions or goes off-track, that's usually a signal that your brief was incomplete - not that the model needs more hand-holding. Invest in the upfront brief (see next tip) and let Opus 4.7 do its thing. ← auto-compact full context →"
+        },
+        {
+          "bid": "b-603bdb7e",
+          "hash": "sha256:3c794d72cc335e8d3f259bf0191ce74f5e1c87f1c9ab9f386033521292101809",
+          "heading": "Full Task Context Upfront",
+          "kind": "tip",
+          "links": [
+            "https://x.com/_catwu/status/2044808533905178822"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/_catwu/status/2044808533905178822",
+          "text": "6 Full Task Context Upfront The delegation model from Tip 5 only works if Claude has what it needs. Cat's second tip: \"Give Claude Code your full task context upfront: goal, constraints, acceptance criteria in the first turn.\" The three things to include Goal - what success looks like in plain language Constraints - non-goals, things not to touch, perf/API contracts Acceptance criteria - how you'll verify the work is done right # Good: full context upfront Goal: add rate limiting to the /api/login endpoint Constraints: - don't modify the DB schema - keep the existing auth flow unchanged - use Redis (already configured) Acceptance criteria: - 5 req/min per IP, returns 429 on limit - existing tests still pass - new test case for the rate-limit behavior If Claude starts with all three, it plans around the full problem space. If it starts with just \"add rate limiting,\" it'll make assumptions you'll have to correct later - and every correction costs context. ← delegate xhigh →"
+        },
+        {
+          "bid": "b-f82e1c19",
+          "hash": "sha256:f218cea7fcf69843afcbf7ed9c56d346b1af876e583e98775b867293f76a4d42",
+          "heading": "xhigh - New Default Effort for Opus 4.7",
+          "kind": "tip",
+          "links": [
+            "https://x.com/_catwu/status/2044808533905178822"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/_catwu/status/2044808533905178822",
+          "text": "7 xhigh - New Default Effort for Opus 4.7 Opus 4.7 in Claude Code defaults to xhigh - a new effort level beyond the low/medium/high/max scale Tip 34 described. The model reasons longer before acting, which pairs with the delegation shift: think harder once, rather than iterate fast and bounce back to you. # check or change the effort level $ /effort Why xhigh is the new default xhigh effort + a full-context brief = one-shot completion of bigger tasks than previous Opus models could handle. The default change signals that Opus 4.7 is expected to run more autonomously, which benefits from more reasoning tokens upfront. Drop it down if you want speed over depth, or leave it alone for most work. Available through /effort just like the other levels. ← full context back to intro →"
+        }
+      ],
+      "declared_tips": 7,
+      "hash": "sha256:b57a8e35131c8fb480f28a406f216608838709f9e34d6c0164c0e7950d901c2a",
+      "id": "part-10",
+      "number": 10,
+      "order": 10,
+      "title": "New Feature Launches",
+      "volume": 12
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-ab757644",
+          "hash": "sha256:2c5a1f812edf176e3d525e81c3d5b9df2627633f7af2050904d72ee1a2728081",
+          "heading": "Mastering Opus 4.7",
+          "kind": "intro",
+          "links": [
+            "https://x.com/bcherny/status/2044847848035156457",
+            "https://claude.com/blog/best-practices-for-using-claude-opus-4-7-with-claude-code"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2044847848035156457",
+          "text": "Mastering Opus 4.7 Boris dogfooded Opus 4.7 for weeks before launch. His verdict: \"It feels more intelligent, agentic, and precise than 4.6. It took a few days for me to learn how to work with it effectively.\" Here's what he learned - plus key behavioral shifts from the Anthropic blog. Auto mode , /fewer-permission-prompts , recaps , /focus , effort mastery, the /go composite skill, and what changed under the hood. @bcherny's April 16, 2026 thread Anthropic blog post Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-b0d3dab4",
+          "hash": "sha256:0b0a763ea947f0d7c87696266ceae2dfd8231f95693be4e004f9600d1578106b",
+          "heading": "Auto Mode + Parallel Claudes",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2044847849662505288"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2044847849662505288",
+          "text": "1 Auto Mode + Parallel Claudes Opus 4.7 loves complex, long-running tasks - deep research, refactoring code, building complex features, iterating until it hits a performance benchmark. In the past, you either had to babysit the model or use --dangerously-skip-permissions . Auto mode changes the game Permission prompts are routed to a model-based classifier. If it's safe, it's auto-approved. No more babysitting while the model runs. More than that - it means you can run more Claudes in parallel. Once a Claude is cooking, switch focus to the next one. Shift-tab to enter auto mode in the CLI, or choose it in the dropdown in Desktop or VSCode. Available for Max, Teams, and Enterprise. ← intro /fewer-perms →"
+        },
+        {
+          "bid": "b-767f2740",
+          "hash": "sha256:4968f6c27fe9af9956425a30bf9680268500d4010c80f96e4bc6d195efd3d55c",
+          "heading": "/fewer-permission-prompts - Tune Your Allowlist",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2044847851591856461"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2044847851591856461",
+          "text": "2 /fewer-permission-prompts - Tune Your Allowlist A new skill that scans through your session history to find common bash and MCP commands that are safe but caused repeated permission prompts. # scan your history and get recommendations $ /fewer-permission-prompts What it does Recommends a list of commands to add to your permissions allowlist. Use it to tune up your permissions and avoid unnecessary prompts - especially useful if you don't use auto mode. ← auto mode recaps →"
+        },
+        {
+          "bid": "b-3a1fed9a",
+          "hash": "sha256:e39252a7b14df6681b94a7c158f10f701e430d3f8b8f21782951aedc7e92abf3",
+          "heading": "Recaps - Know What Happened While You Were Away",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2044847853030580247"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2044847853030580247",
+          "text": "3 Recaps - Know What Happened While You Were Away Shipped alongside Opus 4.7. Recaps are short summaries of what an agent did and what's next. Useful when returning to a long-running session after a few minutes or a few hours. ✻ Cogitated for 6m 27s ✻ recap: Fixing the post-submit transcript shift bug. The styling-flash part is shipped as PR #29869 (auto-merge on, posted to stamps). Next: I need a screen recording of the remaining horizontal rewrap on `cc -c` to target that separate cause. (disable recaps in /config) Pairs naturally with auto mode - you launch Claude, switch focus, come back, and immediately see what happened and what's next without scrolling through tool output. Disable in /config if you prefer the old behavior. ← /fewer-perms /focus →"
+        },
+        {
+          "bid": "b-8a6f9528",
+          "hash": "sha256:197127b832dacdaacda23f2a10e96ccfa8dea5e7263a742642fb9e62124771be",
+          "heading": "Focus Mode - See Only the Final Result",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2044847855006024147"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2044847855006024147",
+          "text": "4 Focus Mode - See Only the Final Result Boris: \"I've been loving the new focus mode in the CLI, which hides all the intermediate work to just focus on the final result. The model has reached a point where I generally trust it to run the right commands and make the right edits. I just look at the final result.\" # toggle focus mode on/off $ /focus When to use it When you trust the model enough that watching every file read and bash command is noise. Focus mode shows you what changed, not how it got there. A natural complement to auto mode - one removes permission prompts, the other removes visual clutter. ← recaps effort →"
+        },
+        {
+          "bid": "b-5886fdd9",
+          "hash": "sha256:6c3e2f90f2e652891a8db412847e431f1c04757c19a3658e718141fcc393df79",
+          "heading": "Effort Mastery - xhigh, max, and Adaptive Thinking",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2044847856872546639"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2044847856872546639",
+          "text": "5 Effort Mastery - xhigh, max, and Adaptive Thinking Opus 4.7 uses adaptive thinking instead of fixed thinking budgets. The model decides when thinking is beneficial rather than using a fixed allocation - less overthinking, smarter resource use. Boris's setup \"I use xhigh effort for most tasks, and max effort for the hardest tasks.\" # set effort level $ /effort # the scale: low → medium → high → xhigh → max # Speed ←--------------------→ Intelligence Key detail most people miss Max applies to just your current session. All other effort levels (including xhigh) are sticky and persist for your next session too. This means you can safely crank to max for one hard debugging session without permanently changing your default. To steer thinking without changing effort: say \"Think carefully and step-by-step before responding\" for harder problems, or \"Prioritize responding quickly rather than thinking deeply\" to save tokens on simple tasks. ← /focus /go →"
+        },
+        {
+          "bid": "b-62c20d17",
+          "hash": "sha256:55c4078636cd23954abe4db7fe8db24b15d572608f8ff3ec6c20b0b2e692b6ae",
+          "heading": "/go - Verify, Simplify, Ship",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2044847858634064115"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2044847858634064115",
+          "text": "6 /go - Verify, Simplify, Ship \"Give Claude a way to verify its work. This has always been a way to 2-3x what you get out of Claude, and with 4.7 it's more important than ever.\" Boris's workflow these days: \"Many of my prompts look like 'Claude do blah blah /go'.\" /go is a skill that has Claude: Test itself end to end using bash, browser, or computer use Run the /simplify skill Put up a PR Verification by domain: backend → make sure Claude knows how to start your server/service to test end to end. Frontend → use the Claude Chromium extension. Mobile → use the iOS/Android simulator MCP. Desktop apps → use computer use. Scripted or Claude-driven tests? Asked whether tests should be scripted (guaranteed but flaky) or Claude-driven, Boris: \"We do both! Depends if it's a one-off or something you want to run on future PRs.\" One-off check → let Claude drive it. Something you want to re-run on every PR → have it write a real test. \"For long running work, verification is important because that way when you come back to a task, you know the code works.\" ← effort 4.6→4.7 →"
+        },
+        {
+          "bid": "b-93ade25c",
+          "hash": "sha256:aa1e8c8d1336716b9a0617020872f5402a872d1e9fcad97edd5f37c8e097c5cd",
+          "heading": "What Changed from 4.6 - Three Shifts to Know",
+          "kind": "tip",
+          "links": [
+            "https://claude.com/blog/best-practices-for-using-claude-opus-4-7-with-claude-code"
+          ],
+          "refs_parts": [],
+          "source_url": null,
+          "text": "7 What Changed from 4.6 - Three Shifts to Know If you're upgrading from 4.6, three behavioral changes matter. Don't assume your old habits carry over - Opus 4.7 thinks differently. 1. Calibrated response length Shorter answers for simple queries, longer for open-ended analysis. If you want a specific length or style, say so explicitly in your prompt. 2. Less automatic tool usage 4.7 reasons more instead of immediately calling tools. If Claude isn't reaching for the right tools, provide explicit guidance describing when and why to use them. 3. More judicious subagent spawning 4.7 is more selective about delegation. For tasks like \"refactor across 40 files,\" explicitly request parallel subagents. Anti-pattern: don't ask it to spawn subagents for refactoring a single visible function. Source: Anthropic blog post ← /go notifications →"
+        },
+        {
+          "bid": "b-4d6a7ee9",
+          "hash": "sha256:8060e86793c4e5d8940242f21c7987ab7e4f5cc443d90743fd540e47cfa84509",
+          "heading": "Task Completion Notifications",
+          "kind": "tip",
+          "links": [
+            "https://claude.com/blog/best-practices-for-using-claude-opus-4-7-with-claude-code"
+          ],
+          "refs_parts": [
+            1
+          ],
+          "source_url": null,
+          "text": "8 Task Completion Notifications With auto mode + focus mode, you're spending less time watching Claude work. But you need to know when it finishes. Set up notifications so you don't have to keep checking back. Options Sound alert - ask Claude to play a sound when it finishes a task Stop hook - use a Stop hook to trigger a notification (Slack, system notification, etc.) iTerm2 notifications - enable native terminal notifications Recaps - when you do check back, recaps tell you what happened (tip 3) The workflow that pulls this all together: start Claude in auto mode with focus on. It runs autonomously, verifies its own work via /go , and notifies you when done. You review the recap and the PR. The future Boris described in Part 1 is here. Source: Anthropic blog post ← 4.6→4.7 back to intro →"
+        }
+      ],
+      "declared_tips": 8,
+      "hash": "sha256:24e150c535f5edf7e4677698b417169099f9628d53bac0ee036988d8e19fbfd1",
+      "id": "part-11",
+      "number": 11,
+      "order": 11,
+      "title": "Mastering Opus 4.7",
+      "volume": 13
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-6bb2e43b",
+          "hash": "sha256:c02c8675c285f7744715fa1ef5d672ceb20718df9460fe3e66563479fdd207db",
+          "heading": "May ship week: Agent View + /goal",
+          "kind": "intro",
+          "links": [
+            "https://x.com/bcherny/status/2053982327123132846",
+            "https://x.com/trq212/status/2053979505346425179",
+            "https://x.com/_catwu/status/2053999857799672111",
+            "https://x.com/dickson_tsai/status/2054008483402694807",
+            "https://x.com/ClaudeDevs/status/2054351031279186040"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2053982327123132846",
+          "text": "May ship week: Agent View + /goal Two Claude Code features surfaced this week. Agent view (launched May 11) is a native control plane for managing many concurrent sessions: run claude agents from a root code directory and see every session grouped by what needs your input, what's still working, and what's done. /goal (highlighted by ClaudeDevs on May 12, described as recently shipped) keeps a single session working until a completion condition is met: /goal all tests in test/auth pass and the lint step is clean , and Claude won't stop until it's true. Two halves of the same story. Run more agents, and make each one finish what it started. @bcherny on agent view · May 11 @trq212 on agent view · May 11 @_catwu on agent view · May 11 @dickson_tsai on agent view · May 11 @ClaudeDevs on /goal · May 12 Click the tabs above to read the breakdowns → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-b7bb97ff",
+          "hash": "sha256:9e55b2320dfc174e0bc1acd18dd448e80e4037830c3b322df8142454a3a2e545",
+          "heading": "Agent View - Many Agents, One List",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2053982327123132846"
+          ],
+          "refs_parts": [
+            1
+          ],
+          "source_url": "https://x.com/bcherny/status/2053982327123132846",
+          "text": "1 Agent View - Many Agents, One List Boris: \"The best way to level up from 1 agent => many agents. No more cycling between terminal tabs.\" Thariq's description: \"kind of like tmux built for CC\" - a native control plane for concurrent Claude Code sessions. How to run it Cat Wu and Thariq both recommend running it from a single high-level directory containing all your repos (Thariq uses ~/Projects ). Every session launched under that root gets tracked. # launch the control plane from your root code dir $ claude agents # from any cli session, hit <- to register it with the control plane What you see Sessions are grouped by status - needs input , working , completed . Each row shows the session name and a short description of what it's doing. Switch focus into one, answer its question, come back to the view. Operational tips from Dickson Tsai Two practical details: new sessions inherit the directory your cursor is on (so starting a session in the right repo is one keystroke), and renaming is critical for keeping the view scannable as sessions pile up. Use /rename or set up a UserPromptSubmit hook to auto-rename. This is the productized version of Part 1, Tip 1 - Boris's original \"spin up 3-5 worktrees\" pattern, but with a first-class control plane instead of manual terminal tabs and za / zb / zc aliases. Research preview. The Claude Code team is actively reading feedback - Thariq: \"let me know if you have any feedback! we will read all of it and action.\" ← intro /goal →"
+        },
+        {
+          "bid": "b-08d8c66b",
+          "hash": "sha256:6db31346f1da6c38ab5bd7f08bfdd3f21e7050b68917e8dc251f427a4f09b326",
+          "heading": "/goal - Keep Claude Working Until the Condition Is Met",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2061545633560010826",
+            "https://gist.github.com/ThariqS/1389dcdff9eba4789887a2211370f06b",
+            "https://x.com/ClaudeDevs/status/2054351031279186040"
+          ],
+          "refs_parts": [
+            1,
+            2
+          ],
+          "source_url": "https://x.com/trq212/status/2061545633560010826",
+          "text": "2 /goal - Keep Claude Working Until the Condition Is Met Surfaced in a May 12 ClaudeDevs thread, described as \"shipped recently\" - exact ship date isn't in the post and would need the changelog to confirm. /goal sets a completion condition. Claude keeps working until the condition is true; every time it tries to stop, the model checks the condition against the transcript. Not done, it keeps going. Done, you get a \"Goal achieved\" summary. # set a completion condition $ /goal all tests in test/auth pass and the lint step is clean How it works ClaudeDevs calls this the Ralph loop, built into Claude Code . Each stop attempt is intercepted; the model self-checks against your condition before exiting. The loop only breaks when the condition is satisfied. Companion tools /loop runs Claude on repeat. Good for iterative refactors, cleanups, or burning down a backlog. /schedule kicks off Claude on a cadence. Nightly test runs, morning triage, weekly cleanup. A Stop hook gives programmatic control over when Claude can finish. Run your test suite, hit a CI endpoint, gate on anything. Auto mode lets Claude work uninterrupted without permission prompts. Enable with shift+tab in the CLI or via the mode selector on desktop. The pairing with Part 12 Tip 1 is the launch story: agent view lets you run many sessions at once; /goal makes each session finish what it started. Boris's worktrees pattern (Part 1, Tip 1) plus auto mode (Tip 68) plus /goal approximates an autonomous fleet that doesn't need babysitting. A non-test use of /goal: make Claude teach you Thariq (@trq212) shared a prompt from Suzanne at Anthropic that points /goal at your understanding instead of a test suite. Claude becomes a tutor: it keeps a running checklist of what you should grasp - the problem and why it existed, the solution and its design decisions, the broader impact - has you restate your understanding, fills the gaps (ask for eli5 / eli14 / \"explain like I'm an intern\"), then quizzes you with AskUserQuestion (shuffled answers, no peeking). The last line is the enforcement: $ /goal the session should not end until you've verified that the human has demonstrated they understood everything on your list. Same Ralph-loop mechanism - but the exit condition is comprehension, not a green build. A good companion to Part 2's \"Learning with Claude\" (Tip 10). ← agent view back to intro →"
+        }
+      ],
+      "declared_tips": 2,
+      "hash": "sha256:bb866bd1caa33713924e20d1693dff2d5c256f619af905ac79f255b7c2afc69f",
+      "id": "part-12",
+      "number": 12,
+      "order": 12,
+      "title": "May ship week: Agent View + /goal",
+      "volume": 14
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-5764e042",
+          "hash": "sha256:3d3aef6259d77a3b3d698d028ae2d9e5b3d56faf1439f19863d5bc29160f29eb",
+          "heading": "May 28 ship day: Opus 4.8 + Dynamic Workflows",
+          "kind": "intro",
+          "links": [
+            "https://x.com/bcherny/status/2060048873440129073",
+            "https://x.com/bcherny/status/2060048875918930045",
+            "https://x.com/bcherny/status/2060048877944778995",
+            "https://x.com/bcherny/status/2060048879274414090",
+            "https://x.com/_catwu/status/2060054180379689074"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2060048873440129073",
+          "text": "May 28 ship day: Opus 4.8 + Dynamic Workflows Anthropic shipped Claude Opus 4.8 - Boris calls it \"our strongest coding model yet\" . SWE-Bench Pro jumps from 64.3 to 69.2, but the bigger shift is honesty: the model tells you when it's unsure and catches its own bugs instead of declaring victory early. Same price as 4.7. Alongside the model: a new high-effort default (with xhigh for hard problems and raised Claude Code rate limits to cover the extra tokens) and dynamic workflows - a research preview that runs hundreds of parallel subagents in a single session for tasks too big for one pass. Cat Wu surfaced the activation trigger: mention \"workflow\" in your prompt and Claude builds the orchestration plan automatically. @bcherny on Opus 4.8 · May 28 @bcherny on effort defaults + rate limits · May 28 @bcherny on dynamic workflows · May 28 @bcherny on big migrations + refactors · May 28 @_catwu on the \"workflow\" trigger + diagram · May 28 Click the tabs above to read the breakdowns → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-053bd3e9",
+          "hash": "sha256:7cd369e75d919e33b3812baadae2f75972905e8895a5636a56eeb32353225e2b",
+          "heading": "Opus 4.8 - Strongest Coding Model Yet",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2060048873440129073"
+          ],
+          "refs_parts": [
+            12
+          ],
+          "source_url": "https://x.com/bcherny/status/2060048873440129073",
+          "text": "1 Opus 4.8 - Strongest Coding Model Yet Boris's framing: \"up on SWE-bench Pro (from 64.3 to 69.2) and noticeably more honest about its own work. It tells you when it's unsure and catches its own bugs instead of declaring victory early.\" Same price as 4.7. Live on claude.ai, the Claude Platform, and all major cloud platforms. Benchmark deltas vs 4.7 Agentic coding (SWE-Bench Pro): 64.3% → 69.2% Agentic terminal coding (Terminal-Bench 2.1): 66.1% → 74.6% Multidisciplinary reasoning (Humanity's Last Exam, with tools): 54.7% → 57.9% Agentic computer use (OSWorld-Verified): 82.8% → 83.4% Knowledge work (GDPval-AA): 1753 → 1890 Agentic financial analysis (Finance Agent v2): 51.5% → 53.9% The honesty shift matters more than the benchmarks The behavioral change Boris calls out - catching its own bugs, flagging uncertainty - is exactly the failure mode that breaks long-running agents. A model that overclaims at step 4 wastes the next 40 steps. Pair this with /goal from Part 12 and dynamic workflows below: honesty is what makes async work actually finish. Also shipped today Fast mode for Opus 4.8 (research preview): same model at roughly 2.5x the speed, 3x cheaper than before. Toggle with /fast in Claude Code. A new effort control on claude.ai lets you choose how much thinking Claude puts into each response - the consumer surface catching up to what Claude Code users already had. ← intro effort + limits →"
+        },
+        {
+          "bid": "b-1da9a852",
+          "hash": "sha256:707eb15567214663021d58ba0935ac0b406fea2ce9d66482bc3c27a4419524c5",
+          "heading": "High-Effort Default + xhigh + Raised Rate Limits",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2060048875918930045"
+          ],
+          "refs_parts": [
+            11
+          ],
+          "source_url": "https://x.com/bcherny/status/2060048875918930045",
+          "text": "2 High-Effort Default + xhigh + Raised Rate Limits Boris: \"4.8 defaults to high effort, which spends about the same tokens as 4.7's default on coding but performs better.\" The default change isn't a tax - it's the same token budget, used smarter. For hard problems and long-running async work, switch to xhigh . To make that economical, Anthropic raised Claude Code rate limits to cover the extra tokens. # default - same tokens as 4.7's default, better output $ /effort high # hard problems, async runs, dynamic workflows $ /effort xhigh Carry-over from Part 11 Part 11 introduced xhigh as Opus 4.7's new top tier (Tip 5: Effort Mastery). With 4.8, the default moved up - what used to be a deliberate choice is now baseline. Mental model: assume more reasoning per turn, and reach for xhigh when you'd previously have reached for \"let it think longer.\" When the extra tokens pay off Boris ties xhigh directly to dynamic workflows (next tab) and long-running async runs. Short conversational tasks don't need it - the default is already higher than 4.7's. Save xhigh for jobs where you're not watching the screen. ← opus 4.8 dyn workflows →"
+        },
+        {
+          "bid": "b-ee9ffd41",
+          "hash": "sha256:15ef70c2d8ce51704d1fb651d73e084ed2c17f13558252fbae9fa0d9f444d9ef",
+          "heading": "Dynamic Workflows - Days or Weeks Instead of Quarters",
+          "kind": "tip",
+          "links": [
+            "https://x.com/_catwu/status/2060054180379689074",
+            "https://x.com/bcherny/status/2060048877944778995"
+          ],
+          "refs_parts": [
+            11,
+            12,
+            16
+          ],
+          "source_url": "https://x.com/bcherny/status/2060048877944778995",
+          "text": "3 Dynamic Workflows - Days or Weeks Instead of Quarters Research preview, shipped today. Boris: \"for tasks too big for one pass. Make sure to default to auto mode so Claude isn't stopping for permissions.\" Per the launch post, Claude runs hundreds of parallel subagents in a single session and verifies its work before reporting back . How to invoke it Cat Wu: \"Mention 'workflow' in a prompt and Claude will dynamically create an orchestration plan that it strictly follows, allowing you to confidently trust that every stage happens in the right order even across 100s of agents.\" Claude takes a request for a workflow as a signal to plan and execute as a dynamic workflow rather than a single run. No new command, no flag. Update (June 9, 2026): Boris refined the trigger to the phrase \"use a workflow\" - bare \"workflow\" had too many false positives (see Part 16). Under the hood - the orchestrator pattern A dynamic workflow is an orchestrator shape, not peer-to-peer \"agent teams.\" A top-level claude kicks off N tasks (N can be in the 100s). Each task fans out: implementer writes, branches into two verifiers , both verifiers feed into a single fixer . Each task's loop runs until its verifiers pass; the orchestrator returns only once every branch completes. Diagram from Cat Wu's May 28 thread . A concrete example Cat: \"Recently, I used dynamic workflows to catalogue all of our 100s of A/B test flags and find the ones rolled out to 0% or 100% so that we can quickly deprecate the stale ones. Instead of waiting for Claude Code to investigate each sequentially, dynamic workflows allowed Claude to process all of them in parallel in <10 minutes.\" The sweet spot: large fan-out across independent items where each needs the same investigation loop. Save it for your biggest jobs Boris's explicit list plus the category Cat's example highlights: Migrations Refactors Perf optimization Batch bug fixes Catalogue-and-categorize sweeps (A/B flags, feature toggles, dependencies, dead code, stale endpoints) It's token-intensive . Don't burn it on a 20-line tweak - that's what default mode and the new high-effort baseline are already for. Auto mode is not optional With hundreds of parallel subagents, a single permission prompt freezes the run. Boris: \"default to auto mode so Claude isn't stopping for permissions.\" Shift+tab into auto mode in the CLI, or toggle it on the desktop app. The combo: auto mode + dynamic workflows + xhigh = Claude actually walking off and finishing. The framing that matters Boris: \"Big migrations and refactors are some of a team's most important work, and the easiest to push off to a 'better time' since they'd tie up engineers for a quarter. With dynamic workflows, Claude can now land that kind of work in days or weeks.\" The pitch isn't speed for routine work - it's making the kind of work teams perpetually defer actually shippable. This connects the arc from Part 11 (auto mode, effort mastery) through Part 12 (agent view, /goal ) into Part 13: the model is more honest about its progress (Tip 1), spends more reasoning by default (Tip 2), and now has a first-class execution mode for jobs that don't fit in one pass. The autonomous fleet from Part 12's intro - agent view + /goal + worktrees - gets a fourth pillar. Research preview. Expect the surface to change. ← effort + limits back to intro →"
+        }
+      ],
+      "declared_tips": 3,
+      "hash": "sha256:785f5504a54daeed432f7be6f61ae77da20eaf6e0894dd31a08225626a26c6a9",
+      "id": "part-13",
+      "number": 13,
+      "order": 13,
+      "title": "May 28 ship day: Opus 4.8 + Dynamic Workflows",
+      "volume": 15
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-d5f01eb3",
+          "hash": "sha256:88203303c67c2085925e9ee5b9e69e730e68de07073e270ca7eee18cf7007150",
+          "heading": "A Harness for Every Task",
+          "kind": "intro",
+          "links": [
+            "https://x.com/trq212/status/2061907337154367865"
+          ],
+          "refs_parts": [
+            13
+          ],
+          "source_url": "https://x.com/trq212/status/2061907337154367865",
+          "text": "A Harness for Every Task Part 13 announced dynamic workflows at launch. A week later, Thariq Shihipar and Sid Bidasaria - the engineers who built the feature - published the practitioner's guide: how workflows actually work, the patterns Claude composes, and where they pay off (often on non-coding work). \"Claude can now write its own harness on the fly, custom-built for the task at hand.\" This is the how-to behind the launch note. Best practices are still developing, and workflows often use more tokens - so think about when to reach for one. @trq212 + @sidbid's article · June 2026 Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-8c1eeac7",
+          "hash": "sha256:3b51ff163786b1d2f959edfaada36615bfaf17624e000cf7b3f4e2a48bc51002",
+          "heading": "Why Workflows - Three Failure Modes They Fix",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2061907337154367865"
+          ],
+          "refs_parts": [
+            13
+          ],
+          "source_url": "https://x.com/trq212/status/2061907337154367865",
+          "text": "1 Why Workflows - Three Failure Modes They Fix The default Claude Code harness plans and executes in one context window. For most coding tasks that's highly effective. It breaks down on the long-running, massively parallel, or adversarial tasks - and the longer Claude works in a single window, the more three specific failure modes creep in. Agentic laziness Claude stops before finishing a complex, multi-part task and declares it done after partial progress - addressing 20 of the 50 items in a security review and calling it complete. Self-preferential bias Claude tends to prefer its own results, especially when asked to verify or judge its work against a rubric. The grader and the author being the same context is the problem. Goal drift Gradual loss of fidelity to the original objective across many turns - worst after compaction. Each summarization step is lossy, and details like edge-case requirements or \"don't do X\" constraints quietly fall out. The fix A workflow orchestrates separate Claudes, each with its own context window and a focused, isolated goal . Laziness loses to a deterministic loop that doesn't exit until every item is handled; bias loses to a different agent doing the judging; drift loses because each agent holds one small goal that never gets summarized away. This connects straight to Part 13's honesty story - a model that overclaims at step 4 wastes the next 40 steps. ← intro primitives →"
+        },
+        {
+          "bid": "b-037ee122",
+          "hash": "sha256:55b917d208bf2f68ff83f6bedc706e7909bd7a6a3d22d1cd77d6e8d62c0cbce2",
+          "heading": "The Primitives - and Dynamic vs Static",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2061907337154367865"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2061907337154367865",
+          "text": "2 The Primitives - and Dynamic vs Static A dynamic workflow is a JavaScript file with a few special functions that spawn and coordinate subagents. Standard JSON , Math , and Array are there too for processing data. # spawn one subagent - schema forces validated JSON back const bugs = await agent(\"audit auth.ts\", { schema: BugList, // JSON Schema → validated output model: \"haiku\", // opus · sonnet · haiku · omit = inherit isolation: \"worktree\", // own checkout, for parallel edits agentType: \"reviewer\", // custom / built-in subagent }) Compose the block parallel([ fns ]) - fan out, run at once. A barrier : it waits for all of them, then you have every result together. pipeline(items, ...stages) - each item streams through every stage independently. No barrier : item A can be in stage 3 while item B is still in stage 1. Claude decides which model each agent uses and whether it runs in its own worktree - picking the intelligence level and isolation the step actually needs. Resumable by default Interrupt a workflow - quit the terminal, cancel mid-run - and resuming the session picks up where it left off. The deterministic harness remembers what already completed. Dynamic vs static You may have built static workflows before with the Agent SDK or claude -p . Because a static workflow has to handle every edge case, it ends up generic: \"turn this into 5 web searches → fetch → verify → summarize → a generic report.\" With Opus 4.8, Claude is smart enough to write a custom harness tailor-made for your case : \"read our billing code → check each feature against the new provider's docs → devil's advocate the strongest case against migrating → a specific recommendation.\" ← why workflows six patterns →"
+        },
+        {
+          "bid": "b-2d688d72",
+          "hash": "sha256:ce3d129891f300a237975b96aff0b80ce2ee528b031c2e3b43edd2586c68681a",
+          "heading": "The Six Patterns Claude Composes",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2061907337154367865"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2061907337154367865",
+          "text": "3 The Six Patterns Claude Composes Building a mental model for these helps you nudge Claude via prompts. They're not exclusive - Claude mixes and nests them. 1 · Classify-and-act A classifier agent decides the type of task, then routes to different agents or behavior. Or classify at the end to shape the output. 2 · Fan-out-and-synthesize Split into many smaller steps, run an agent on each, then synthesize. The synthesize step is a barrier - it waits for all the fan-out agents, then merges their structured outputs into one result. Best when each step benefits from its own clean context so they don't cross-contaminate. 3 · Adversarial verification For each spawned agent, run a separate agent to adversarially verify its output against a rubric. The verifier is never the author - that's what kills self-preferential bias. 4 · Generate-and-filter Generate many ideas on a topic, then filter by a rubric or by verification, dedupe, and return only the highest-quality, tested few. 5 · Tournament Instead of dividing work, have agents compete . Spawn N agents that each attempt the same task a different way, then judge them pairwise until you have a winner. Comparative judgment is more reliable than absolute scoring. 6 · Loop-until-done For an unknown amount of work, keep spawning agents until a stop condition is met - no new findings, no more errors in the logs - instead of a fixed number of passes. Simple counters miss the tail. ← primitives use cases →"
+        },
+        {
+          "bid": "b-e479aab7",
+          "hash": "sha256:fe0bdfa7c28360065effacd65c393b9aebb8f725a5192c587c92a7c59c35aed4",
+          "heading": "Use Cases - Often Better for Non-Coding Work",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2061907337154367865"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2061907337154367865",
+          "text": "4 Use Cases - Often Better for Non-Coding Work Thariq: \"I've found that workflows are sometimes even more useful for non-technical work.\" A sampling from the article: Migrations & refactors Bun was rewritten from Zig to Rust using workflows. Break the task into units - callsites, failing tests, modules - spin off a subagent for each fix in its own worktree, have another agent adversarially review, then merge. Tell agents to avoid resource-intensive commands so you can maximally parallelize without melting your machine. Deep research & deep verification The /deep-research skill is itself a workflow: fan out web searches, fetch sources, adversarially verify their claims, synthesize a cited report. The inverse is deep verification - one agent extracts every factual claim from a report, a subagent checks each in detail, and an optional source-auditor agent confirms the source is high quality. \"Verify every technical claim in my blog draft against the codebase - I don't want to ship anything wrong.\" Sorting 1,000+ items You can't sort 1,000 rows by a qualitative measure in one prompt - quality degrades and it won't fit in context. Run a tournament , a pipeline of pairwise-comparison agents (comparative judgment beats absolute scoring), or bucket-rank in parallel then merge. Each comparison is its own agent; the deterministic loop holds the bracket so only the running order stays in context. Memory & rule adherence For rules Claude keeps missing even in CLAUDE.md: one verifier agent per rule , plus a skeptic persona that reviews the rules to avoid false positives. The reverse direction works too - mine your recent sessions and code-review comments for corrections you keep making, cluster them, adversarially verify each candidate (\"would this rule have prevented a real mistake?\"), and distill the survivors back into CLAUDE.md. Root-cause investigation Debugging works best with several independent hypotheses tested in parallel - but one context window invites self-preferential bias. A workflow spins up agents that generate hypotheses from disjoint evidence (logs, files, data), then each hypothesis faces a panel of verifiers and refuters. Works for sales (\"why did sales drop in March?\"), data engineering, any post-mortem. Triage, taste, evals, routing Triage at scale: classify each backlog item, dedupe against what's already tracked, then fix or escalate. Use a quarantine pattern - agents reading untrusted public content can't take high-privilege actions. Pair with /loop to run continuously. Exploration & taste: for design or naming, give a review agent a rubric; the task is done when the rubric is met. Order options via tournament. Evals: spin agents in worktrees, then comparison agents grade outputs against a rubric - handy for refining a skill you're building. Model routing: a classifier researches the task, then routes to Sonnet or Opus based on expected complexity. ← six patterns loop + budgets →"
+        },
+        {
+          "bid": "b-0802ba6b",
+          "hash": "sha256:dbb9f0c76499a861ef688bde72baa556502c861aca5b719fab80db92dcb56152",
+          "heading": "Pair With /goal, /loop, and Token Budgets",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2061907337154367865"
+          ],
+          "refs_parts": [
+            12,
+            13
+          ],
+          "source_url": "https://x.com/trq212/status/2061907337154367865",
+          "text": "5 Pair With /goal, /loop, and Token Budgets Workflows compose with the rest of Claude Code. Three levers worth knowing, plus the honest \"when not to.\" /goal + /loop For repeatable workflows - triage, research, verification - pair with /loop to run at regular intervals and /goal to set a hard completion requirement. This is the Part 12 + Part 13 arc closing: /goal sets the exit condition, the workflow does the parallel work, /loop keeps it going. Token budgets Workflows are token-hungry, so cap them. Prompt a budget directly - \"use 10k tokens\" - and the workflow holds the ceiling. $ Use a workflow to rank these 80 resumes for the backend role and double-check the top ten. use 50k tokens See what's burning tokens: /usage When a long autonomous run eats your limits faster than expected, run /usage for a breakdown of the specific skills, MCPs, and plugins spending your tokens. Boris points people here first when they hit limits mid-run - it's how you find the workflow or MCP that's quietly dominating the bill. Quick workflows They aren't only for big jobs. Prompt a \"quick workflow\" for something small - a fast adversarial review of a single assumption, for instance. When not to use one Workflows can use significantly more tokens and aren't needed for every task. Thariq: \"For regular coding tasks, ask yourself: does it really need more compute? Most traditional coding tasks do not need a panel of 5 reviewers.\" Use them to push Claude in ways you couldn't before - not as the default for a 20-line change. ← use cases save + share →"
+        },
+        {
+          "bid": "b-beb0902d",
+          "hash": "sha256:e796094cdc8cdc458d477e22101e7a59eda2862abd135f0a34ee72f126d1e215",
+          "heading": "Save and Share Your Workflows",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2061907337154367865"
+          ],
+          "refs_parts": [
+            11,
+            12,
+            13
+          ],
+          "source_url": "https://x.com/trq212/status/2061907337154367865",
+          "text": "6 Save and Share Your Workflows A good workflow is reusable. Once Claude builds one you like, keep it. Save it Press \"s\" in the workflow menu to save. Check the files into ~/.claude/workflows , or distribute them via a skill. Dynamic workflows 1 running · 2 completed ⟩ ✓ review-changes · 14 agents · 482k tok · 6m 12s ◴ find-flaky-tests · 6 agents · 121k tok · 1m 48s ✓ deep-research · 22 agents · 1.1M tok · 11m 3s ↑/↓ select · enter view · s save · esc close Share via a skill Put your JavaScript workflow files in the skill folder and reference them in the SKILL.md . For flexibility, prompt Claude to treat the workflows in a skill as a template , not a script to run verbatim - so it adapts the harness to the specific case instead of replaying it blindly. The \"ultracode\" trigger You can start a workflow just by asking for one - or use the trigger word \"ultracode\" to guarantee Claude Code builds a workflow rather than running a single pass. This is the fourth pillar settling into place: Part 11's auto mode, Part 12's agent view + /goal , Part 13's Opus 4.8 + the workflow launch, and now the patterns to drive them. Thariq's closing line is the honest one - \"there's still much to discover in how to use them best.\" Research preview. Best practices are still developing. ← loop + budgets back to intro →"
+        }
+      ],
+      "declared_tips": 6,
+      "hash": "sha256:8eca7b4ed072569fc81bd122e2a8540142761db7c6f1e5c2e7143f07a4775c59",
+      "id": "part-14",
+      "number": 14,
+      "order": 14,
+      "title": "A Harness for Every Task",
+      "volume": 16
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-a7ca4064",
+          "hash": "sha256:05f8c12f00d32e7fd1eab8bdae56cff660991b35a87cea29cf0302e7ea5c2442",
+          "heading": "Reflecting on a Year of Claude Code",
+          "kind": "intro",
+          "links": [
+            "https://x.com/bcherny/status/2064034799711588805",
+            "https://www.youtube.com/watch?v=Hth_tLaC2j8"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2064034799711588805",
+          "text": "Reflecting on a Year of Claude Code One year after Claude Code went GA, Boris Cherny (Head of Claude Code) and Cat Wu (Head of Product) sat down to talk about what changed - \"from a Slack demo that got two reactions to engineering teams deploying it across entire codebases.\" Four ideas stood out, and a couple quietly overturned earlier advice on this very site: why Boris dropped plan mode, the shift to context minimalism, the one habit that lets Claude run for hours, and why auto mode is safer than reading every prompt. @bcherny + @_catwu · June 8, 2026 Watch: \"Reflecting on a year of Claude Code\" Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-35bbd6ad",
+          "hash": "sha256:656d75573eb760cf678a8155cc1ca3b6acade64bc58fc63c52222c83e99cada5",
+          "heading": "Auto Mode Retired Plan Mode (Opus 4.6+)",
+          "kind": "tip",
+          "links": [
+            "https://www.youtube.com/watch?v=Hth_tLaC2j8"
+          ],
+          "refs_parts": [
+            1
+          ],
+          "source_url": "https://www.youtube.com/watch?v=Hth_tLaC2j8",
+          "text": "1 Auto Mode Retired Plan Mode (Opus 4.6+) For over a year, plan mode was Boris's go-to for synchronous coding. A year after GA, he's moved on - and the reason is the model, not the feature. In his words \"What it used to be is plan mode. I don't use that anymore. I use auto mode - instead of plan mode. The newer models don't actually need a planning step. It was really important for Opus 4 through 4.5, but starting with 4.6, and definitely with 4.7, it just doesn't need it.\" Why it changed Older models needed an explicit plan to stay on track. 4.6+ plan implicitly, so the planning step became overhead - an artifact to review before any work starts. What he does instead Start Claude in auto mode, let it work, move to the next Claude. No babysitting. Some people keep plan mode for the written artifact, and that's fine - Boris just runs auto mode for everything. Updates Part 1 This revises the plan-mode tip from Part 1. The rule of thumb shifted with the model: pre-4.6, plan first; 4.6 and later, let it run. Pairs with the auto mode tips in Parts 8 and 11. ← intro minimalism →"
+        },
+        {
+          "bid": "b-b788ffbe",
+          "hash": "sha256:bd6d71e1ed6c20c3c2fc0f86143a8d7f342e4559906f4c5f56411b6c68dc7278",
+          "heading": "Context Minimalism - Tell the Model Less",
+          "kind": "tip",
+          "links": [
+            "https://www.youtube.com/watch?v=Hth_tLaC2j8"
+          ],
+          "refs_parts": [
+            10
+          ],
+          "source_url": "https://www.youtube.com/watch?v=Hth_tLaC2j8",
+          "text": "2 Context Minimalism - Tell the Model Less \"From context engineering to context minimalism\" is its own chapter in the interview. The era you're in tracks the model you're using. The progression Sonnet 3.5 was the era of prompt engineering . Opus 4 was the era of context engineering . Today's models need neither. Boris \"You give it the minimal possible system prompt, the minimal possible tools, and then you let the model figure it out. You just have to give the model some way to pull in the context.\" Cat \"I'm a context minimalist. Tell the model only what it needs to know and let it figure out the rest. When you give the model too much context, it's like you're micromanaging it - and sometimes the model knows a better way to get to the same outcome.\" The move Stop front-loading giant prompts and tool lists. Give a lean brief plus a way to fetch context - files, search, MCP - then get out of the way. Minimal ≠ vague: give the goal, not the micro-steps. Pairs with Part 10's \"delegation over guidance.\" ← plan → auto write it down →"
+        },
+        {
+          "bid": "b-bd57e996",
+          "hash": "sha256:a9ea97b5a9c2dd51a8db89ae89e254f9879c29ff4715f400c5bee67facbb9772",
+          "heading": "When Claude Errs, Write It Down - Don't Re-Prompt",
+          "kind": "tip",
+          "links": [
+            "https://www.youtube.com/watch?v=Hth_tLaC2j8"
+          ],
+          "refs_parts": [
+            1,
+            10
+          ],
+          "source_url": "https://www.youtube.com/watch?v=Hth_tLaC2j8",
+          "text": "3 When Claude Errs, Write It Down - Don't Re-Prompt Boris calls this the single most important idea for long-running work - and it's the whole reason his agents can run for hours. In his words \"Every single time Claude makes a mistake, I don't tell it to do it differently. I tell it to write it to the CLAUDE.md, or make a skill, or something. If you can do this, then Claude can just run forever.\" The distinction Correcting Claude in chat fixes this one run . Writing the fix into CLAUDE.md or a skill fixes every future run . A conversational correction is a patch; a written rule is a fix. Why it compounds The error rate trends down over time instead of resetting each session. The rule set grows; the mistakes don't come back. When something goes wrong, your next instruction isn't \"do it this way\" - it's \"add a rule so this doesn't happen again.\" Pairs with Part 1's CLAUDE.md and Skills tips, and Part 10's /rewind over correcting. ← minimalism auto mode safety →"
+        },
+        {
+          "bid": "b-aa38d678",
+          "hash": "sha256:b44845e2841f53521add08aab28f68259c83aac916343f34c5dd05daa843d3b9",
+          "heading": "Why Auto Mode Is Trustworthy - Red-Teaming and Evals",
+          "kind": "tip",
+          "links": [
+            "https://www.youtube.com/watch?v=Hth_tLaC2j8"
+          ],
+          "refs_parts": [],
+          "source_url": "https://www.youtube.com/watch?v=Hth_tLaC2j8",
+          "text": "4 Why Auto Mode Is Trustworthy - Red-Teaming and Evals Auto mode routes each action to a classifier instead of asking you to approve every prompt. The interview explains why you can trust it - and why it's arguably safer than reading every prompt yourself. How it was hardened The team collected thousands of full agent transcripts plus the permission prompt, had auto mode classify each as safe or unsafe, then brought in red-teamers to prompt-inject and attack the codebase. Those attacks became evals ; auto mode was tuned until it caught them all. The counterintuitive part \"When you accept 99% of requests, your eyes glaze over. Auto mode is more safe than reading every single permission prompt because it means you're only paying attention to the most important thing.\" The payoff Because he trusts it, he can let one agent run and start a second. Trust is what makes parallel, autonomous work possible - it protects against today's known vulnerabilities and the most intelligent attacks the team can construct. Pairs with the auto mode tips in Parts 8 and 11. ← write it down back to intro →"
+        }
+      ],
+      "declared_tips": 4,
+      "hash": "sha256:061dfaf49eab111c4c46f61960034157d5fb3263ee18f80812d1a389e305f2c2",
+      "id": "part-15",
+      "number": 15,
+      "order": 15,
+      "title": "Reflecting on a Year of Claude Code",
+      "volume": 17
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-334efebe",
+          "hash": "sha256:4b6f08eca3287e41f856ddbc0e6fefb9184a9985c017ca817320612b4a525c1f",
+          "heading": "Agents That Spawn Agents",
+          "kind": "intro",
+          "links": [
+            "https://x.com/bcherny/status/2064327225504403752"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2064327225504403752",
+          "text": "Agents That Spawn Agents A June 9 ship: nested subagent support - \"agents kicking off agents as a way to better manage context,\" capped at depth=5 to start. Plus an experimental fork: true skill frontmatter, and a correction to how you trigger a dynamic workflow (it's \"use a workflow\" now, not bare \"workflow\" ). Three quick ones, straight from Boris's thread. @bcherny · June 9, 2026 Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-e6bb7ad7",
+          "hash": "sha256:be240537230af01ba9b58607c93e66310a19fa123efce03923109d2b614ff129",
+          "heading": "Nested Subagents - Agents Kicking Off Agents",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2064327225504403752"
+          ],
+          "refs_parts": [
+            1,
+            12
+          ],
+          "source_url": "https://x.com/bcherny/status/2064327225504403752",
+          "text": "1 Nested Subagents - Agents Kicking Off Agents Boris: \"Just landed nested subagent support in Claude Code. Starting to experiment more with agents kicking off agents as a way to better manage context. Capped at depth=5 to start.\" What it is A subagent can now spawn its own subagents, down to depth=5 (a starting cap). Nesting is a context-management tool - each layer keeps its own context window, so deep work doesn't bloat the parent. Monitor them To watch what each subagent is doing, hit arrow-down in the terminal. (Asked how to see them, Boris: \"In terminal? Hit arrow down.\" ) Model propagates, thinking weights don't (yet) Dispatched subagents can run on a chosen model; per a user's testing that Boris confirmed, the model carries through but thinking weights do not propagate yet. Nesting also works with forked sessions and subagents can use Chrome . Where a dynamic workflow (Parts 13-14) is an orchestrated harness, nested subagents are the lower-level primitive - any agent can delegate to keep its own context clean. Pairs with Part 1's subagents + worktrees and Part 12's agent view. ← intro fork: true →"
+        },
+        {
+          "bid": "b-e2ce4773",
+          "hash": "sha256:5d6cc725ee3520615aa7684cd94c8719494614807eafecbb37b07d833632928e",
+          "heading": "fork: true - Run a Skill in Its Own Context Window",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2064327225504403752"
+          ],
+          "refs_parts": [
+            15
+          ],
+          "source_url": "https://x.com/bcherny/status/2064327225504403752",
+          "text": "2 fork: true - Run a Skill in Its Own Context Window An idea Boris shared in the same thread, framed explicitly as \"one idea I'm experimenting with\" - so treat it as a preview, not a stable API. The mechanic Add fork: true to a skill's frontmatter so the skill runs in its own context window , then have the skill use agents to keep context isolated per step. --- skill frontmatter --- name: my-skill fork: true In his words \"add 'fork:true' to a skill's frontmatter to have it run in its own context window, then in the skill tell it to use agents to keep context isolated for each step also. Adding this to the built in /code-review skill to improve performance even more.\" Why A heavy skill (deep research, code review) can pollute or blow out the main context. Forking gives it a clean window; per-step agents (tip 1) isolate further. Same instinct as Part 15's context minimalism - keep each unit of work to the smallest context it needs. ← nested agents use a workflow →"
+        },
+        {
+          "bid": "b-314c2128",
+          "hash": "sha256:0be7a347009b1c47a04f6b1b696e789be43bb80fc32288ef8697d2ae4651e29e",
+          "heading": "The Dynamic-Workflows Trigger Is Now \"use a workflow\"",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2064327225504403752"
+          ],
+          "refs_parts": [
+            13,
+            14
+          ],
+          "source_url": "https://x.com/bcherny/status/2064327225504403752",
+          "text": "3 The Dynamic-Workflows Trigger Is Now \"use a workflow\" A correction to the activation trigger from Part 13 and Part 14. The launch said the bare word \"workflow\" in a prompt was the trigger. Boris has refined it: In his words \"Say 'use a workflow'. Just 'workflow' had too many false positives.\" Do this To launch a dynamic workflow, say \"use a workflow\" - e.g. \"use a workflow to rank these 80 resumes\" - not just the word \"workflow.\" Updates Parts 13 & 14 The workflow mechanics in Parts 13-14 are unchanged - orchestrator → implementer → verifiers → fixer, hundreds of agents, default to auto mode. Only the trigger phrasing tightened. ← fork: true back to intro →"
+        }
+      ],
+      "declared_tips": 3,
+      "hash": "sha256:f7c08db484232475135101105743cf7b9d6f62f800af7605f9d29e62f4c4a91d",
+      "id": "part-16",
+      "number": 16,
+      "order": 16,
+      "title": "Agents That Spawn Agents",
+      "volume": 18
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-2aab1b89",
+          "hash": "sha256:da6de38a57307b3d4156833cca45fd03b8116a93b9ecfd742470647516e38473",
+          "heading": "Fable 5 - The Best Coding Model, By a Wide Margin",
+          "kind": "intro",
+          "links": [
+            "https://x.com/claudeai/status/2064394151441863006",
+            "https://x.com/bcherny/status/2064402671898075579"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2064402671898075579",
+          "text": "Fable 5 - The Best Coding Model, By a Wide Margin Anthropic launched Claude Fable 5 - a \"Mythos-class model we've made safe for general use,\" whose \"capabilities exceed those of any model we've ever made generally available.\" Now in Claude Code and Cowork. Boris: \"the best model I have used for coding, by a wide margin... a big step up.\" Anthropic published a full benchmark table too - Fable 5 is state-of-the-art on nearly all of them. It's priced at $10/M in · $50/M out - double Opus 4.8. Fable-specific effort/usage tactics are still emerging. @bcherny + @claudeai · June 9, 2026 Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-d9c0060f",
+          "hash": "sha256:cea9ce44e177f8617d3cddc24f5edccf2300d2dee5fe43a4d3b6e5035d5bf7af",
+          "heading": "Fable 5 - The Launch",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2064431111154053187",
+            "https://x.com/karpathy/status/2064409694761054332",
+            "https://x.com/bcherny/status/2064402671898075579"
+          ],
+          "refs_parts": [
+            1,
+            13
+          ],
+          "source_url": "https://x.com/bcherny/status/2064402671898075579",
+          "text": "1 Fable 5 - The Launch The announcement from Claude: \"Introducing Claude Fable 5: a Mythos-class model that we've made safe for general use. Its capabilities exceed those of any model we've ever made generally available.\" Available now in Claude Code and Cowork . Boris's verdict \"Fable is the best model I have used for coding, by a wide margin. It is a big step up, enabling less prompts and steers, more efficient token use, better code quality, better tool use, more intelligent self-verification, longer running sessions, and higher trust & autonomy.\" \"Big model smell\" - Boris on living with it \"With Fable, it's felt like Claude has stepped up from being a coding agent to a thought and design partner... Fable has judgement, taste, and dimensionality in a way that previous models didn't. The first time I had this realization was when I asked Fable to debug something - it's the first model I've used that was so methodical and precise, taking measurements and adding logs then verifying that it truly fixed the issue before declaring victory. There's nothing in Claude Code's prompting telling it to do that; it's just part of its personality. It really has this 'big model smell.'\" That self-verifying debugging is the Verification (Part 1) + Opus 4.8 honesty (Part 13) thread paying off in the base model. Boris on living with Fable 5 The step-ups, at a glance Fewer prompts & steers More efficient token use Better code quality & tool use More intelligent self-verification Longer-running sessions Higher trust & autonomy The benchmarks (Fable 5 → Opus 4.8 → GPT 5.5 → Gemini 3.1 Pro) Claude: \"state-of-the-art on nearly all tested benchmarks... the longer and more complex the task, the larger Fable 5's lead.\" Agentic coding, SWE-Bench Pro: 80.3% → 69.2 → 58.6 → 54.2 Frontier coding, FrontierCode/Diamond (xhigh): 29.3% → 13.4 → 5.7 → - Knowledge work, GDPval-AA: 1932 → 1890 → 1769 → 1314 Spatial reasoning, Blueprint-Bench 2: 38.6% → 14.5 → 36.2 → 26.5 Computer use, OSWorld-Verified: 85.0% → 83.4 → 78.7 → 76.2 Accuracy note: \"Fable 5\" is the Mythos-class model made safe for general use; the table reports the higher of Mythos 5 / Fable 5 (within 1-3 pts). On the starred benchmarks (cybersecurity, biology, Terminal-Bench, Humanity's Last Exam, HealthBench), Fable 5 performs closer to Opus 4.8 due to safety fallbacks - so treat those higher figures as Mythos 5. Boris confirms the classifiers are currently \"trigger-happy\" (flagging ordinary debugging as cyber/bio) and the team is \"working on improving it.\" A second voice - Andrej Karpathy (now at Anthropic) \"It's SOTA on everything by a margin... qualitatively, a major-version-bump-deserving step change forward. You can give it a lot more ambitious tasks than what you're used to - the model 'gets it' and it will just go. It's never felt this tempting to stop looking at the code at all (but don't do this in prod!).\" He adds the safeguards are \"a little too trigger-happy for launch\" - the same fallbacks behind the starred benchmarks above. Karpathy's take ← intro what changes →"
+        },
+        {
+          "bid": "b-42aed628",
+          "hash": "sha256:3e6b6c333db9c463e54580df58a3b84391a518ad89d652ee84085eab8d7e234c",
+          "heading": "What Fable 5 Changes for You",
+          "kind": "tip",
+          "links": [
+            "https://x.com/claudeai/status/2064394151441863006"
+          ],
+          "refs_parts": [
+            1,
+            10,
+            12,
+            13,
+            15,
+            16
+          ],
+          "source_url": "https://x.com/claudeai/status/2064394151441863006",
+          "text": "2 What Fable 5 Changes for You Fable 5 supersedes Opus 4.8 as the strongest coding model - which shifts a couple of earlier tips and leans harder into others. It's the new default for coding Updates Part 1's \"use Opus\" tip and Part 13's \"Opus 4.8, strongest yet.\" When you pick a model for coding, Fable 5 now leads. \"Less prompts and steers\" → lean into minimalism + delegation That's exactly the world Part 15's context minimalism and Part 10's delegation-over-guidance describe - give it the goal, not the micro-steps. Longer sessions + higher autonomy → the autonomy stack pays off more Auto mode (Parts 8, 11), /goal (Part 12), nested subagents (Part 16), and workflows (Parts 13-14) all benefit from a base model that self-verifies better and needs less babysitting. Caveat Pricing is live - $10/M input · $50/M output , exactly 2× Opus 4.8's $5/$25. Model id claude-fable-5 ; 1M context, 128K max output, adaptive thinking, knowledge cutoff Jan 2026; no fast mode yet. Fable-specific effort levels and usage best-practices aren't documented yet. ← fable 5 back to intro →"
+        }
+      ],
+      "declared_tips": 2,
+      "hash": "sha256:44215e68327521238bb40634dd349f3a4e06e040b855b848689bfb0633958b7b",
+      "id": "part-17",
+      "number": 17,
+      "order": 17,
+      "title": "Fable 5 - The Best Coding Model, By a Wide Margin",
+      "volume": 19
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-6d331949",
+          "hash": "sha256:178455ce6664219e2218bc79a926774a99a7af2f49a3d071ff8ab968ad772177",
+          "heading": "Finding Your Unknowns - The Map Is Not the Territory",
+          "kind": "intro",
+          "links": [
+            "https://x.com/trq212/status/2073100352921215386?s=51"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2073100352921215386?s=51",
+          "text": "Finding Your Unknowns - The Map Is Not the Territory Thariq (@trq212, Claude Code) says working with Fable 5 keeps re-teaching one lesson: \"the map is not the territory.\" The map is what you give Claude - your prompts, skills, and context. The territory is where the work actually happens - the codebase, the real world, its actual constraints. The gap between them is what he calls your unknowns . Fable is the first model where he finds the quality of the work is bottlenecked by his ability to clarify those unknowns - so \"reducing and planning for your unknowns is the skill of agentic coding.\" The good news: it's a skill you can improve at, by working with Claude. @trq212 · July 3, 2026 Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-d7b4e2d6",
+          "hash": "sha256:0129ba2196a80760c9b16e0da58336b5b022199b11887ab3bc723a26611e293e",
+          "heading": "The Four Unknowns",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2073100352921215386?s=51"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2073100352921215386?s=51",
+          "text": "1 The Four Unknowns When Thariq brings a problem to Claude, he breaks it down four ways - the Rumsfeld matrix, applied to prompting: ▤ Known knowns what's in your prompt What you tell the agent you want. ? Known unknowns questions you know to ask What you haven't figured out yet, but you're aware you haven't. ◉ Unknown knowns \"I'll know it when I see it\" What's so obvious you'd never write it down, but you'd recognize it if you saw it. ⚠ Unknown unknowns what you never considered The pothole you didn't know the road could have. The more work being done, the more of these Claude will run into. When Claude hits an unknown, it has to make a decision based on its best guess of what you want. \"The best agentic coders have relatively few unknowns,\" Thariq writes - watching someone like Boris or Jarred prompt, it's obvious they know what they want in detail and are deeply in-sync with both the codebase and the model's behaviors. But they also assume unknowns. Reducing and planning for them is the actual skill of agentic coding - and the rest of this Part is his toolkit for finding them before, during, and after implementation. ← intro before →"
+        },
+        {
+          "bid": "b-0c6d3ce0",
+          "hash": "sha256:484027082fdcb75a7ceb60b69f23fb359993c239ceeba63ccace4a01fe6d1127",
+          "heading": "Before Implementation",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2073100352921215386?s=51"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2073100352921215386?s=51",
+          "text": "2 Before Implementation Most unknowns are cheapest to find before you write code. Thariq's pre-implementation techniques, each with the literal prompts he uses: Blind spot pass Ask Claude to find your unknown unknowns and explain them - he uses the literal words \"blindspot pass.\" Give it context on who you are and what you already know. I'm working on adding a new auth provider but I know nothing about the auth modules in this codebase. Can you do a blindspot pass to help me figure out my relevant unknown unknowns and help me prompt you better. Brainstorms & prototypes - for unknown knowns When the criteria are ones you'll only recognize when you see them (visual design, layout), ask Claude to brainstorm and prototype. An HTML artifact you can react to beats trying to describe it. I want a dashboard for this data but I have no visual taste and don't know what's possible. Make me an HTML page with 4 wildly different design directions so I can react to them. Interviews Once you've brainstormed, ask Claude to interview you about remaining ambiguities - one question at a time, prioritizing questions whose answer would change the architecture. Interview me one question at a time about anything ambiguous, prioritize questions where my answer would change the architecture. References - the best reference is source code When you can't describe what you want, point Claude at a reference. Diagrams and pictures work, but the best reference is source code - point Fable at a folder or a module on a website and it reads the underlying code, not just the screenshot. This is also how Claude Design works: richer detail on markup, structure, and how the thing is actually built. Implementation plans Ask for a plan that leads with the parts most likely to change - data models, type interfaces, UX flows - so Claude surfaces what you might actually need to alter, and buries the mechanical refactoring. Write an implementation plan in HTML, but lead with the decisions I'm most likely to tweak: data model changes, new type interfaces, and anything user-facing. Bury the mechanical refactoring at the bottom, I trust you on that part. ← 4 unknowns during →"
+        },
+        {
+          "bid": "b-9014824b",
+          "hash": "sha256:6f3c81fb663c3802a4bb957f13082a5b75e2ed1b1956219cc1ce957e062fb707",
+          "heading": "During Implementation",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2073100352921215386?s=51"
+          ],
+          "refs_parts": [
+            15
+          ],
+          "source_url": "https://x.com/trq212/status/2073100352921215386?s=51",
+          "text": "3 During Implementation No matter how much you plan, there are always unknown unknowns lurking - the agent may hit an edge case mid-work that forces a different tack. Implementation notes Ask Claude Code to keep a temporary implementation-notes.md (or .html ) file where it logs the decisions it makes, so you can learn from them on the next attempt. Keep an implementation-notes.md file. If you hit an edge case that forces you to deviate from the plan, pick the conservative option, log it under 'Deviations', and keep going. This pairs with Part 15's \"write it down\" discipline - what the agent learns mid-run becomes the map for next time, instead of evaporating when the session ends. ← before after →"
+        },
+        {
+          "bid": "b-28c89e68",
+          "hash": "sha256:09d095d70a27b986d025d65df16801650b0349ac55ee989143662dc028e8b946",
+          "heading": "After Implementation",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2073100352921215386?s=51"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2073100352921215386?s=51",
+          "text": "4 After Implementation Once the work lands, the remaining unknowns are other people's - your reviewers' and your own future understanding. Pitches & explainers Getting buy-in is one of the most important parts of shipping. Package the prototype, the spec, and the implementation notes into a single doc you can drop in Slack - lead with the demo. Reviewers start with the same unknowns you did, so answer them up front. Package the prototype, the spec, and the implementation notes into a single doc I can drop in Slack to get buy-in. Lead with the demo GIF. Quizzes - merge only when you pass After a long session Claude may have done more than you realized, and reading diffs only gives a light understanding. Ask Claude to quiz you about the change after giving you context - Thariq only merges after passing the quiz perfectly. Give me an HTML report on the changes to read and understand with context, intuition, and what was done - and a quiz at the bottom on the changes that I must pass. How it comes together: launching Fable The Fable launch video was edited entirely by Claude Code - a domain Thariq was \"by no means an expert\" in. He ran exactly this loop: started from what he knew (Claude can edit and transcribe video), asked Claude to explain how transcription and ffmpeg cutting worked, prototyped a timed UI with Remotion, and - realizing he didn't know what \"good\" color grading looked like - asked Claude to teach him his unknowns rather than guess at variations. \"The better models get, the more you can achieve with the right approach... So start your next project by asking Claude to help you find your unknowns.\" ← during back to intro →"
+        }
+      ],
+      "declared_tips": 4,
+      "hash": "sha256:91a10f0175ccc4f1277ca6291337f035bed0f0c9a2d0b126d58b3820c27da1ca",
+      "id": "part-18",
+      "number": 18,
+      "order": 18,
+      "title": "Finding Your Unknowns - The Map Is Not the Territory",
+      "volume": 20
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-6ec9bc81",
+          "hash": "sha256:62052a6255d601a5537637aeacb4c338c1645fa862bc4447732e918539eb811e",
+          "heading": "Getting Started With Loops",
+          "kind": "intro",
+          "links": [
+            "https://x.com/ClaudeDevs/status/2074208949205881033?s=51"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/ClaudeDevs/status/2074208949205881033?s=51",
+          "text": "Getting Started With Loops The Claude Code team defines a loop as an agent repeating cycles of work until a stop condition is met . Everything from a single prompt to a cloud routine is a loop - they differ only in how they're triggered , how they're stopped , which Claude Code primitive runs them, and what kind of task fits. This guide maps the four types and when to reach for each. Not every task needs a complex loop - start with the simplest one and use these patterns selectively. @ClaudeDevs · July 6, 2026 Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-ec63c380",
+          "hash": "sha256:b846faa23d8e3d286294746e91e904dbd5e25d8336a90caee87106ba3c6605b3",
+          "heading": "The Four Loops",
+          "kind": "tip",
+          "links": [
+            "https://x.com/ClaudeDevs/status/2074208949205881033?s=51"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/ClaudeDevs/status/2074208949205881033?s=51",
+          "text": "1 The Four Loops Every loop in Claude Code fits one of four shapes. They differ by what triggers them, what stops them, and - most usefully - how much of the loop you hand off: ↻ Turn-based the agentic loop Triggered by a prompt; stops when Claude judges the task done. Best for shorter, one-off tasks. You hand off the check . ◎ Goal-based · /goal until the condition is met Triggered by a prompt; stops when the goal is met or a turn cap is hit. Best when you have verifiable exit criteria. You hand off the stop condition . ⏱ Time-based · /loop · /schedule on an interval Triggered by a time interval; stops when you cancel or the work completes. Best for recurring work or reacting to external systems. You hand off the trigger . ⚡ Proactive event-driven, no human Triggered by an event or schedule with no human in real time; each task exits at its goal, the routine runs until you turn it off. Best for recurring streams of well-defined work. You hand off the prompt . Notice the progression: moving from turn-based to proactive, you hand off more of the loop each step - first the verification check, then the stop condition, then the trigger, and finally the prompt itself. Tab 4 has the full \"which loop when\" table. ← intro you drive →"
+        },
+        {
+          "bid": "b-befe3f1c",
+          "hash": "sha256:8c8f6473a77159c2c24f78068e4b7b1c4bc517b46226f4ff5a0ec714b176840c",
+          "heading": "Loops You Drive - Turn-based & Goal-based",
+          "kind": "tip",
+          "links": [
+            "https://x.com/ClaudeDevs/status/2074208949205881033?s=51"
+          ],
+          "refs_parts": [
+            12,
+            18
+          ],
+          "source_url": "https://x.com/ClaudeDevs/status/2074208949205881033?s=51",
+          "text": "2 Loops You Drive - Turn-based & Goal-based The two real-time loops: you kick them off and stay close. Turn-based - the agentic loop Every prompt you send is already a loop: Claude gathers context, takes action, checks its work, repeats if needed, and responds - exiting when it judges the task complete or the effort budget runs out. The lever is verification: encode your manual check steps as a SKILL.md so Claude verifies its own work end-to-end, and give it tools to see, measure, interact (the more quantitative the check, the easier it self-verifies). Builds on verification and Part 18's verification skills . Create a verify-frontend-change skill: never call a UI change done from a successful edit alone. Start the dev server, open the page, interact with the change, confirm zero new console errors, and run a Chrome DevTools MCP performance trace. If any step fails, fix it and rerun from the top. Goal-based - /goal A single turn often isn't enough, and agents do better when they can iterate. /goal lets you define what \"done\" looks like so Claude can't quietly decide it's \"good enough\" and stop early. Each time it tries to stop, an evaluator model checks your condition and sends it back to work until the goal is met or your turn cap is reached. Deterministic criteria - tests passing, a score threshold - work best. Extends /goal (see Part 12). /goal get the homepage Lighthouse score to 90 or above, stop after 5 tries ← the four loops runs without you →"
+        },
+        {
+          "bid": "b-781216c8",
+          "hash": "sha256:497a306a256d34699b743632d97bfa8a85fdcba8484095ca667bfc681c6c38a0",
+          "heading": "Loops That Run Without You - Time-based & Proactive",
+          "kind": "tip",
+          "links": [
+            "https://x.com/ClaudeDevs/status/2074208949205881033?s=51"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/ClaudeDevs/status/2074208949205881033?s=51",
+          "text": "3 Loops That Run Without You - Time-based & Proactive The two autonomous loops: the work comes to Claude instead of you prompting each time. Time-based - /loop and /schedule For work that's recurring (same task, changing inputs - a morning Slack summary) or that reacts to an external system (a PR that gets reviews or fails CI). /loop re-runs a prompt on an interval on your machine - turn your laptop off and it stops. Move it to the cloud by turning it into a Routine with /schedule . Pulls together /loop , /schedule , and Routines . /loop 5m check my PR, address review comments, and fix failing CI Proactive - compose the whole stack The most autonomous loop: triggered by an event or schedule with no human in real time, running in the cloud whether your laptop is open or not. You compose the primitives - /schedule to watch for new work, /goal + verification skills to define and check \"done,\" dynamic workflows to orchestrate triage/fix/review across many items, and auto mode so it never stops to ask permission. Each task exits at its goal; the routine runs until you turn it off. /schedule every hour: check the project-feedback channel for bug reports, triage each one, open a PR with a fix, and have a second agent review it before notifying me ← you drive make them good →"
+        },
+        {
+          "bid": "b-0c0d6910",
+          "hash": "sha256:678eb8993e4eba3dbd64823ea5c1a1bdd7d96aa2a0530013849adb3c5b59d1e7",
+          "heading": "Making Loops Good - Quality, Tokens & Which One When",
+          "kind": "tip",
+          "links": [
+            "https://x.com/ClaudeDevs/status/2074208949205881033?s=51"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/ClaudeDevs/status/2074208949205881033?s=51",
+          "text": "4 Making Loops Good - Quality, Tokens & Which One When A loop is only as good as the system around it. Two things to get right, plus a cheat sheet. Keep the output quality high Keep the codebase clean - Claude follows the patterns already there. Give it a way to verify its own work - encode what \"good\" looks like as skills. Make docs easy to reach - framework and library docs carry current best practices. Use a second agent for review - fresh context is less biased; the built-in /code-review or Code Review for GitHub. When a result misses the bar, don't just fix the instance - encode the fix so every future iteration improves. Manage token usage Right primitive + model - small tasks don't need a fleet; use cheaper/faster models for routine work. Clear stop criteria - specific \"done\" so Claude lands sooner (but not too soon). Pilot before a large run - dynamic workflows can spawn hundreds of agents; gauge on a slice first. Scripts for deterministic work - running a script beats re-reasoning the steps each time. Don't over-schedule - match the interval to how often the thing you watch actually changes. Review usage - /usage breaks down skills/subagents/MCPs; /goal with no args shows turns + tokens so far; /workflows shows per-agent usage and lets you stop one. Which loop when Loop You hand off Use it when Reach for Turn-based The check You're exploring or deciding Custom verification skills Goal-based The stop condition You know what done looks like /goal Time-based The trigger The work happens on a schedule, outside your project /loop , /schedule Proactive The prompt The work is recurring and well-defined All of the above + dynamic workflows To get started, look at the work you already do, pick one task where you're the bottleneck, and ask which piece you could hand off - the verification check, the stop condition, or the trigger. Run the loop, watch where it stalls or over-reaches, and iterate. ← runs without you back to intro →"
+        }
+      ],
+      "declared_tips": 4,
+      "hash": "sha256:523987bcdcd4b98f3d25d22652df26cc08a915da0e3f26766c820cac83997ff8",
+      "id": "part-19",
+      "number": 19,
+      "order": 19,
+      "title": "Getting Started With Loops",
+      "volume": 21
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-1109dd16",
+          "hash": "sha256:424a378df62652950d241472c42cc1bd2c92edb134c218d90bc6070b4c4ce289",
+          "heading": "Give Your Setup a /checkup",
+          "kind": "intro",
+          "links": [
+            "https://x.com/bcherny/status/2074997571563479143"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2074997571563479143",
+          "text": "Give Your Setup a /checkup Every setup drifts - skills you stopped using, a CLAUDE.md that quietly grew to 10k tokens, hooks that slow every turn, a version that's three releases behind. Boris shipped /checkup : one command that audits your whole Claude Code install, tells you exactly what's wasteful or broken, and cleans it up - after it confirms with you, and always reversibly. It's the whole \"keep your setup lean\" playbook - context minimalism, CLAUDE.md hygiene, writing fixes down instead of re-prompting - turned into a single command. @bcherny · July 8, 2026 Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-7a79722d",
+          "hash": "sha256:63788ce8d41b05263952fcba2f5f0c8e1e636d92070f6c4e3af4fe95e3cda1c4",
+          "heading": "/checkup - The One-Command Tune-Up",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2074997571563479143"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2074997571563479143",
+          "text": "1 /checkup - The One-Command Tune-Up Run /checkup and Claude Code inspects your setup for waste, staleness, and breakage, then proposes fixes across seven areas: What /checkup cleans up Clean up unused skills / MCPs / plugins - drop what you never invoke and save context every session ( context minimalism ). Dedup your local CLAUDE.md against the checked-in one so rules aren't stated twice. Break up a big root CLAUDE.md into nested CLAUDE.md's + skills, so context loads only where it's relevant. Turn off slow hooks that tax every turn. Update Claude Code to the latest version. Enable auto mode by default so it stops asking permission for safe work. Pre-approve frequently-denied read-only commands - the same idea as /fewer-permission-prompts . ...and a few other goodies. Think of it as a periodic tune-up: the hygiene tips scattered across this catalog, run for you in one pass. /checkup ← intro safe by default →"
+        },
+        {
+          "bid": "b-56143e1d",
+          "hash": "sha256:59d94b662fb4a7bd4d242a9e70b823aef8ebf8ccd9c5b917a5325a764e31a014",
+          "heading": "Safe by Default - Confirms First, Fully Reversible",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2074997571563479143"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2074997571563479143",
+          "text": "2 Safe by Default - Confirms First, Fully Reversible The reason you can run /checkup on a real project without holding your breath: it never changes anything behind your back. It confirms before it touches anything /checkup surfaces a plan first - here's what's broken, here's what's unused, here's what it'd change - and waits for your call. Nothing is modified until you pick an option. Everything is reversible Settings changes are one-line toggles you can flip back. CLAUDE.md edits stay in your working tree, so you review them in git diff before you commit a thing - same discipline as writing fixes down instead of re-prompting. You're always in control of scope Clean up everything - the recommended one-shot. Let me pick - choose which groups to touch (install repair, unused plugins/MCP, unused skills, CLAUDE.md slimming). No, keep everything - report only; nothing changes. Chat about this - ask questions before deciding. ← /checkup the run →"
+        },
+        {
+          "bid": "b-916c7592",
+          "hash": "sha256:ce5f97f08a03332ca79fc3300201f65e92d2e496414a6ca403affba9a590434f",
+          "heading": "The Run - What It Actually Found",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2074997571563479143"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2074997571563479143",
+          "text": "3 The Run - What It Actually Found Boris ran /checkup on his own setup and posted the result. It caught things he didn't know were there: The findings His claude command was broken - a test run had overwritten its launcher. 38 project skills had never been used across 2,345 sessions . His CLAUDE.md was loading ~10k tokens every session . Cleaning it all up repairs the install and saves roughly 5.5k tokens of context per session - a permanent tax lifted off every future turn. The recommended fix (one keystroke) Repair the broken launcher, disable 3 unused plugins + the hex MCP server + 1 stray skill, turn off the 38 never-used project skills, and slim CLAUDE.md by moving ~1.9k tokens of content to lazy loading. Reversible, as always - the CLAUDE.md edits land in your working tree for git diff review. The lesson underneath the feature: setups accumulate silent waste, and you rarely notice until something measures it. /checkup is that measurement - the maintenance half of context minimalism, automated. ← safe by default back to intro →"
+        }
+      ],
+      "declared_tips": 3,
+      "hash": "sha256:9414023c08e186c70c92e54d13ea8bf9499c33bdc80f41a6bdbfeba143384503",
+      "id": "part-20",
+      "number": 20,
+      "order": 20,
+      "title": "Give Your Setup a /checkup",
+      "volume": 22
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-e4e21e90",
+          "hash": "sha256:375022463118b091d5de824e93576f2d8d2dd47f2a1e07b7e89cc329e3cd0aa0",
+          "heading": "Automation Is the Meta-Skill",
+          "kind": "intro",
+          "links": [
+            "https://x.com/bcherny/status/2077460395279692197"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2077460395279692197",
+          "text": "Automation Is the Meta-Skill The best engineers always spent their time automating - vim macros, lint rules, e2e suites - because it multiplied their own output. Boris argues that in the agent era this matters more , for three reasons: it speeds up your whole fleet, it moves fixes into code so a class of bug is gone forever, and - most importantly - it lets anyone contribute by encoding domain knowledge as infrastructure instead of leaving it stuck in people's heads. The punchline: a rejected PR is a failure of automation. @bcherny · July 15, 2026 Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-1a577f98",
+          "hash": "sha256:0a60204c210004429fbe81983926917ff1475a014f59ab1afc8e3329ff738c51",
+          "heading": "Automation Is the Highest-Leverage Work",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2077460395279692197"
+          ],
+          "refs_parts": [
+            1,
+            19
+          ],
+          "source_url": "https://x.com/bcherny/status/2077460395279692197",
+          "text": "1 Automation Is the Highest-Leverage Work The through-line hasn't changed - only gotten stronger. The best engineers Boris knew always poured time into automating their own work, because it multiplied everything else they did. Old world, sharpened Better vim/emacs macros, lint rules that catch a repeat issue automatically, an e2e suite so you never smoke-test by hand - these were the highest-leverage activities an engineer could do, because they multiplied their own output. That logic didn't go away with agents; it compounded. Infra and DevX automation speeds you up - and if you're running an army of agents, every one of them is sped up too. So the payoff stopped being linear: more automation = more output per unit of time × your number of agents Pairs with parallel execution (Part 1) and loops (Part 19). ← intro fixes into code →"
+        },
+        {
+          "bid": "b-84a09810",
+          "hash": "sha256:108ff468b16eadd3cdd73f621218865f380410e3ec85e88be3fef1d03e4de905",
+          "heading": "Move Fixes From Prompts Into Code",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2077460395279692197"
+          ],
+          "refs_parts": [
+            15,
+            19
+          ],
+          "source_url": "https://x.com/bcherny/status/2077460395279692197",
+          "text": "2 Move Fixes From Prompts Into Code There's a difference between fixing an issue and eliminating a class of issue. The first is a chat correction; the second is infrastructure. One-off fix The agent fixes the issue every time it sees it - spends tokens on every run, and might miss cases. ▸ Encoded rule Claude writes a lint rule, CI step, or routine - the whole class is caught automatically, forever, for every contributor. Boris: this is \"really what people are talking about when they talk about loops - it's about automating entire types of busywork rather than solving them one off.\" Not a new idea - engineers have done it for a long time - but agents make it cheap to reach for. It generalizes write it down, don't re-prompt (Part 15): a chat correction fixes one run; encoded infrastructure fixes every run (Part 19). ← highest leverage knowledge as infra →"
+        },
+        {
+          "bid": "b-24ea42c1",
+          "hash": "sha256:79b7ba196f13748dde17ae41f4298a0f12f208d3b6cc374b76a3b0bdb81d11dc",
+          "heading": "Encode Domain Knowledge as Infrastructure",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2077460395279692197"
+          ],
+          "refs_parts": [
+            1,
+            2,
+            6
+          ],
+          "source_url": "https://x.com/bcherny/status/2077460395279692197",
+          "text": "3 Encode Domain Knowledge as Infrastructure The most important reason, and the one that's genuinely new. Automation is what lets other people - not just you - contribute to a codebase. What used to block contribution Engineers now contribute on day one because Claude can navigate the codebase for them, and non-engineers can contribute as effectively as engineers. What gets in the way of both is domain knowledge that lives in people's heads - the stuff you used to have to learn while ramping up. What's changed: the knowledge you can encode as infrastructure is no longer limited to lint rules, types, and tests. It can now capture nearly all domain knowledge - code comments skills CLAUDE.md REVIEW.md docs memories - so an agent (or a new human) works productively with zero additional context from the prompter . Builds directly on CLAUDE.md (Part 1), skills (Part 2), and code review (Part 6). If I put up a PR for an iOS codebase I don't know and a reviewer rejects it because it doesn't use the right framework, or a designer's feature gets rejected because it doesn't follow the right architectural patterns - these are failures of automation. - Boris Cherny. The knowledge should have been in the infra, not a reviewer's head. Every team should be writing the CLAUDE.md's, REVIEW.md's, skills, and docs that let agents work in their codebase with zero extra context. It sounds extreme, but it's the natural extension of what engineers have always done: automate, and encode domain knowledge as infrastructure - so Claude writes better code, review catches issues automatically, and the next person contributes more easily. ← fixes into code back to intro →"
+        }
+      ],
+      "declared_tips": 3,
+      "hash": "sha256:ad8c21d69a46ee1719693211069cbb1af2c9709d0461f9a7892ee42888093f56",
+      "id": "part-21",
+      "number": 21,
+      "order": 21,
+      "title": "Automation Is the Meta-Skill",
+      "volume": 23
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-561ff7aa",
+          "hash": "sha256:e261d15ca332d578d2989db988fba2fd3e05eb63a83e2f387935f92cbd6d9890",
+          "heading": "The New Rules of Context Engineering",
+          "kind": "intro",
+          "links": [
+            "https://x.com/trq212/status/2080710971228918066?s=51"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2080710971228918066?s=51",
+          "text": "The New Rules of Context Engineering Your prompt is only a sliver of what Claude actually reads - the rest is assembled from the system prompt, CLAUDE.md, skills, memory, and references. That's context engineering , and the rules just changed. Tuning Claude Code for the Claude 5 generation, the team deleted over 80% of the system prompt with no measurable loss on coding evals. Thariq distilled what they learned into six then→now shifts, and every one says the same thing: stop over-constraining the model and let its judgement do the work. It lands the same day as Opus 5 - the model these rules are written for. @trq212 · July 24, 2026 Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-e04fd328",
+          "hash": "sha256:f1b5fc43999ae949bbe20be77ce6e7397721477aa1c53145f2dc9163a99eedfd",
+          "heading": "Give Judgement, Not Rules",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2080710971228918066?s=51"
+          ],
+          "refs_parts": [
+            15
+          ],
+          "source_url": "https://x.com/trq212/status/2080710971228918066?s=51",
+          "text": "1 Give Judgement, Not Rules The headline shift. Older models needed rigid guardrails to avoid worst-case behavior - but a rule that's right 90% of the time is wrong the other 10%. Newer models read the surrounding context and decide for themselves, so the team swapped hard rules for judgement. The system prompt's comment guidance is the cleanest example: Then - a rule \"In code: default to writing no comments. Never write multi-paragraph docstrings or multi-line comment blocks - one short line max.\" ▸ Now - judgement \"Write code that reads like the surrounding code: match its comment density, naming, and idiom.\" The rule was wrong everywhere comments were wanted - documentation, gnarly code. Judgement handles both cases without a special rule for each. That's how they cut the prompt so hard: -80% of Claude Code's system prompt removed for Opus 5 / Fable 5 = no measurable eval loss The mirror worth holding up: most CLAUDE.md files (this repo's included) are still walls of hard rules and banned phrases. Updates context minimalism (Part 15). ← intro design interfaces →"
+        },
+        {
+          "bid": "b-9f1c635e",
+          "hash": "sha256:a9b4bc17d4d96ceccba69f9f27540d3aa6e8f234ab7d966fcbee87f62626843c",
+          "heading": "Design Interfaces, Not Examples",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2080710971228918066?s=51"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2080710971228918066?s=51",
+          "text": "2 Design Interfaces, Not Examples The old number-one rule for tools was to give Claude worked examples. With the newest models, examples backfire - they fence Claude into the exploration space you happened to demonstrate. Design the interface instead, and let expressive parameters do the teaching. TodoWrite, without a single example The tool ships no walkthrough. Its shape teaches usage: a status parameter that can only be one of three values, plus one constraint on how they move. pending in_progress completed only one in_progress at a time The enum hints at the lifecycle; the \"one in_progress\" rule pins down the behavior - no example needed. Ask the same of your own tools, scripts, and files: what parameters does Claude have, and how could they be more expressive ? A rich interface beats a page of examples. (Same idea for design: an HTML mockup beats a described layout or a screenshot - see tab 4.) ← judgement progressive disclosure →"
+        },
+        {
+          "bid": "b-4b718e0c",
+          "hash": "sha256:5e26eae774e21b972c5695f95961dd46939e0ae24d9b6ca28ebbaed96315677c",
+          "heading": "Progressive Disclosure Over Front-Loading",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2080710971228918066?s=51"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/trq212/status/2080710971228918066?s=51",
+          "text": "3 Progressive Disclosure Over Front-Loading Don't cram everything a request might need into the prompt. Load context at the moment it's relevant - the same principle whether it's the built-in system prompt, tools, or your own files. Surface Then - all upfront Now - loaded when needed System prompt Code-review & verification steps baked in Moved into skills Claude calls selectively Tools Every definition always in context Deferred loading - searched via ToolSearch before use CLAUDE.md / skills One mega-file with every practice A tree of files loaded at the right time The myth is that CLAUDE.md and skills should be a central repository for everything you might hit, because Claude won't find it otherwise. It will. Split long skills across many files and let Claude pull the branch it needs. And stop repeating yourself Older models leaned on repetition and end-of-context reminders, so instructions got duplicated in both the system prompt and the tool description. Newer models don't need it - put tool instructions in the tool description only , and delete the echo. ← interfaces memory & references →"
+        },
+        {
+          "bid": "b-b6ce0a44",
+          "hash": "sha256:91c61173738f35cd44397bc75368d475ffcf9b4496f54777d0f383686fe0601f",
+          "heading": "Auto-Memory & Rich References",
+          "kind": "tip",
+          "links": [
+            "https://x.com/trq212/status/2080710971228918066?s=51"
+          ],
+          "refs_parts": [
+            8,
+            15
+          ],
+          "source_url": "https://x.com/trq212/status/2080710971228918066?s=51",
+          "text": "4 Auto-Memory & Rich References Two shifts in how Claude remembers, and what you point it at. Memory in CLAUDE.md → Auto-memory You used to hand-save context to CLAUDE.md with the # hotkey. Now Claude automatically saves memories relevant to the work and to you, and loads them across sessions - memory, artifacts, and skills take over the job CLAUDE.md used to do alone. Builds on auto-memory (Part 8) and write-it-down (Part 15). And references got richer. A \"spec\" no longer means a markdown file - Claude handles far more expressive references, and code-shaped ones carry the highest fidelity: ▦ HTML artifacts A working mockup from the artifacts feature - a real design beats a screenshot or a description. </> Code as spec A function in another codebase to port - an instruction in a language Claude already knows cold. ✓ Test suites A detailed suite is a spec that verifies itself. ★ Rubrics Encode your taste - what good API design looks like - and verifier agents in a dynamic workflow check against it. ← progressive disclosure your context →"
+        },
+        {
+          "bid": "b-ba8e93b9",
+          "hash": "sha256:01133cbc0cd6c5509bfb49b452a67aadbca120ec07bdda2578281e89555a6d93",
+          "heading": "Applying It to Your Own Context",
+          "kind": "tip",
+          "links": [
+            "https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models"
+          ],
+          "refs_parts": [
+            20
+          ],
+          "source_url": "https://claude.com/blog/the-new-rules-of-context-engineering-for-claude-5-generation-models",
+          "text": "5 Applying It to Your Own Context Pull it together - here's the stack Claude assembles for a request, top to bottom, and what belongs in each layer: The assembled context Your prompt - the one specific thing you want right now. References - @-mentioned files, specs, mockups, codebases, artifacts. System prompt - tied to the product; you rarely touch it in Claude Code (spend real time here only if you're building your own agent). CLAUDE.md - lightweight: what the repo is for, and the gotchas . Skip the obvious; push detail into skills via progressive disclosure. Skills - lightweight guides for your opinions and best practices; avoid over-constraining except in high-stakes areas. Memory - now automatic. Can't tell what to cut? Run /doctor The new claude doctor command ( /doctor in Claude Code) rightsizes your skills and CLAUDE.md automatically - the context-engineering twin of Part 20's /checkup . /doctor ← memory & references opus 5 →"
+        },
+        {
+          "bid": "b-be1681fe",
+          "hash": "sha256:e31a3644a039de477774d6dc6b96f8d4bec3dd0e5bc54d256c083bef7836721a",
+          "heading": "Opus 5 - And the Model That's Hardest to Inject",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2080713091688583312?s=51"
+          ],
+          "refs_parts": [
+            15
+          ],
+          "source_url": "https://x.com/bcherny/status/2080713091688583312?s=51",
+          "text": "6 Opus 5 - And the Model That's Hardest to Inject These rules ship for a reason. Opus 5 landed the same day - state-of-the-art on coding and knowledge-work evals (agentic terminal coding, GDPval, ARC-AGI-3, computer use). But the eval scores aren't what Boris led with. The least prompt-injectable model yet Across prompt-injection evals and red-teaming, Opus 5 is very hard to inject. Layer the defenses - strong model alignment, prompt-injection probes, and Auto Mode in Claude Code - and the attack success rate collapses. prompt-injection attacks vs. Opus 5 + PI probes + auto mode success rate → ~0% That's the ground the new rules stand on: judgement-based context engineering only works if you can trust the model to reconcile conflicting, attacker-adjacent context safely. Pairs with why auto mode is trustworthy (Part 15). More than any of these eval scores, what is most exciting to me is something else: Opus 5 is our least prompt injectable model yet. - Boris Cherny, on the Opus 5 launch ← your context back to intro →"
+        }
+      ],
+      "declared_tips": 6,
+      "hash": "sha256:e4dee7e42df0ac8bb1f1c9ada805a195fb5205b42775d5a5f2790cc611e16ae0",
+      "id": "part-22",
+      "number": 22,
+      "order": 22,
+      "title": "The New Rules of Context Engineering",
+      "volume": 24
+    }
+  ],
+  "schema_version": 1,
+  "shape": {
+    "blocks_count": 149,
+    "parser_profile": "v2-volume-tab",
+    "parts_count": 22,
+    "text_chars": 117396,
+    "tips_count": 127
+  },
+  "source": {
+    "content_hash": "sha256:288731b8d1a9858fc85ec206689068969e13b64642ae26c1b9ec91e2b86cedc5",
+    "etag": "\"90bc9abed0b34f9c5845654c4c1e5364-ssl-df\"",
+    "fetched_at": "2026-07-30T08:20:53Z",
+    "last_modified": null,
+    "raw_bytes": 546617,
+    "url": "https://howborisusesclaudecode.com/"
+  }
+}
