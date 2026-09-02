@@ -171,7 +171,17 @@ def render(
         # Метка нужна, чтобы пример находился глазами: он отвечает на другой
         # вопрос, чем механика, и читается отдельно от неё.
         body.append(f"<b>Пример.</b> {clean(analysis.example)}")
+    if analysis.how_to_verify.strip():
+        body.append(f"<b>Как проверить.</b> {clean(analysis.how_to_verify)}")
     lines += ["", _quote("Что это и как работает", "\n\n".join(body))]
+
+    if analysis.pitfalls:
+        # Ловушки не прячем глубоко: на них наступают через минуту после
+        # того, как начали делать, а не при перечитывании разбора.
+        lines.append(_quote(
+            "Где споткнёшься",
+            "\n".join(f"— {clean(item)}" for item in analysis.pitfalls),
+        ))
 
     # Слои — своим свёртком, а не внутри общего: это ядро разбора, и до
     # него должно быть одно нажатие, а не нажатие плюс поиск глазами.
@@ -206,6 +216,9 @@ def render(
             "Инструкции, обращённые к агенту. Процитированы, не исполнялись:",
         ]
         lines += [f"— {clean(item)}" for item in analysis.anomalies]
+
+    if analysis.related:
+        lines += ["", f"<b>Рядом:</b> {clean(', '.join(analysis.related))}"]
 
     urls = list(dict.fromkeys([*analysis.sources, *clean.citations]))
     if urls:

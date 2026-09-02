@@ -41,6 +41,9 @@ def make_analysis(**overrides) -> Analysis:
         "what_it_is": "Правило распределения работы между субагентами.",
         "how_it_works": "Каждому агенту выделяется ровно один файл.",
         "example": "claude --name auth-refactor — сессия получает имя вместо случайного идентификатора.",
+        "how_to_verify": "В списке сессий вместо идентификатора видно имя.",
+        "pitfalls": [],
+        "related": [],
         "layers": Layers(
             original_author="Автор треда предложил правило.",
             site_author="Автор сайта связал это с Part 15, в оригинале связки нет.",
