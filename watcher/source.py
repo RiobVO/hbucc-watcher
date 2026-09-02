@@ -296,6 +296,8 @@ class Document:
     content_hash: str
     text_chars: int
     parser_profile: str
+    # Кто ведёт сайт, по его собственной разметке. None — метки нет.
+    site_author: str | None = None
 
     @property
     def blocks_count(self) -> int:
@@ -437,6 +439,21 @@ def _parse_volume(area: Node, part_number: int, declared: int | None, order: int
     )
 
 
+def site_author(html: str) -> str | None:
+    """Кто ведёт сайт — по его собственной разметке.
+
+    Нужно, чтобы слой «дописано на сайте» подписывался человеком, а не
+    безличным «сайт». Имя берётся из `<meta name="author">` — то есть из
+    факта на странице. Модели этот вопрос не задаётся вовсе: выдуманное
+    авторство хуже безличной формулировки, а проверить его читатель не
+    может. Метки нет — возвращаем None, и подпись остаётся безличной.
+    """
+    node = HTMLParser(html).css_first('meta[name="author"]')
+    if node is None:
+        return None
+    return (node.attributes.get("content") or "").strip() or None
+
+
 def parse(html: str) -> Document:
     """Разложить HTML в структуру «части -> блоки».
 
@@ -482,6 +499,7 @@ def parse(html: str) -> Document:
         content_hash=content_hash,
         text_chars=text_chars,
         parser_profile="v2-volume-tab",
+        site_author=site_author(html),
     )
     log.info(
         "разобрано: %d частей, %d советов (+%d интро), %d символов",

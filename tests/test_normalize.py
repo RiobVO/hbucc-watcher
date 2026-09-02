@@ -7,7 +7,7 @@
 
 from __future__ import annotations
 
-from watcher.source import normalize_text, sha256_of
+from watcher.source import normalize_text, sha256_of, site_author
 
 
 def test_smart_quotes_do_not_change_hash():
@@ -56,3 +56,32 @@ def test_leading_and_trailing_space_removed():
 def test_empty_input_is_safe():
     assert normalize_text("") == ""
     assert normalize_text("   \n\t ") == ""
+
+
+# --------------------------------------------------------------------------
+# Кто ведёт сайт — факт из его же разметки
+# --------------------------------------------------------------------------
+
+
+def test_site_author_is_read_from_meta():
+    """Подписывать слой «дописано на сайте» нужно тем, кто его ведёт.
+
+    Имя берётся из разметки страницы, а не из памяти модели: выдуманное
+    авторство хуже безличной формулировки.
+    """
+    html = '<html><head><meta name="author" content="@CarolinaCherry"></head><body></body></html>'
+    assert site_author(html) == "@CarolinaCherry"
+
+
+def test_site_author_survives_attribute_order():
+    html = '<html><head><meta content="@someone" name="author"></head></html>'
+    assert site_author(html) == "@someone"
+
+
+def test_site_author_is_none_when_absent():
+    """Метки нет — остаётся безличная подпись, догадок не строим."""
+    assert site_author("<html><head><title>x</title></head></html>") is None
+
+
+def test_site_author_ignores_blank_value():
+    assert site_author('<html><head><meta name="author" content="   "></head></html>') is None

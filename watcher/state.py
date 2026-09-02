@@ -144,6 +144,8 @@ class Snapshot:
                 "fetched_at": utcnow(),
                 "content_hash": doc.content_hash,
                 "raw_bytes": raw_bytes,
+                # Чтобы разбор мог назвать того, кто ведёт сайт, по имени.
+                "site_author": doc.site_author,
             },
             shape={
                 "parts_count": len(doc.parts),

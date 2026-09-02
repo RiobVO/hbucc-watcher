@@ -140,10 +140,10 @@ class Analysis(BaseModel):
     headline: str = Field(description="До 80 символов, по-русски, без кавычек и эмодзи.")
     what_it_is: str = Field(description="Своими словами, для человека, который видит эту фичу впервые.")
     how_it_works: str = Field(description="Механика по сути, а не пересказ формулировок с сайта.")
-    # Отдельное поле, а не абзац внутри how_it_works. Пример под его стек
-    # объявлен обязательным, и внутри одного поля он конкурировал за место
-    # с механикой и границами применимости — вытеснялась именно механика.
-    where_it_fits: str = Field(description="Один конкретный пример: где это ляжет в его работе — Python, aiogram, FastAPI, PostgreSQL, Next.js, Windows, один разработчик. Не видишь такого места — скажи прямо, что не видишь.")
+    # Отдельное поле, а не абзац внутри how_it_works: пример объявлен
+    # обязательным, и внутри одного поля он конкурировал за место с
+    # механикой — вытеснялась именно механика.
+    example: str = Field(description="Как это выглядит в деле: команда, строчка конфига или короткая последовательность шагов. Общий и повторяемый, а не про репозитории читателя. Только из разбираемого материала или из найденной документации.")
     layers: Layers
     windows: Windows
     verdict: Verdict
@@ -233,6 +233,7 @@ def build_context(
     snapshot_parts: list[Part],
     allowed_domains: list[str],
     originals: list[Original] | None = None,
+    site_author: str | None = None,
 ) -> str:
     """Собрать вход для модели: фрагмент плюс адресный контекст.
 
@@ -261,6 +262,10 @@ def build_context(
     parts_by_number = {p.number: p for p in snapshot_parts}
     lines: list[str] = []
 
+    if site_author:
+        # Факт из разметки сайта, а не догадка. Нужен, чтобы слой «дописано
+        # на сайте» назывался человеком, а не безличным «сайт».
+        lines.append(f"САЙТ ВЕДЁТ: {site_author}")
     lines.append(f"ТИП ИЗМЕНЕНИЯ: {_KIND_RU.get(event.kind, event.kind)}")
     lines.append(f"ЧАСТЬ: Part {event.part_number} — {event.part_title}")
     if event.injection_suspected:
@@ -505,6 +510,7 @@ def analyze(
     system_prompt: str,
     task_template: str,
     user_agent: str = "hbucc-watcher/1.0",
+    site_author: str | None = None,
 ) -> Analysis:
     """Получить разбор события. Бросает AnalysisFailed — событие не доставлено."""
     import openai
@@ -524,7 +530,9 @@ def analyze(
     opened = sum(1 for o in originals if o.status == STATUS_OK)
     log.info("первоисточники: загружено %d из %d ссылок", opened, len(originals))
 
-    context = build_context(event, snapshot_parts, allowed, originals=originals)
+    context = build_context(
+        event, snapshot_parts, allowed, originals=originals, site_author=site_author
+    )
     user_message = task_template.replace("{{CONTEXT}}", context)
 
     client = OpenAI(api_key=api_key, max_retries=2)

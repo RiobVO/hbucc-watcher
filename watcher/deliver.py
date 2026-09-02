@@ -121,7 +121,23 @@ class _Text:
         return esc(cleaned)
 
 
-def render(analysis: Analysis, event: Event) -> str:
+def post_handle(urls: list[str]) -> str | None:
+    """Хендл автора цитируемого поста — из адреса, а не из текста.
+
+    Подписывать слой именем человека честно только тогда, когда имя
+    вычислено, а не припомнено. В адресе поста хендл стоит первым сегментом
+    пути, ошибиться негде. Поста среди источников нет — подпись безличная.
+    """
+    for url in urls:
+        parsed = urlparse(url)
+        if (parsed.hostname or "").removeprefix("www.").endswith("x.com"):
+            tail = [p for p in parsed.path.split("/") if p]
+            if tail:
+                return f"@{tail[0]}"
+    return None
+
+
+def render(analysis: Analysis, event: Event, *, site_author: str | None = None) -> str:
     """Собрать текст разбора.
 
     Порядок секций и подписи — здесь. Менять тон и объём можно правкой
@@ -144,17 +160,25 @@ def render(analysis: Analysis, event: Event) -> str:
         lines += ["", "<b>Что сделать</b>", clean(analysis.action)]
 
     body = [clean(analysis.what_it_is), clean(analysis.how_it_works)]
-    if analysis.where_it_fits.strip():
+    if analysis.example.strip():
         # Метка нужна, чтобы пример находился глазами: он отвечает на другой
         # вопрос, чем механика, и читается отдельно от неё.
-        body.append(f"<b>Где ляжет у тебя.</b> {clean(analysis.where_it_fits)}")
+        body.append(f"<b>Пример.</b> {clean(analysis.example)}")
     lines += ["", _quote("Что это и как работает", "\n\n".join(body))]
 
     # Слои — своим свёртком, а не внутри общего: это ядро разбора, и до
     # него должно быть одно нажатие, а не нажатие плюс поиск глазами.
+    #
+    # Подписи называют людей, а не роли: «@trq212 в оригинале» вместо
+    # «автор оригинала». Оба имени вычислены — хендл из адреса поста, тот,
+    # кто ведёт сайт, из его разметки. Не вычислилось — подпись безличная:
+    # чужое имя в подписи хуже её отсутствия.
+    who_post = post_handle(analysis.sources)
+    said = f"{esc(who_post)} в оригинале" if who_post else "В оригинальном посте"
+    added = f"{esc(site_author)} дописал" if site_author else "Дописано на сайте"
     lines.append(_quote("Слои достоверности", "\n\n".join([
-        f"<b>Автор оригинала.</b> {clean(analysis.layers.original_author)}",
-        f"<b>Автор сайта дописал.</b> {clean(analysis.layers.site_author)}",
+        f"<b>{said}.</b> {clean(analysis.layers.original_author)}",
+        f"<b>{added}.</b> {clean(analysis.layers.site_author)}",
         f"<b>Документация.</b> {clean(analysis.layers.official_docs)}",
         f"<b>Мой вывод.</b> {clean(analysis.layers.my_conclusion)}",
     ])))

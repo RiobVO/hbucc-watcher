@@ -23,6 +23,7 @@ from watcher.deliver import (
     TELEGRAM_HARD_LIMIT,
     chunk,
     esc,
+    post_handle,
     render,
     source_label,
     strip_citations,
@@ -39,7 +40,7 @@ def make_analysis(**overrides) -> Analysis:
         "headline": "Субагентам дают по одному файлу",
         "what_it_is": "Правило распределения работы между субагентами.",
         "how_it_works": "Каждому агенту выделяется ровно один файл.",
-        "where_it_fits": "В боте на aiogram делить нечего: там один handler на задачу.",
+        "example": "claude --name auth-refactor — сессия получает имя вместо случайного идентификатора.",
         "layers": Layers(
             original_author="Автор треда предложил правило.",
             site_author="Автор сайта связал это с Part 15, в оригинале связки нет.",
@@ -175,32 +176,30 @@ def test_decision_comes_before_evidence(event):
 
 def test_render_separates_four_credibility_layers(event):
     """Четыре слоя обязаны быть различимы, а не слиты в один абзац."""
-    text = render(make_analysis(), event)
-    assert "<b>Автор оригинала.</b>" in text
-    assert "<b>Автор сайта дописал.</b>" in text
+    text = render(make_analysis(), event, site_author="@CarolinaCherry")
+    assert "<b>@bcherny в оригинале.</b>" in text
+    assert "<b>@CarolinaCherry дописал.</b>" in text
     assert "<b>Документация.</b>" in text
     assert "<b>Мой вывод.</b>" in text
 
 
-def test_where_it_fits_is_rendered_as_its_own_paragraph(event):
-    """Пример под его стек — отдельное поле схемы.
+def test_example_is_rendered_as_its_own_paragraph(event):
+    """Пример — отдельное поле схемы.
 
     Пока он жил внутри how_it_works вместе с механикой и границами
     применимости, он вытеснял механику: пример объявлен обязательным, а
     лимит поля — один на всех.
     """
-    text = render(
-        make_analysis(where_it_fits="В скоринге на FastAPI это уберёт три захода."), event
-    )
-    assert "<b>Где ляжет у тебя.</b>" in text
-    assert "В скоринге на FastAPI это уберёт три захода." in text
+    text = render(make_analysis(example="Набери /color и выбери цвет строки ввода."), event)
+    assert "<b>Пример.</b>" in text
+    assert "Набери /color и выбери цвет строки ввода." in text
     block = text[text.index("Что это и как работает"):]
-    assert "Где ляжет у тебя." in block[: block.index("</blockquote>")]
+    assert "Пример." in block[: block.index("</blockquote>")]
 
 
-def test_empty_where_it_fits_leaves_no_dangling_label(event):
-    """Модель не увидела места в его проектах — метка без текста не выводится."""
-    assert "Где ляжет у тебя." not in render(make_analysis(where_it_fits=""), event)
+def test_empty_example_leaves_no_dangling_label(event):
+    """Рабочего примера в материале не нашлось — метка без текста не выводится."""
+    assert "Пример." not in render(make_analysis(example=""), event)
 
 
 def test_layers_live_in_their_own_collapsible_block(event):
@@ -366,3 +365,32 @@ def test_rendered_long_analysis_survives_chunking(event):
         body = part.split("\n", 1)[1] if part.startswith("[") else part
         for line in body.split("\n"):
             assert inline_balanced(line), line[:80]
+
+
+# --------------------------------------------------------------------------
+# Подписи слоёв: люди, а не роли
+# --------------------------------------------------------------------------
+
+
+def test_layers_name_the_people_behind_them(event):
+    """Читатель должен видеть, КТО это сказал, а не безличную роль."""
+    text = render(
+        make_analysis(sources=["https://x.com/trq212/status/2080710971228918066"]),
+        event,
+        site_author="@CarolinaCherry",
+    )
+    assert "<b>@trq212 в оригинале.</b>" in text
+    assert "<b>@CarolinaCherry дописал.</b>" in text
+
+
+def test_layers_stay_impersonal_without_facts(event):
+    """Имя не вычислилось — подпись безличная. Чужое имя хуже его отсутствия."""
+    text = render(make_analysis(sources=["https://code.claude.com/docs/x"]), event)
+    assert "<b>В оригинальном посте.</b>" in text
+    assert "<b>Дописано на сайте.</b>" in text
+
+
+def test_post_handle_reads_the_author_from_the_url():
+    assert post_handle(["https://x.com/bcherny/status/1"]) == "@bcherny"
+    assert post_handle(["https://code.claude.com/docs/hooks"]) is None
+    assert post_handle([]) is None

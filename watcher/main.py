@@ -388,7 +388,7 @@ class Runner:
         if overflow > 0:
             log.warning("событий больше лимита: %d, переношу %d", len(fresh), overflow)
 
-        delivered, failed = self._deliver_batch(batch, snapshot, ledger, overflow)
+        delivered, failed = self._deliver_batch(batch, snapshot, doc, ledger, overflow)
 
         if failed:
             threshold = self.cfg.get("alerts", "model_failures_before_alert")
@@ -415,7 +415,7 @@ class Runner:
 
     # ------------------------------------------------------------ внутреннее
 
-    def _deliver_batch(self, batch, snapshot, ledger, overflow: int):
+    def _deliver_batch(self, batch, snapshot, doc, ledger, overflow: int):
         """Разобрать и доставить события по одному.
 
         Журнал пишется и ПУШИТСЯ после каждой доставки, а не в конце цикла.
@@ -428,6 +428,10 @@ class Runner:
         system_prompt = (PROMPTS_DIR / "system.md").read_text(encoding="utf-8")
         task_template = (PROMPTS_DIR / "analysis.md").read_text(encoding="utf-8")
         keep = self.cfg.get("state", "ledger_keep")
+        # Кто ведёт сайт — из ТОЛЬКО ЧТО разобранного документа, а не из
+        # снапшота: снапшот мог быть записан до появления этого поля, и
+        # тогда подписи слоёв остались бы безличными на неопределённый срок.
+        who_runs_site = doc.site_author or snapshot.source.get("site_author")
 
         delivered = 0
         failed: list[str] = []
@@ -443,12 +447,13 @@ class Runner:
                     system_prompt=system_prompt,
                     task_template=task_template,
                     user_agent=self.cfg.get("source", "user_agent"),
+                    site_author=who_runs_site,
                 )
             except AnalysisFailed as exc:
                 failed.append(f"{event.headline}: разбор не получен — {exc}")
                 break
 
-            text = render(analysis, event)
+            text = render(analysis, event, site_author=who_runs_site)
             if overflow > 0 and index == len(batch):
                 text += (
                     f"\n\nЕщё {overflow} изменений в очереди — придут следующим прогоном."
