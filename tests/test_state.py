@@ -150,6 +150,22 @@ def test_heartbeat_broken_timestamp_forces_commit():
     assert Heartbeat(last_committed="не дата").due_for_commit(interval_hours=20) is True
 
 
+def test_model_probe_first_run_is_due():
+    assert Heartbeat().due_for_probe(interval_hours=24) is True
+
+
+def test_model_probe_not_due_right_after():
+    """Проба стоит денег и запроса — на каждом прогоне она не нужна."""
+    hb = Heartbeat(last_model_probe=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"))
+    assert hb.due_for_probe(interval_hours=24) is False
+
+
+def test_model_probe_due_after_interval():
+    stale = datetime.now(timezone.utc) - timedelta(hours=25)
+    hb = Heartbeat(last_model_probe=stale.strftime("%Y-%m-%dT%H:%M:%SZ"))
+    assert hb.due_for_probe(interval_hours=24) is True
+
+
 def test_heartbeat_roundtrip(store):
     hb = Heartbeat(last_run="2026-07-28T06:00:00Z", consecutive_source_failures=2, runs_total=428)
     store.save_heartbeat(hb)

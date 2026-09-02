@@ -51,6 +51,23 @@ def utcnow() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _due(stamp: str, interval_hours: int) -> bool:
+    """Прошло ли interval_hours с метки. Метки нет или она битая — да, пора.
+
+    Ошибаться безопаснее в сторону действия: пропущенный коммит heartbeat
+    приближает отключение workflow, пропущенная проба продлевает слепоту
+    к кончившейся квоте.
+    """
+    if not stamp:
+        return True
+    try:
+        previous = datetime.strptime(stamp, "%Y-%m-%dT%H:%M:%SZ")
+    except ValueError:
+        return True
+    elapsed = (datetime.now(timezone.utc) - previous.replace(tzinfo=timezone.utc)).total_seconds()
+    return elapsed >= interval_hours * 3600
+
+
 class StateCorrupted(RuntimeError):
     """Состояние на диске непригодно. Автовосстановления НЕТ намеренно.
 
@@ -196,6 +213,9 @@ class Heartbeat:
     # сообщаем на переходе «работало -> сломалось», а дальше об этом
     # молчит Telegram и говорит внешний watchdog отсутствием пинга.
     last_violation_signature: str = ""
+    # Когда последний раз проверяли, что ключ жив и квота не кончилась.
+    # Отдельно от last_run: прогонов четыре в сутки, а проба нужна одна.
+    last_model_probe: str = ""
 
     def to_dict(self) -> dict:
         return {
@@ -206,6 +226,7 @@ class Heartbeat:
             "consecutive_model_failures": self.consecutive_model_failures,
             "runs_total": self.runs_total,
             "last_violation_signature": self.last_violation_signature,
+            "last_model_probe": self.last_model_probe,
         }
 
     @classmethod
@@ -219,15 +240,15 @@ class Heartbeat:
         «touch» в месяц. Слишком редко — GitHub отключает scheduled workflow
         после 60 дней без активности, и система умирает тихо.
         """
-        if not self.last_committed:
-            return True
-        try:
-            previous = datetime.strptime(self.last_committed, "%Y-%m-%dT%H:%M:%SZ")
-        except ValueError:
-            return True
-        previous = previous.replace(tzinfo=timezone.utc)
-        elapsed = (datetime.now(timezone.utc) - previous).total_seconds()
-        return elapsed >= interval_hours * 3600
+        return _due(self.last_committed, interval_hours)
+
+    def due_for_probe(self, interval_hours: int) -> bool:
+        """Пора ли проверять, что модель вообще доступна.
+
+        Каждый прогон проверять незачем: это лишний запрос каждые шесть
+        часов ради состояния, которое меняется раз в месяцы.
+        """
+        return _due(self.last_model_probe, interval_hours)
 
 
 # --------------------------------------------------------------------------

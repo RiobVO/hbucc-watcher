@@ -30,7 +30,14 @@ from pathlib import Path
 
 import httpx
 
-from watcher.analyze import AnalysisFailed, analyze
+from watcher.analyze import (
+    PROBE_OK,
+    PROBE_QUOTA,
+    PROBE_UNREACHABLE,
+    AnalysisFailed,
+    analyze,
+    probe_model,
+)
 from watcher.config import STATE_DIR, PROMPTS_DIR, Config, ConfigError, Secrets, setup_logging
 from watcher.deliver import DeliveryFailed, deliver, render, send_alert
 from watcher.detect import (
@@ -88,10 +95,60 @@ class Runner:
             # пропущенную. Ошибаться безопаснее в эту сторону.
             log.warning("watchdog: пинг не прошёл: %s", exc)
 
-    def finish(self, ok: bool) -> int:
+    def probe_model_if_due(self) -> bool:
+        """Проверить доступность модели на прогоне, где её не будили.
+
+        Это заплата на слепом пятне второго инварианта. Прогон без
+        изменений на сайте до модели не доходит и пингует сторожа как
+        чистый — значит кончившаяся квота или отозванный ключ иначе
+        обнаружились бы только на первом настоящем событии.
+
+        Возвращает False только при приговоре аккаунту: тогда пинг не
+        уходит, и сторож сообщает о поломке снаружи. Временная помеха
+        (сеть, лимит частоты, 5xx) прогон не портит и метку не двигает —
+        проба не состоялась, а не провалилась.
+        """
+        model_cfg = self.cfg.section("model")
+        if not self.heartbeat.due_for_probe(model_cfg["probe_interval_hours"]):
+            return True
+
+        outcome = probe_model(api_key=self.secrets.openai_api_key, model=model_cfg["name"])
+        if outcome == PROBE_UNREACHABLE:
+            log.warning("проба модели не состоялась — повторю следующим прогоном")
+            return True
+
+        self.heartbeat.last_model_probe = utcnow()
+        if outcome == PROBE_OK:
+            log.info("проба модели: ключ жив, квота есть")
+            return True
+
+        if outcome == PROBE_QUOTA:
+            self.alert(
+                "На аккаунте провайдера кончилась квота.",
+                "Разборы не придут, пока баланс не пополнен. Ключ при этом валиден.",
+                "",
+                "Найдено пробой по расписанию: сайт не менялся, и без неё это",
+                "выяснилось бы только на первом настоящем изменении.",
+                signature="model_quota",
+            )
+        else:
+            self.alert(
+                f"Модель недоступна: {outcome}.",
+                "Ключ отозван, сменился или потерял доступ к модели из конфига.",
+                "Разборы не придут, пока это не починено.",
+                signature=f"model_{outcome}",
+            )
+        return False
+
+    def finish(self, ok: bool, *, model_used: bool = False) -> int:
         """Сохранить heartbeat, при необходимости зафиксировать, пингануть."""
         self.heartbeat.last_run = utcnow()
         self.heartbeat.runs_total += 1
+
+        # Только на чистом прогоне без модели: на грязном алерт уже ушёл, а
+        # после настоящего разбора доступность модели только что доказана.
+        if ok and not model_used:
+            ok = self.probe_model_if_due()
 
         interval = self.cfg.get("state", "heartbeat_commit_interval_hours")
         if self.heartbeat.due_for_commit(interval):
@@ -342,10 +399,10 @@ class Runner:
         # Инвариант: снапшот вперёд только при полной доставке.
         if overflow > 0:
             log.info("остаток %d событий — снапшот не двигаю", overflow)
-            return self.finish(ok=True)
+            return self.finish(ok=True, model_used=True)
 
         self._advance(snapshot, doc, result, note=f"доставлено {delivered} событий")
-        return self.finish(ok=True)
+        return self.finish(ok=True, model_used=True)
 
     # ------------------------------------------------------------ внутреннее
 

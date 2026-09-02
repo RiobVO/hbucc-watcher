@@ -24,6 +24,12 @@ import httpx
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from watcher.analyze import (  # noqa: E402
+    PROBE_OK,
+    PROBE_QUOTA,
+    PROBE_UNREACHABLE,
+    probe_model,
+)
 from watcher.config import Config, setup_logging  # noqa: E402
 
 SECRET_NAMES = (
@@ -94,34 +100,20 @@ def check_openai(api_key: str) -> bool:
 
     # Список моделей отдаётся с 200 и при нулевом балансе — проверено. Поэтому
     # одного его недостаточно: нужен настоящий, пусть и крошечный, запрос на
-    # генерацию. Иначе команда рапортует «ключ рабочий» про мёртвый аккаунт,
-    # а это хуже, чем не проверять вовсе: наблюдатель не вызывает модель на
-    # прогонах без изменений, и кончившаяся квота иначе всплывёт только на
-    # первом настоящем событии.
-    try:
-        with httpx.Client(timeout=30.0) as client:
-            probe = client.post(
-                "https://api.openai.com/v1/responses",
-                headers={"Authorization": f"Bearer {api_key}", "content-type": "application/json"},
-                json={"model": wanted, "input": "ok", "max_output_tokens": 16},
-            )
-    except httpx.HTTPError as exc:
-        print(f"{BAD} OpenAI: сеть недоступна на пробном запросе: {exc}")
-        return False
-
-    if probe.status_code == 200:
+    # генерацию. Иначе команда рапортует «ключ рабочий» про мёртвый аккаунт.
+    # Та же проба, что раннер делает по расписанию: держать вторую копию
+    # этой проверки значит однажды получить два разных вердикта об одном
+    # аккаунте.
+    outcome = probe_model(api_key=api_key, model=wanted)
+    if outcome == PROBE_OK:
         print(f"{OK} OpenAI: ключ рабочий, модель {wanted} отвечает")
         return True
-
-    kind = ""
-    try:
-        kind = (probe.json().get("error") or {}).get("code") or ""
-    except ValueError:
-        pass
-    if kind == "insufficient_quota":
+    if outcome == PROBE_QUOTA:
         print(f"{BAD} OpenAI: на аккаунте нет квоты — пополни баланс. Ключ при этом валиден")
+    elif outcome == PROBE_UNREACHABLE:
+        print(f"{BAD} OpenAI: проба не дошла — сеть, лимит частоты или сбой провайдера")
     else:
-        print(f"{BAD} OpenAI: HTTP {probe.status_code} ({kind or 'без кода'}) — {probe.text[:160]}")
+        print(f"{BAD} OpenAI: проба отвергнута — {outcome}")
     return False
 
 

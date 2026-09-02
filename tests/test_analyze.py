@@ -11,17 +11,26 @@
 from __future__ import annotations
 
 import copy
+import json
+import re
 
+import httpx
+import pytest
 from conftest import make_block, make_part
 
 from watcher.analyze import (
+    PROBE_OK,
+    PROBE_QUOTA,
+    PROBE_UNREACHABLE,
     Analysis,
     build_context,
     collect_links,
     domain_allowed,
+    probe_model,
     split_links,
     strict_schema,
 )
+from watcher.config import PROMPTS_DIR
 from watcher.detect import BLOCK_ADDED, BLOCK_EDITED, PART_ADDED, Event
 from watcher.original import Original
 
@@ -289,3 +298,94 @@ def test_schema_keeps_the_four_layers():
 def test_schema_requires_windows_verdict():
     schema = strict_schema(Analysis)
     assert set(schema["properties"]) >= {"windows", "verdict", "anomalies", "unconfirmed"}
+
+
+# --------------------------------------------------------------------------
+# Примеры в системном промте
+# --------------------------------------------------------------------------
+
+
+def _prompt_examples() -> list[str]:
+    text = (PROMPTS_DIR / "system.md").read_text(encoding="utf-8")
+    return re.findall(r"^Выход:\n(\{.*?^\})$", text, re.S | re.M)
+
+
+@pytest.mark.parametrize("raw", _prompt_examples())
+def test_prompt_example_matches_the_schema(raw: str):
+    """Пример в промте — это образец ответа, и он обязан быть полным.
+
+    Режим strict требует все поля до единого. Пример с недостающим полем
+    учит модель отдавать неполный JSON — то есть ломает разбор ровно в тот
+    момент, когда схему расширили, а примеры поправить забыли.
+    """
+    Analysis.model_validate_json(raw)
+    assert set(json.loads(raw)) == set(Analysis.model_fields)
+
+
+def test_both_examples_are_found():
+    """Регулярка выше молча вернула бы пустой список, и параметризация исчезла бы."""
+    assert len(_prompt_examples()) == 2
+
+
+# --------------------------------------------------------------------------
+# Проба модели: жив ли ключ и есть ли квота
+# --------------------------------------------------------------------------
+
+
+def _probe(handler) -> str:
+    return probe_model(
+        api_key="k", model="gpt-5.6-terra", transport=httpx.MockTransport(handler)
+    )
+
+
+def _error(status: int, code: str):
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(status, json={"error": {"code": code, "message": "..."}})
+
+    return handler
+
+
+def test_probe_ok_when_model_answers():
+    assert _probe(lambda r: httpx.Response(200, json={"status": "completed"})) == PROBE_OK
+
+
+def test_probe_detects_exhausted_quota():
+    """Ровно тот случай, ради которого проба и существует."""
+    assert _probe(_error(429, "insufficient_quota")) == PROBE_QUOTA
+
+
+def test_probe_reports_revoked_key_as_denial():
+    assert _probe(_error(401, "invalid_api_key")) == "denied:invalid_api_key"
+
+
+def test_probe_treats_rate_limit_as_temporary():
+    """Упёрлись в частоту — это не приговор аккаунту.
+
+    Разница принципиальная: приговор гасит пинг сторожу и будит алерт, а
+    временная помеха не должна делать ни того, ни другого.
+    """
+    assert _probe(_error(429, "rate_limit_exceeded")) == PROBE_UNREACHABLE
+
+
+def test_probe_treats_server_error_as_temporary():
+    assert _probe(_error(503, "")) == PROBE_UNREACHABLE
+
+
+def test_probe_survives_network_failure():
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectTimeout("таймаут", request=request)
+
+    assert _probe(handler) == PROBE_UNREACHABLE
+
+
+def test_probe_stays_cheap():
+    """Проба уходит по расписанию — раздутый лимит вывода это счёт на пустом месте."""
+    sent: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        sent.update(json.loads(request.content))
+        return httpx.Response(200, json={})
+
+    _probe(handler)
+    assert sent["max_output_tokens"] <= 16
+    assert sent["input"] == "ok"

@@ -30,6 +30,7 @@ import logging
 from difflib import unified_diff
 from typing import Any, Literal
 
+import httpx
 from pydantic import BaseModel, Field, ValidationError
 
 from watcher.detect import (
@@ -56,6 +57,9 @@ from watcher.source import Part
 log = logging.getLogger(__name__)
 
 __all__ = [
+    "PROBE_OK",
+    "PROBE_QUOTA",
+    "PROBE_UNREACHABLE",
     "Analysis",
     "AnalysisFailed",
     "Layers",
@@ -65,9 +69,21 @@ __all__ = [
     "build_context",
     "collect_links",
     "domain_allowed",
+    "probe_model",
     "split_links",
     "strict_schema",
 ]
+
+# Исходы пробы. Разделение на «приговор» и «временную помеху» — суть этой
+# проверки: приговор гасит пинг сторожу, временная помеха не должна.
+PROBE_OK = "ok"
+PROBE_QUOTA = "quota"
+PROBE_UNREACHABLE = "unreachable"
+
+# Ответ не читается, важен только факт «биллинг пропустил запрос». У
+# рассуждающей модели эти токены уйдут в reasoning и ответ придёт
+# незавершённым — это ожидаемо и на исход пробы не влияет.
+PROBE_MAX_TOKENS = 16
 
 
 class AnalysisFailed(RuntimeError):
@@ -107,6 +123,10 @@ class Analysis(BaseModel):
     headline: str = Field(description="До 80 символов, по-русски, без кавычек и эмодзи.")
     what_it_is: str = Field(description="Своими словами, для человека, который видит эту фичу впервые.")
     how_it_works: str = Field(description="Механика по сути, а не пересказ формулировок с сайта.")
+    # Отдельное поле, а не абзац внутри how_it_works. Пример под его стек
+    # объявлен обязательным, и внутри одного поля он конкурировал за место
+    # с механикой и границами применимости — вытеснялась именно механика.
+    where_it_fits: str = Field(description="Один конкретный пример: где это ляжет в его работе — Python, aiogram, FastAPI, PostgreSQL, Next.js, Windows, один разработчик. Не видишь такого места — скажи прямо, что не видишь.")
     layers: Layers
     windows: Windows
     verdict: Verdict
@@ -363,6 +383,65 @@ def _links_section(
         lines.extend(f"  {o.url}" for o in refused)
 
     return lines
+
+
+# --------------------------------------------------------------------------
+# Проба: жив ли ключ и есть ли квота
+# --------------------------------------------------------------------------
+
+
+def probe_model(
+    *,
+    api_key: str,
+    model: str,
+    timeout_seconds: float = 30.0,
+    transport: httpx.BaseTransport | None = None,
+) -> str:
+    """Крошечный запрос на генерацию. Возвращает один из исходов PROBE_*.
+
+    Существует из-за слепого пятна сторожа: прогон без изменений на сайте
+    до модели не доходит и пингует watchdog как чистый. Значит кончившаяся
+    квота или отозванный ключ иначе обнаружились бы только на первом
+    настоящем событии — то есть ровно тогда, когда разбор нужен.
+
+    Почему именно генерация, а не /v1/models: список моделей отдаётся с 200
+    и при нулевом балансе — проверено на настоящем пустом аккаунте.
+
+    Отказ по частоте и 5xx намеренно не считаются приговором: аккаунт от
+    них не умирает, а ложно погашенный пинг поднял бы сторожа зря.
+
+    `transport` — ради тестов: исход пробы должен проверяться без сети.
+    """
+    try:
+        with httpx.Client(
+            timeout=httpx.Timeout(timeout_seconds), transport=transport
+        ) as client:
+            response = client.post(
+                "https://api.openai.com/v1/responses",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "content-type": "application/json",
+                },
+                json={"model": model, "input": "ok", "max_output_tokens": PROBE_MAX_TOKENS},
+            )
+    except httpx.HTTPError as exc:
+        log.warning("проба модели не дошла: %s", exc)
+        return PROBE_UNREACHABLE
+
+    if response.status_code == 200:
+        return PROBE_OK
+
+    code = ""
+    try:
+        code = (response.json().get("error") or {}).get("code") or ""
+    except ValueError:  # тело не JSON — бывает у шлюзов на 5xx
+        log.debug("проба: тело ответа не разбирается как JSON", exc_info=True)
+
+    if code == "insufficient_quota":
+        return PROBE_QUOTA
+    if code == "rate_limit_exceeded" or response.status_code >= 500:
+        return PROBE_UNREACHABLE
+    return f"denied:{code or response.status_code}"
 
 
 # --------------------------------------------------------------------------

@@ -39,6 +39,7 @@ def make_analysis(**overrides) -> Analysis:
         "headline": "Субагентам дают по одному файлу",
         "what_it_is": "Правило распределения работы между субагентами.",
         "how_it_works": "Каждому агенту выделяется ровно один файл.",
+        "where_it_fits": "В боте на aiogram делить нечего: там один handler на задачу.",
         "layers": Layers(
             original_author="Автор треда предложил правило.",
             site_author="Автор сайта связал это с Part 15, в оригинале связки нет.",
@@ -179,6 +180,27 @@ def test_render_separates_four_credibility_layers(event):
     assert "<b>Автор сайта дописал.</b>" in text
     assert "<b>Документация.</b>" in text
     assert "<b>Мой вывод.</b>" in text
+
+
+def test_where_it_fits_is_rendered_as_its_own_paragraph(event):
+    """Пример под его стек — отдельное поле схемы.
+
+    Пока он жил внутри how_it_works вместе с механикой и границами
+    применимости, он вытеснял механику: пример объявлен обязательным, а
+    лимит поля — один на всех.
+    """
+    text = render(
+        make_analysis(where_it_fits="В скоринге на FastAPI это уберёт три захода."), event
+    )
+    assert "<b>Где ляжет у тебя.</b>" in text
+    assert "В скоринге на FastAPI это уберёт три захода." in text
+    block = text[text.index("Что это и как работает"):]
+    assert "Где ляжет у тебя." in block[: block.index("</blockquote>")]
+
+
+def test_empty_where_it_fits_leaves_no_dangling_label(event):
+    """Модель не увидела места в его проектах — метка без текста не выводится."""
+    assert "Где ляжет у тебя." not in render(make_analysis(where_it_fits=""), event)
 
 
 def test_layers_live_in_their_own_collapsible_block(event):

@@ -143,10 +143,12 @@ def render(analysis: Analysis, event: Event) -> str:
     if analysis.action.strip():
         lines += ["", "<b>Что сделать</b>", clean(analysis.action)]
 
-    lines += ["", _quote(
-        "Что это и как работает",
-        clean(analysis.what_it_is) + "\n\n" + clean(analysis.how_it_works),
-    )]
+    body = [clean(analysis.what_it_is), clean(analysis.how_it_works)]
+    if analysis.where_it_fits.strip():
+        # Метка нужна, чтобы пример находился глазами: он отвечает на другой
+        # вопрос, чем механика, и читается отдельно от неё.
+        body.append(f"<b>Где ляжет у тебя.</b> {clean(analysis.where_it_fits)}")
+    lines += ["", _quote("Что это и как работает", "\n\n".join(body))]
 
     # Слои — своим свёртком, а не внутри общего: это ядро разбора, и до
     # него должно быть одно нажатие, а не нажатие плюс поиск глазами.
