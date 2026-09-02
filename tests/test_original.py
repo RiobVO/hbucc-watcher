@@ -14,7 +14,13 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from watcher.original import Original, extract_text, fetch_originals
+from watcher.original import (
+    Original,
+    author_handle,
+    extract_text,
+    fetch_author,
+    fetch_originals,
+)
 
 ALLOWED = ["x.com", "docs.claude.com", "code.claude.com", "claude.com"]
 
@@ -234,3 +240,57 @@ def test_result_is_a_frozen_record():
     assert isinstance(result[0], Original)
     with pytest.raises(Exception):
         result[0].text = "подмена"  # type: ignore[misc]
+
+
+# --------------------------------------------------------------------------
+# Кто написал первоисточник
+# --------------------------------------------------------------------------
+
+PROFILE_HTML = """<!doctype html><html><head>
+<title>Thariq (@trq212) / X</title>
+<meta property="og:title" content="Thariq (@trq212) on X">
+<meta property="og:description" content="Claude Code @anthropicai. prev YC W20, @southpkcommons">
+</head><body></body></html>"""
+
+
+def test_author_is_fetched_by_handle():
+    """Читатель не обязан знать хендлы. Имя и род занятий — из профиля."""
+    author = fetch_author(
+        "@trq212", ["x.com"], transport=transport(always(PROFILE_HTML))
+    )
+    assert author is not None
+    assert author.name == "Thariq"
+    assert author.handle == "@trq212"
+    assert "Claude Code" in author.bio
+
+
+def test_author_handle_is_taken_from_a_post_url():
+    assert author_handle("https://x.com/bcherny/status/12345") == "@bcherny"
+    assert author_handle("https://x.com/bcherny") is None
+    assert author_handle("https://code.claude.com/docs/hooks") is None
+
+
+def test_author_off_whitelist_is_not_requested():
+    """Профиль — такой же внешний адрес, и белый список для него тот же."""
+    called = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        called.append(str(request.url))
+        return httpx.Response(200, html=PROFILE_HTML)
+
+    assert fetch_author("@someone", ["docs.claude.com"], transport=transport(handler)) is None
+    assert called == []
+
+
+def test_author_is_none_when_profile_is_unavailable():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(404)
+
+    assert fetch_author("@trq212", ["x.com"], transport=transport(handler)) is None
+
+
+def test_author_without_name_in_title_keeps_the_handle():
+    """Заголовок не разобрался — остаётся хендл, выдумывать имя нельзя."""
+    html = '<html><head><title>X</title><meta property="og:description" content="био"></head></html>'
+    author = fetch_author("@ghost", ["x.com"], transport=transport(always(html)))
+    assert author is not None and author.name == "" and author.bio == "био"

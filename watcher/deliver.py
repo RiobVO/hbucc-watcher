@@ -39,6 +39,7 @@ from urllib.parse import urlparse
 import httpx
 
 from watcher.analyze import Analysis
+from watcher.original import Author
 from watcher.detect import Event
 
 log = logging.getLogger(__name__)
@@ -137,7 +138,13 @@ def post_handle(urls: list[str]) -> str | None:
     return None
 
 
-def render(analysis: Analysis, event: Event, *, site_author: str | None = None) -> str:
+def render(
+    analysis: Analysis,
+    event: Event,
+    *,
+    site_author: str | None = None,
+    author: "Author | None" = None,
+) -> str:
     """Собрать текст разбора.
 
     Порядок секций и подписи — здесь. Менять тон и объём можно правкой
@@ -173,7 +180,7 @@ def render(analysis: Analysis, event: Event, *, site_author: str | None = None) 
     # «автор оригинала». Оба имени вычислены — хендл из адреса поста, тот,
     # кто ведёт сайт, из его разметки. Не вычислилось — подпись безличная:
     # чужое имя в подписи хуже её отсутствия.
-    who_post = post_handle(analysis.sources)
+    who_post = author.credited if author else post_handle(analysis.sources)
     said = f"{esc(who_post)} в оригинале" if who_post else "В оригинальном посте"
     added = f"{esc(site_author)} дописал" if site_author else "Дописано на сайте"
     lines.append(_quote("Слои достоверности", "\n\n".join([

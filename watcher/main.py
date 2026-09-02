@@ -32,6 +32,7 @@ import httpx
 
 from watcher.analyze import (
     PROBE_OK,
+    collect_links,
     PROBE_QUOTA,
     PROBE_UNREACHABLE,
     AnalysisFailed,
@@ -47,6 +48,7 @@ from watcher.detect import (
     diff_documents,
     flag_injections,
 )
+from watcher.original import author_handle, fetch_author
 from watcher.source import ParseError, SourceUnavailable, fetch, parse
 from watcher.state import (
     GitError,
@@ -438,6 +440,21 @@ class Runner:
 
         for index, event in enumerate(batch, 1):
             log.info("событие %d/%d: %s", index, len(batch), event.headline)
+            # Профиль автора поста грузится один раз и уходит и в промт, и
+            # в подпись слоя: два запроса за одним и тем же фактом — лишний
+            # стук по чужому серверу.
+            handle = next(
+                (h for h in map(author_handle, collect_links(event)) if h), None
+            )
+            author = (
+                fetch_author(
+                    handle,
+                    model_cfg["allowed_domains"],
+                    user_agent=self.cfg.get("source", "user_agent"),
+                )
+                if handle
+                else None
+            )
             try:
                 analysis = analyze(
                     event,
@@ -448,12 +465,13 @@ class Runner:
                     task_template=task_template,
                     user_agent=self.cfg.get("source", "user_agent"),
                     site_author=who_runs_site,
+                    author=author,
                 )
             except AnalysisFailed as exc:
                 failed.append(f"{event.headline}: разбор не получен — {exc}")
                 break
 
-            text = render(analysis, event, site_author=who_runs_site)
+            text = render(analysis, event, site_author=who_runs_site, author=author)
             if overflow > 0 and index == len(batch):
                 text += (
                     f"\n\nЕщё {overflow} изменений в очереди — придут следующим прогоном."

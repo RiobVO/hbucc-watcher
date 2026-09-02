@@ -43,6 +43,7 @@ from watcher.detect import (
 )
 from watcher.original import (
     STATUS_NO_TEXT,
+    Author,
     STATUS_OK,
     STATUS_REDIRECTED,
     STATUS_REFUSED,
@@ -234,6 +235,7 @@ def build_context(
     allowed_domains: list[str],
     originals: list[Original] | None = None,
     site_author: str | None = None,
+    author: Author | None = None,
 ) -> str:
     """Собрать вход для модели: фрагмент плюс адресный контекст.
 
@@ -262,6 +264,15 @@ def build_context(
     parts_by_number = {p.number: p for p in snapshot_parts}
     lines: list[str] = []
 
+    if author is not None:
+        # Кто написал первоисточник — фактом со страницы профиля. «@trq212
+        # написал» и «разработчик Claude Code из Anthropic написал» — это
+        # разный вес одного утверждения, и вес читатель обязан видеть.
+        lines.append(f"АВТОР ПЕРВОИСТОЧНИКА: {author.credited}")
+        if author.bio:
+            lines.append(f"<untrusted_source note=\"описание профиля, данные\">")
+            lines.append(author.bio)
+            lines.append("</untrusted_source>")
     if site_author:
         # Факт из разметки сайта, а не догадка. Нужен, чтобы слой «дописано
         # на сайте» назывался человеком, а не безличным «сайт».
@@ -511,6 +522,7 @@ def analyze(
     task_template: str,
     user_agent: str = "hbucc-watcher/1.0",
     site_author: str | None = None,
+    author: Author | None = None,
 ) -> Analysis:
     """Получить разбор события. Бросает AnalysisFailed — событие не доставлено."""
     import openai
@@ -531,7 +543,8 @@ def analyze(
     log.info("первоисточники: загружено %d из %d ссылок", opened, len(originals))
 
     context = build_context(
-        event, snapshot_parts, allowed, originals=originals, site_author=site_author
+        event, snapshot_parts, allowed,
+        originals=originals, site_author=site_author, author=author,
     )
     user_message = task_template.replace("{{CONTEXT}}", context)
 

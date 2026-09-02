@@ -42,6 +42,22 @@ STATUS_UNAVAILABLE = "unavailable"
 STATUS_NO_TEXT = "no_text"
 STATUS_SKIPPED = "skipped_cap"
 
+__all__ = [
+    "Author",
+    "Original",
+    "author_handle",
+    "domain_allowed",
+    "extract_text",
+    "fetch_author",
+    "fetch_originals",
+    "STATUS_OK",
+    "STATUS_REFUSED",
+    "STATUS_REDIRECTED",
+    "STATUS_UNAVAILABLE",
+    "STATUS_NO_TEXT",
+    "STATUS_SKIPPED",
+]
+
 
 @dataclass(frozen=True)
 class Original:
@@ -55,6 +71,85 @@ class Original:
     host: str
     status: str
     text: str = ""
+
+
+@dataclass(frozen=True)
+class Author:
+    """Кто написал первоисточник.
+
+    Хендл читателю ничего не говорит: «@trq212 написал» и «разработчик
+    Claude Code из Anthropic написал» — это разный вес одного и того же
+    утверждения. Имя и род занятий берутся со страницы профиля, то есть
+    остаются фактом, а не догадкой модели о том, кто есть кто.
+    """
+
+    handle: str
+    name: str = ""
+    bio: str = ""
+
+    @property
+    def credited(self) -> str:
+        """Как называть автора в тексте: «Имя (@хендл)» либо просто хендл."""
+        return f"{self.name} ({self.handle})" if self.name else self.handle
+
+
+def author_handle(url: str) -> str | None:
+    """Хендл автора поста — из адреса поста, а не из его текста.
+
+    Профиль сам по себе (`x.com/bcherny`) сюда не годится: адрес автора
+    нужен нам как свойство ПОСТА, и брать его следует только оттуда, где
+    он однозначен — из ссылки вида `/handle/status/…`.
+    """
+    parsed = urlparse(url)
+    if not (parsed.hostname or "").removeprefix("www.").endswith("x.com"):
+        return None
+    parts = [p for p in parsed.path.split("/") if p]
+    if len(parts) >= 2 and parts[1] == "status":
+        return f"@{parts[0]}"
+    return None
+
+
+def fetch_author(
+    handle: str,
+    allowed: list[str],
+    *,
+    timeout_seconds: float = 15.0,
+    user_agent: str = "hbucc-watcher/1.0",
+    transport: httpx.BaseTransport | None = None,
+) -> "Author | None":
+    """Открыть профиль и достать имя с описанием. None — не вышло.
+
+    Профиль — такой же внешний адрес, поэтому идёт через ту же границу
+    доверия: домен проверяется до запроса и на каждом редиректе. Не
+    открылось или заголовок не разобрался — возвращаем то, что достоверно,
+    вплоть до None. Придумывать, кто этот человек, нельзя: неверно
+    приписанная должность хуже, чем голый хендл.
+    """
+    url = f"https://x.com/{handle.lstrip('@')}"
+    if not domain_allowed(url, allowed):
+        return None
+
+    with httpx.Client(
+        timeout=httpx.Timeout(timeout_seconds),
+        follow_redirects=False,
+        headers={"User-Agent": user_agent, "Accept": "text/html,*/*"},
+        transport=transport,
+    ) as client:
+        try:
+            status, body = _get(client, url, allowed)
+        except httpx.HTTPError as exc:
+            log.info("профиль %s не открылся: %s", handle, exc)
+            return None
+
+    if status != STATUS_OK:
+        return None
+
+    tree = HTMLParser(body)
+    title_node = tree.css_first("title")
+    raw_title = html_module.unescape(title_node.text(strip=True)) if title_node else ""
+    # «Thariq (@trq212) / X» -> «Thariq». Не разобралось — имени нет.
+    name = raw_title.split("(")[0].strip() if "(" in raw_title else ""
+    return Author(handle=handle, name=name, bio=extract_text(body))
 
 
 def domain_allowed(url: str, allowed: list[str]) -> bool:
