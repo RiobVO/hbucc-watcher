@@ -85,6 +85,23 @@ PROBE_UNREACHABLE = "unreachable"
 # незавершённым — это ожидаемо и на исход пробы не влияет.
 PROBE_MAX_TOKENS = 16
 
+# Классификация отказа построена от обратного: приговором считается только
+# явно названная причина, всё остальное — временная помеха. Перечислять
+# временные коды бесполезно, их список у провайдера открытый: 409, 422 и
+# прочие повторяемые отказы попали бы в приговор просто потому, что их
+# забыли назвать, — и погасили бы пинг сторожу на ровном месте. Ошибиться
+# в мягкую сторону дешевле: настоящий отказ всплывёт на первом же событии
+# и разбудит алерт о падающих разборах.
+PROBE_MONEY_CODES = frozenset({"insufficient_quota", "credit_balance_exhausted"})
+PROBE_FATAL_CODES = frozenset({
+    "invalid_api_key",
+    "account_deactivated",
+    "model_not_found",
+    "permission_denied",
+})
+# 401 — ключ отвергнут, 403 — доступ закрыт, 404 — модели из конфига нет.
+PROBE_FATAL_STATUSES = frozenset({401, 403, 404})
+
 
 class AnalysisFailed(RuntimeError):
     """Модель не вернула пригодный разбор. Событие остаётся недоставленным."""
@@ -437,11 +454,11 @@ def probe_model(
     except ValueError:  # тело не JSON — бывает у шлюзов на 5xx
         log.debug("проба: тело ответа не разбирается как JSON", exc_info=True)
 
-    if code == "insufficient_quota":
+    if code in PROBE_MONEY_CODES:
         return PROBE_QUOTA
-    if code == "rate_limit_exceeded" or response.status_code >= 500:
-        return PROBE_UNREACHABLE
-    return f"denied:{code or response.status_code}"
+    if code in PROBE_FATAL_CODES or response.status_code in PROBE_FATAL_STATUSES:
+        return f"denied:{code or response.status_code}"
+    return PROBE_UNREACHABLE
 
 
 # --------------------------------------------------------------------------

@@ -132,9 +132,13 @@ class Runner:
                 signature="model_quota",
             )
         else:
+            # Причину не пересказываем своими словами: под denied попадают
+            # и отозванный ключ, и закрытый доступ, и пропавшая модель.
+            # Пусть в сообщении будет код провайдера, а не наша догадка.
             self.alert(
-                f"Модель недоступна: {outcome}.",
-                "Ключ отозван, сменился или потерял доступ к модели из конфига.",
+                f"Модель недоступна, провайдер ответил: {outcome}.",
+                "Проверь ключ, доступ к модели из config.toml и состояние аккаунта:",
+                "python tools/setup.py check",
                 "Разборы не придут, пока это не починено.",
                 signature=f"model_{outcome}",
             )
@@ -151,15 +155,20 @@ class Runner:
             ok = self.probe_model_if_due()
 
         interval = self.cfg.get("state", "heartbeat_commit_interval_hours")
-        if self.heartbeat.due_for_commit(interval):
+        # Решение о коммите — явным флагом, а не сравнением двух меток
+        # времени. Метки расходятся, стоит между ними появиться чему-нибудь
+        # небыстрому: проба делает сетевой запрос на секунду-две, и
+        # секундной точности utcnow() хватает, чтобы условие стало ложным.
+        # Тогда heartbeat не коммитится — а он и существует затем, чтобы
+        # GitHub не отключил расписание за 60 дней без активности.
+        commit_due = self.heartbeat.due_for_commit(interval)
+        if commit_due:
             self.heartbeat.last_committed = utcnow()
 
         self.store.save_heartbeat(self.heartbeat)
 
         try:
-            if self.heartbeat.last_committed == self.heartbeat.last_run:
-                # Коммит heartbeat — это ещё и защита от отключения
-                # scheduled workflow за 60 дней без активности в репозитории.
+            if commit_due:
                 self.store.commit_and_push(
                     [self.store.heartbeat_path], "chore(state): heartbeat"
                 )
@@ -392,7 +401,7 @@ class Runner:
                     "Состояние не двигается — недоставленное повторится следующим прогоном.",
                     signature="delivery_failing",
                 )
-            return self.finish(ok=False)
+            return self.finish(ok=False, model_used=True)
 
         self.heartbeat.consecutive_model_failures = 0
 

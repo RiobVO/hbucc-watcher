@@ -358,6 +358,16 @@ def test_probe_reports_revoked_key_as_denial():
     assert _probe(_error(401, "invalid_api_key")) == "denied:invalid_api_key"
 
 
+def test_probe_reports_missing_model_as_denial():
+    """Модель из конфига пропала — разбор не состоится, это приговор."""
+    assert _probe(_error(404, "model_not_found")) == "denied:model_not_found"
+
+
+def test_probe_detects_exhausted_credit_balance():
+    """У исчерпанного баланса код не один: денежная причина бывает и такой."""
+    assert _probe(_error(400, "credit_balance_exhausted")) == PROBE_QUOTA
+
+
 def test_probe_treats_rate_limit_as_temporary():
     """Упёрлись в частоту — это не приговор аккаунту.
 
@@ -369,6 +379,19 @@ def test_probe_treats_rate_limit_as_temporary():
 
 def test_probe_treats_server_error_as_temporary():
     assert _probe(_error(503, "")) == PROBE_UNREACHABLE
+
+
+@pytest.mark.parametrize("status", [408, 409, 422, 425])
+def test_probe_treats_retryable_statuses_as_temporary(status: int):
+    """Повторяемый отказ не должен поднимать сторожа.
+
+    Классификация построена наоборот, чем напрашивается: приговором
+    считается только явно названная причина, всё прочее — помеха. Ошибиться
+    в эту сторону дешевле: настоящий отказ всё равно всплывёт на первом же
+    событии и разбудит алерт о падающих разборах, а ложная тревога гасит
+    пинг сторожу на ровном месте.
+    """
+    assert _probe(_error(status, "")) == PROBE_UNREACHABLE
 
 
 def test_probe_survives_network_failure():
