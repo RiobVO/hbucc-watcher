@@ -35,6 +35,7 @@ import html
 import json
 import logging
 import re
+import time
 from datetime import datetime
 from typing import Iterable
 from urllib.parse import urlparse
@@ -66,6 +67,7 @@ __all__ = [
     "page_url",
     "publish_page",
     "render_page",
+    "wait_for_page",
 ]
 
 CSS_PATH = ROOT / "templates" / "report.css"
@@ -616,6 +618,49 @@ def publish_page(
             f"страница не записана: HTTP {written.status_code} — {_reason(written)}"
         )
     log.info("страница опубликована: %s", name)
+
+
+# Расписание опроса: сначала часто, потом реже. Замер 30 июля 2026 — новая
+# страница поднялась на 50-й секунде; чаще всего Pages укладывается в
+# полминуты, и первые короткие паузы экономят время всего прогона.
+PAGE_POLL_DELAYS = (3, 3, 5, 5, 10, 10, 10, 15, 15, 15)
+
+
+def wait_for_page(
+    url: str,
+    *,
+    delays: tuple[int, ...] = PAGE_POLL_DELAYS,
+    timeout_seconds: float = 15.0,
+    transport: httpx.BaseTransport | None = None,
+) -> bool:
+    """Дождаться, пока страница начнёт отдаваться по своему адресу.
+
+    Записать файл и опубликовать страницу — не одно и то же. Contents API
+    отвечает мгновенно, а GitHub Pages пересобирает сайт: 30 июля 2026
+    страница ответила 200 только через 50 секунд после успешной записи.
+    Карточка, отправленная сразу, дала бы читателю ссылку на 404 ровно в
+    тот момент, когда он её нажмёт.
+
+    Вернуло False — страницы по адресу пока нет. Это не сбой публикации:
+    файл записан и поднимется сам, но ссылку на него давать уже нельзя,
+    и вызывающий уходит на полный текст.
+    """
+    with httpx.Client(
+        timeout=httpx.Timeout(timeout_seconds), transport=transport, follow_redirects=True
+    ) as client:
+        for index, delay in enumerate((0, *delays)):
+            if delay:
+                time.sleep(delay)
+            try:
+                response = client.get(url, headers={"Cache-Control": "no-cache"})
+            except httpx.HTTPError as exc:
+                log.debug("страница ещё не отвечает: %s", exc)
+                continue
+            if response.status_code == 200:
+                log.info("страница поднялась с попытки %d: %s", index + 1, url)
+                return True
+    log.warning("страница не поднялась за отведённое время: %s", url)
+    return False
 
 
 def _reason(response: httpx.Response) -> str:

@@ -43,6 +43,7 @@ from watcher.publish import (
     page_url,
     publish_page,
     render_page,
+    wait_for_page,
 )
 
 FIXTURE = Path(__file__).parent / "fixtures" / "analysis-part22-6.json"
@@ -428,3 +429,51 @@ def test_credential_never_appears_in_the_error(page):
             transport=httpx.MockTransport(handler),
         )
     assert FAKE not in str(exc.value)
+
+
+# ------------------------------------------------- страница по своему адресу
+
+
+def test_ready_page_needs_no_waiting():
+    calls = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(str(request.url))
+        return httpx.Response(200, text="<html></html>")
+
+    assert wait_for_page(
+        "https://example.com/a.html", delays=(), transport=httpx.MockTransport(handler)
+    )
+    assert len(calls) == 1
+
+
+def test_page_that_appears_late_is_still_caught():
+    """Замер 30 июля: Pages поднял страницу только через 50 секунд."""
+    codes = iter([404, 404, 200])
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(next(codes))
+
+    assert wait_for_page(
+        "https://example.com/a.html", delays=(0, 0), transport=httpx.MockTransport(handler)
+    )
+
+
+def test_page_that_never_appears_reports_it():
+    """False, а не исключение: файл записан, но ссылку давать уже нельзя."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(404)
+
+    assert not wait_for_page(
+        "https://example.com/a.html", delays=(0,), transport=httpx.MockTransport(handler)
+    )
+
+
+def test_unreachable_host_is_not_a_ready_page():
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise httpx.ConnectError("сеть недоступна")
+
+    assert not wait_for_page(
+        "https://example.com/a.html", delays=(0,), transport=httpx.MockTransport(handler)
+    )

@@ -50,7 +50,14 @@ from watcher.detect import (
     flag_injections,
 )
 from watcher.original import author_handle, fetch_author
-from watcher.publish import PublishFailed, page_name, page_url, publish_page, render_page
+from watcher.publish import (
+    PublishFailed,
+    page_name,
+    page_url,
+    publish_page,
+    render_page,
+    wait_for_page,
+)
 from watcher.source import ParseError, SourceUnavailable, fetch, parse
 from watcher.state import (
     GitError,
@@ -558,7 +565,16 @@ class Runner:
         except PublishFailed as exc:
             log.warning("страница не опубликована, уходит полный текст: %s", exc)
             return None
-        return page_url(cfg["base_url"], name)
+
+        # Файл записан — это ещё не значит, что страница открывается:
+        # GitHub Pages пересобирает сайт, и замер показал 50 секунд между
+        # успешной записью и первым 200. Ссылку отдаём только после того,
+        # как адрес ответил.
+        url = page_url(cfg["base_url"], name)
+        if not wait_for_page(url):
+            log.warning("страница ещё не поднялась, уходит полный текст: %s", url)
+            return None
+        return url
 
     def _advance(self, snapshot: Snapshot, doc, result, *, note: str) -> None:
         """Продвинуть снапшот. Вызывается только при полной доставке."""
