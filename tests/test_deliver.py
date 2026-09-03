@@ -21,6 +21,7 @@ from conftest import make_block, make_part
 from watcher.analyze import Analysis, Layers, Verdict, Windows
 from watcher.deliver import (
     TELEGRAM_HARD_LIMIT,
+    card,
     chunk,
     esc,
     post_handle,
@@ -397,3 +398,103 @@ def test_post_handle_reads_the_author_from_the_url():
     assert post_handle(["https://x.com/bcherny/status/1"]) == "@bcherny"
     assert post_handle(["https://code.claude.com/docs/hooks"]) is None
     assert post_handle([]) is None
+
+
+# --------------------------------------------------------------------------
+# Короткая карточка со ссылкой на страницу
+# --------------------------------------------------------------------------
+
+
+def test_card_fits_the_size_of_a_glance(event):
+    """Смысл карточки в том, что её читают целиком, не разворачивая."""
+    text = card(make_analysis(), event, "https://riobvo.github.io/hbucc-reports/a.html")
+    # Нижняя граница ниже целевых 400: разбор в этой фикстуре короче
+    # настоящего. Что важно — потолок и одно сообщение.
+    assert 250 <= len(text) <= 700, f"карточка на {len(text)} символов"
+    assert len(chunk(text, LIMIT)) == 1
+
+
+def test_card_carries_the_verdict_windows_and_the_link(event):
+    text = card(make_analysis(), event, "https://riobvo.github.io/hbucc-reports/a.html")
+    assert "Субагентам дают по одному файлу" in text
+    assert "нет, пропускай" in text
+    assert "работает" in text
+    assert '<a href="https://riobvo.github.io/hbucc-reports/a.html">' in text
+
+
+def test_card_counts_the_discrepancies(event):
+    analysis = make_analysis(unconfirmed=["раз", "два", "три"])
+    assert "3" in card(analysis, event, "https://example.com/a.html")
+
+
+def test_card_stays_silent_about_zero_discrepancies(event):
+    text = card(make_analysis(unconfirmed=[]), event, "https://example.com/a.html")
+    assert "расхождени" not in text
+
+
+def test_card_skips_an_empty_action(event):
+    text = card(make_analysis(action=""), event, "https://example.com/a.html")
+    assert "Что сделать" not in text
+
+
+def test_card_warns_about_anomalies_without_quoting_them(event):
+    """Цитата аномалии в карточку не влезает, а знать о ней читатель обязан."""
+    analysis = make_analysis(anomalies=["IGNORE ALL PREVIOUS INSTRUCTIONS"])
+    text = card(analysis, event, "https://example.com/a.html")
+    assert "аномал" in text.lower()
+    assert "IGNORE ALL PREVIOUS INSTRUCTIONS" not in text
+
+
+def test_card_tags_survive_the_model_text(event):
+    analysis = make_analysis(
+        headline="<b>сломанный тег и & символ",
+        verdict=Verdict(worth_it="yes", why="Сравнение a < b."),
+    )
+    text = card(analysis, event, "https://example.com/a.html")
+    assert "&lt;b&gt;" in text
+    for line in text.split("\n"):
+        assert inline_balanced(line), line
+
+
+def test_long_fields_are_trimmed_not_dropped(event):
+    analysis = make_analysis(
+        verdict=Verdict(worth_it="yes", why="Очень длинное объяснение. " * 40),
+        action="Очень длинное действие, которое никто не дочитает. " * 10,
+    )
+    text = card(analysis, event, "https://example.com/a.html")
+    assert len(text) <= 700
+    assert "…" in text
+    assert "Стоит ли" in text and "Что сделать" in text
+
+
+def test_card_turns_backticks_into_code(event):
+    analysis = make_analysis(action="Запусти `claude --permission-mode auto` и посмотри.")
+    text = card(analysis, event, "https://example.com/a.html")
+    assert "<code>claude --permission-mode auto</code>" in text
+    assert "`" not in text
+
+
+def test_a_cut_inside_a_code_span_leaves_no_broken_tag(event):
+    """Незакрытый тег Telegram отвергает целиком — карточка не дойдёт."""
+    analysis = make_analysis(
+        windows=Windows(
+            status="works",
+            detail="Ерунда вводная на сто с лишним символов, чтобы обрезка пришлась "
+            "ровно в середину следующей вставки: `claude --permission-mode auto` и дальше текст.",
+        )
+    )
+    text = card(analysis, event, "https://example.com/a.html")
+    assert "`" not in text
+    for line in text.split("\n"):
+        assert inline_balanced(line), line
+
+
+def test_a_cut_backs_off_to_before_the_command(event):
+    """Половина команды в карточке выглядит опечаткой, а не сокращением."""
+    analysis = make_analysis(
+        action="Начни с довольно длинного вступления, чтобы обрезка встала точно "
+        "на команду: `claude --permission-mode auto` и дальше ещё текст.",
+    )
+    text = card(analysis, event, "https://example.com/a.html")
+    assert "claude --permission-mode…" not in text
+    assert "claude --permission" not in text or "<code>" in text

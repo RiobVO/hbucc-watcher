@@ -52,6 +52,11 @@ class Secrets:
     telegram_bot_token: str
     telegram_chat_id: str
     healthcheck_url: str | None
+    # Отдельный токен на запись в репозиторий отчётов. Опционален по той
+    # же логике, что и watchdog: без него система работает, просто шлёт
+    # полный текст вместо карточки со ссылкой. У GITHUB_TOKEN в Actions
+    # прав на чужой репозиторий нет, поэтому нужен именно свой PAT.
+    reports_token: str | None = None
 
     @classmethod
     def from_env(cls) -> "Secrets":
@@ -83,11 +88,19 @@ class Secrets:
                 "смерть задачи останется незамеченной"
             )
 
+        reports_token = os.environ.get("REPORTS_TOKEN", "").strip() or None
+        if reports_token is None:
+            log.warning(
+                "REPORTS_TOKEN не задан — страницы разборов не публикуются, "
+                "в Telegram уходит полный текст"
+            )
+
         return cls(
             openai_api_key=required["OPENAI_API_KEY"],
             telegram_bot_token=required["TELEGRAM_BOT_TOKEN"],
             telegram_chat_id=required["TELEGRAM_CHAT_ID"],
             healthcheck_url=healthcheck,
+            reports_token=reports_token,
         )
 
     def __repr__(self) -> str:  # pragma: no cover - защита от случайного лога
@@ -100,7 +113,8 @@ class Secrets:
         return (
             f"Secrets(openai_api_key=<{len(self.openai_api_key)} chars>, "
             f"telegram_bot_token=<hidden>, telegram_chat_id=<hidden>, "
-            f"healthcheck_url={'set' if self.healthcheck_url else 'unset'})"
+            f"healthcheck_url={'set' if self.healthcheck_url else 'unset'}, "
+            f"reports_token={'set' if self.reports_token else 'unset'})"
         )
 
 

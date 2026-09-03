@@ -51,6 +51,9 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           HEALTHCHECK_URL: ${{ secrets.HEALTHCHECK_URL }}
+          # Отдельный PAT: у GITHUB_TOKEN прав на чужой репозиторий нет,
+          # а страницы разборов лежат именно там.
+          REPORTS_TOKEN: ${{ secrets.REPORTS_TOKEN }}
           BOOTSTRAP: ${{ inputs.bootstrap && '1' || '0' }}
           VERBOSE: ${{ inputs.verbose && '1' || '0' }}
         run: python -m watcher.main

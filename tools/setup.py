@@ -37,6 +37,7 @@ SECRET_NAMES = (
     "TELEGRAM_BOT_TOKEN",
     "TELEGRAM_CHAT_ID",
     "HEALTHCHECK_URL",
+    "REPORTS_TOKEN",
 )
 
 OK = "OK  "
@@ -134,16 +135,50 @@ def check_healthcheck(url: str) -> bool:
     return False
 
 
+def check_reports(pat: str, repo: str) -> bool:
+    """Есть ли у токена право писать в репозиторий отчётов.
+
+    Проверяется именно право на запись, а не факт существования токена:
+    PAT без доступа к чужому репозиторию выглядит рабочим ровно до первой
+    настоящей публикации — и та тихо деградирует в полный текст.
+    """
+    if not pat:
+        print(f"{SKIP} REPORTS_TOKEN не задан — страницы разборов публиковаться не будут")
+        return False
+    try:
+        with httpx.Client(timeout=20.0) as client:
+            response = client.get(
+                f"https://api.github.com/repos/{repo}",
+                headers={
+                    "Authorization": f"Bearer {pat}",
+                    "Accept": "application/vnd.github+json",
+                },
+            )
+    except httpx.HTTPError as exc:
+        print(f"{BAD} отчёты: сеть недоступна: {exc}")
+        return False
+    if response.status_code != 200:
+        print(f"{BAD} отчёты: {repo} недоступен — HTTP {response.status_code}")
+        return False
+    if not response.json().get("permissions", {}).get("push"):
+        print(f"{BAD} отчёты: токен видит {repo}, но права на запись у него нет")
+        return False
+    print(f"{OK} отчёты: {repo} доступен на запись")
+    return True
+
+
 def cmd_check() -> int:
     token = ask("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
     api_key = ask("OPENAI_API_KEY")
     hc = os.environ.get("HEALTHCHECK_URL", "").strip()
+    reports = os.environ.get("REPORTS_TOKEN", "").strip()
 
     results = [
         check_telegram(token, chat_id),
         check_openai(api_key),
         check_healthcheck(hc),
+        check_reports(reports, Config.load().get("reports", "repo")),
     ]
     print()
     if all(results):

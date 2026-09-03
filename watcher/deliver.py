@@ -60,6 +60,10 @@ _QUOTE_CLOSE = "</blockquote>"
 # и собираем адреса отдельно, чтобы ни одна ссылка не потерялась.
 _INLINE_CITATION = re.compile(r"\s*\(\[[^\]]+\]\((https?://[^)\s]+)\)\)")
 
+# Команды и пути модель обрамляет обратными кавычками, хотя промт этого не
+# просит. В карточке это готовая разметка, а не мусор — см. _code_spans().
+_CODE_SPAN = re.compile(r"`([^`]+)`")
+
 _WINDOWS_LABEL = {
     "works": "работает",
     "macos_only": "только macOS",
@@ -233,6 +237,107 @@ def render(
 def _quote(title: str, body: str) -> str:
     """Сворачиваемый блок. Открывающий тег — в начале строки, закрывающий — в конце."""
     return f"<blockquote expandable><b>{title}</b>\n{body}{_QUOTE_CLOSE}"
+
+
+# Карточку читают целиком и не разворачивая — в этом весь её смысл.
+# Поэтому у каждого поля свой потолок: без него одно многословное поле
+# съедает место у остальных, и карточка превращается в ту же простыню,
+# от которой уходили.
+CARD_WHY_CHARS = 140
+CARD_WINDOWS_CHARS = 100
+CARD_ACTION_CHARS = 110
+
+
+def _trim(text: str, limit: int) -> str:
+    """Укоротить до потолка, отметив, что текст урезан.
+
+    Многоточие обязательно даже при обрезке по концу предложения: без него
+    фраза выглядит законченной, и читатель не узнает, что за ссылкой есть
+    продолжение. Точка перед многоточием убирается — «…дробят работу…»
+    читается, «…работу. …» нет.
+    """
+    text = text.strip()
+    if len(text) <= limit:
+        return text
+    sentence = text.rfind(".", 0, limit + 1)
+    if sentence > limit // 2:
+        return _outside_code(text[:sentence]) + "…"
+    word = text.rfind(" ", 0, limit)
+    return _outside_code(text[: word if word > 0 else limit]) + "…"
+
+
+def _outside_code(text: str) -> str:
+    """Отступить назад, если разрез пришёлся внутрь вставки в кавычках.
+
+    Половина команды («claude --permission-mode…») читателю бесполезна и
+    выглядит опечаткой: лучше оборвать фразу до неё.
+    """
+    if text.count("`") % 2:
+        text = text[: text.rfind("`")]
+    return text.rstrip(" ,;:-—")
+
+
+def _code_spans(text: str) -> str:
+    """Обратные кавычки модели → <code>, непарная кавычка выбрасывается.
+
+    Модель размечает команды обратными кавычками вопреки запрету в промте.
+    В карточке они доезжают буквальными символами и выглядят мусором, а
+    <code> Telegram понимает. Обрезка при этом может прийтись на середину
+    вставки — оставшуюся одинокую кавычку убираем, потому что незакрытый
+    тег Telegram отвергает целиком, и карточка просто не дойдёт.
+    """
+    return _CODE_SPAN.sub(lambda m: f"<code>{m.group(1)}</code>", text).replace("`", "")
+
+
+def _short(raw: str, limit: int) -> str:
+    """Поле модели для карточки: без цитат, укороченное, экранированное.
+
+    Порядок обязателен. Обрезать уже экранированный текст нельзя: разрез
+    придётся на середину сущности вроде &amp;lt; и сломает разметку. Теги
+    добавляются последними — по той же причине.
+    """
+    text, _ = strip_citations(raw)
+    return _code_spans(esc(_trim(text, limit)))
+
+
+def card(analysis: Analysis, event: Event, url: str) -> str:
+    """Короткая карточка со ссылкой на страницу разбора.
+
+    Отвечает на четыре вопроса, ради которых сообщение открывают: что
+    случилось, стоит ли оно времени, работает ли на Windows и что сделать.
+    Доказательная часть — слои, механика, расхождения — живёт на странице:
+    в мессенджере её всё равно читают по диагонали, а через неделю не
+    находят вовсе.
+
+    Адрес приходит параметром, а не строится здесь: карточка отправляется
+    только после того, как страница уже отвечает по этому адресу.
+    """
+    lines = [
+        f"<b>{esc(analysis.headline)}</b>",
+        f"<i>{esc(event.headline)}</i>",
+        "",
+        f"<b>Стоит ли:</b> {_VERDICT_LABEL[analysis.verdict.worth_it]} — "
+        f"{_short(analysis.verdict.why, CARD_WHY_CHARS)}",
+        f"<b>Windows:</b> {_WINDOWS_LABEL[analysis.windows.status]} — "
+        f"{_short(analysis.windows.detail, CARD_WINDOWS_CHARS)}",
+    ]
+
+    if analysis.action.strip():
+        lines.append(f"<b>Что сделать:</b> {_short(analysis.action, CARD_ACTION_CHARS)}")
+
+    # Числом, а не цитатой: сама находка лежит на странице, а в карточке
+    # важно, что она есть. Аномалия при этом не тонет — читатель видит,
+    # что материал пытался управлять системой.
+    notes = []
+    if analysis.unconfirmed:
+        notes.append(f"расхождений с документацией: {len(analysis.unconfirmed)}")
+    if analysis.anomalies:
+        notes.append(f"аномалий в исходном тексте: {len(analysis.anomalies)}")
+    if notes:
+        lines += ["", "Найдено — " + ", ".join(notes) + "."]
+
+    lines += ["", f'<a href="{esc(url)}">Разбор целиком</a>']
+    return "\n".join(lines)
 
 
 def chunk(text: str, limit: int) -> list[str]:

@@ -26,6 +26,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 import httpx
@@ -40,7 +41,7 @@ from watcher.analyze import (
     probe_model,
 )
 from watcher.config import STATE_DIR, PROMPTS_DIR, Config, ConfigError, Secrets, setup_logging
-from watcher.deliver import DeliveryFailed, deliver, render, send_alert
+from watcher.deliver import DeliveryFailed, card, deliver, render, send_alert
 from watcher.detect import (
     check_assumptions,
     check_diff_scale,
@@ -49,6 +50,7 @@ from watcher.detect import (
     flag_injections,
 )
 from watcher.original import author_handle, fetch_author
+from watcher.publish import PublishFailed, page_name, page_url, publish_page, render_page
 from watcher.source import ParseError, SourceUnavailable, fetch, parse
 from watcher.state import (
     GitError,
@@ -456,7 +458,7 @@ class Runner:
                 else None
             )
             try:
-                analysis = analyze(
+                analysis, usage = analyze(
                     event,
                     snapshot.parts,
                     api_key=self.secrets.openai_api_key,
@@ -471,7 +473,14 @@ class Runner:
                 failed.append(f"{event.headline}: разбор не получен — {exc}")
                 break
 
-            text = render(analysis, event, site_author=who_runs_site, author=author)
+            # Сначала страница, потом ссылка на неё. Порядок обязателен:
+            # карточка со ссылкой на 404 хуже простыни, от которой уходили.
+            url = self._publish(analysis, event, usage, author, who_runs_site)
+            text = (
+                card(analysis, event, url)
+                if url
+                else render(analysis, event, site_author=who_runs_site, author=author)
+            )
             if overflow > 0 and index == len(batch):
                 text += (
                     f"\n\nЕщё {overflow} изменений в очереди — придут следующим прогоном."
@@ -507,6 +516,49 @@ class Runner:
             delivered += 1
 
         return delivered, failed
+
+    def _publish(self, analysis, event, usage, author, site_author) -> str | None:
+        """Опубликовать страницу разбора. Возвращает адрес либо None.
+
+        None — это не сбой прогона, а деградация: читатель получит полный
+        текст, как получал раньше, и в журнале будет сказано, почему
+        страницы нет. Событие при этом доставлено, снапшот двинется.
+
+        Обратный выбор — считать неудачную публикацию провалом события —
+        означал бы, что отвалившийся токен к чужому репозиторию
+        останавливает разборы совсем. Разбор важнее его оформления.
+        """
+        cfg = self.cfg.section("reports")
+        if not cfg["enabled"]:
+            return None
+        if not self.secrets.reports_token:
+            log.info("REPORTS_TOKEN не задан — уходит полный текст")
+            return None
+
+        model_cfg = self.cfg.section("model")
+        name = page_name(event, datetime.now(timezone.utc))
+        try:
+            publish_page(
+                render_page(
+                    analysis,
+                    event,
+                    author=author,
+                    site_author=site_author,
+                    usage=usage,
+                    price_usd=usage.price(
+                        input_per_mtok=model_cfg["price_input_per_mtok"],
+                        output_per_mtok=model_cfg["price_output_per_mtok"],
+                        per_search=model_cfg["price_per_search"],
+                    ),
+                ),
+                name=name,
+                repo=cfg["repo"],
+                token=self.secrets.reports_token,
+            )
+        except PublishFailed as exc:
+            log.warning("страница не опубликована, уходит полный текст: %s", exc)
+            return None
+        return page_url(cfg["base_url"], name)
 
     def _advance(self, snapshot: Snapshot, doc, result, *, note: str) -> None:
         """Продвинуть снапшот. Вызывается только при полной доставке."""
