@@ -52,10 +52,12 @@ from watcher.detect import (
 from watcher.original import author_handle, fetch_author
 from watcher.publish import (
     PublishFailed,
+    index_entry,
     page_name,
     page_url,
     publish_page,
     render_page,
+    update_index,
     wait_for_page,
 )
 from watcher.source import ParseError, SourceUnavailable, fetch, parse
@@ -543,7 +545,8 @@ class Runner:
             return None
 
         model_cfg = self.cfg.section("model")
-        name = page_name(event, datetime.now(timezone.utc))
+        now = datetime.now(timezone.utc)
+        name = page_name(event, now)
         try:
             publish_page(
                 render_page(
@@ -574,6 +577,19 @@ class Runner:
         if not wait_for_page(url):
             log.warning("страница ещё не поднялась, уходит полный текст: %s", url)
             return None
+
+        # Индекс — отдельная попытка и отдельный отказ. Страница уже
+        # опубликована и открывается; не попасть в архив она может, а вот
+        # отменять из-за этого доставку нечего.
+        try:
+            update_index(
+                index_entry(analysis, event, name, now),
+                repo=cfg["repo"],
+                token=self.secrets.reports_token,
+            )
+        except PublishFailed as exc:
+            log.warning("индекс архива не обновлён: %s", exc)
+
         return url
 
     def _advance(self, snapshot: Snapshot, doc, result, *, note: str) -> None:

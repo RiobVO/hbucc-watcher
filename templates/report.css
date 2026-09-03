@@ -170,3 +170,19 @@ ul.plain li:last-child { margin-bottom: 0; }
   .sources .host { min-width: 100%; }
   .sources a { flex-wrap: wrap; gap: 2px; }
 }
+
+/* --- индексная страница архива --- */
+
+.report-list { display: grid; gap: 10px; }
+.report-list a {
+  display: block; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+  padding: 14px 16px; text-decoration: none; color: #334155;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.report-list a:hover { border-color: #94a3b8; transform: translateX(2px); }
+.report-meta {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  color: #64748b; margin-bottom: 4px;
+}
+.report-title { font-weight: 600; color: #0f172a; margin-bottom: 4px; }
+.report-summary { font-size: 13px; color: #475569; }

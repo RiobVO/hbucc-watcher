@@ -65,10 +65,25 @@ __all__ = [
     "PublishFailed",
     "page_name",
     "page_url",
+    "index_entries",
+    "index_entry",
+    "merge_entry",
     "publish_page",
+    "render_index",
     "render_page",
+    "update_index",
     "wait_for_page",
 ]
+
+INDEX_NAME = "index.html"
+
+# Индекс носит свои данные в себе. Отдельный манифест рядом со страницей
+# — это два файла, которые обязаны совпадать, а значит однажды разойдутся;
+# к тому же Contents API отдаёт содержимое и sha одним ответом, так что
+# самодостаточная страница обходится двумя запросами вместо четырёх.
+_INDEX_DATA = re.compile(
+    r'<script type="application/json" id="reports">(.*?)</script>', re.S
+)
 
 CSS_PATH = ROOT / "templates" / "report.css"
 
@@ -265,14 +280,38 @@ def render_page(
     return "\n".join([_head(analysis, event), *[part for part in body if part], _TAIL])
 
 
-def _head(analysis: Analysis, event: Event) -> str:
+def _summary(analysis: Analysis) -> str:
+    """Одна строка про разбор: вердикт, Windows, число расхождений.
+
+    Идёт и в og:description страницы, и в строку архива — это один и тот
+    же ответ на один и тот же вопрос «о чём это и стоит ли открывать».
+    """
     summary = (
         f"Стоит ли: {_VERDICT_SHORT[analysis.verdict.worth_it]} · "
         f"Windows: {_WINDOWS_SHORT[analysis.windows.status]}"
     )
     if analysis.unconfirmed:
         summary += f" · расхождений с документацией: {len(analysis.unconfirmed)}"
-    summary += f". Part {event.part_number}, {_KIND_BADGE.get(event.kind, event.kind)}."
+    return summary
+
+
+def index_entry(analysis: Analysis, event: Event, name: str, when: datetime) -> dict:
+    """Строка архива для этого разбора."""
+    return {
+        "name": name,
+        "title": analysis.headline,
+        "summary": _summary(analysis),
+        "date": f"{when:%Y-%m-%d}",
+        "part": event.part_number,
+        "kind": _KIND_BADGE.get(event.kind, event.kind),
+    }
+
+
+def _head(analysis: Analysis, event: Event) -> str:
+    summary = (
+        f"{_summary(analysis)}. Part {event.part_number}, "
+        f"{_KIND_BADGE.get(event.kind, event.kind)}."
+    )
     title = html.escape(analysis.headline, quote=True)
 
     return f"""<!DOCTYPE html>
@@ -560,6 +599,141 @@ _TAIL = """
 
 
 # --------------------------------------------------------------------------
+# Индекс архива
+# --------------------------------------------------------------------------
+
+
+def index_entries(page: str | None) -> list[dict]:
+    """Достать список разборов из самой индексной страницы.
+
+    Индекса нет или его переписали руками — считаем, что записей нет.
+    Архив соберётся заново со следующей публикации: терять при этом
+    нечего, страницы разборов лежат на своих адресах и никуда не делись.
+    """
+    if not page:
+        return []
+    found = _INDEX_DATA.search(page)
+    if not found:
+        log.warning("в индексе нет блока с данными — список собирается заново")
+        return []
+    try:
+        data = json.loads(found.group(1))
+    except json.JSONDecodeError:
+        log.warning("данные индекса не разбираются, список собирается заново", exc_info=True)
+        return []
+    return data if isinstance(data, list) else []
+
+
+def merge_entry(entries: list[dict], entry: dict) -> list[dict]:
+    """Добавить разбор в список, заменив прежнюю запись с тем же именем.
+
+    Замена, а не добавление: повторная публикация того же события
+    перезаписывает ту же страницу, и второй строки в архиве быть не должно.
+    """
+    kept = [item for item in entries if item.get("name") != entry["name"]]
+    return sorted(
+        [entry, *kept],
+        key=lambda item: (item.get("date", ""), item.get("part", 0)),
+        reverse=True,
+    )
+
+
+def _reports_word(count: int) -> str:
+    """«1 разбор», «3 разбора», «11 разборов». Русский счёт, не английский."""
+    if 11 <= count % 100 <= 14:
+        return "разборов"
+    last = count % 10
+    if last == 1:
+        return "разбор"
+    if 2 <= last <= 4:
+        return "разбора"
+    return "разборов"
+
+
+def render_index(entries: list[dict]) -> str:
+    """Собрать индексную страницу архива."""
+    if entries:
+        rows = "\n".join(
+            f'    <a href="{html.escape(str(item["name"]), quote=True)}">\n'
+            f'      <div class="report-meta">{html.escape(str(item.get("date", "")))} · '
+            f'Part {html.escape(str(item.get("part", "")))} · '
+            f'{html.escape(str(item.get("kind", "")))}</div>\n'
+            f'      <div class="report-title">{html.escape(str(item.get("title", "")))}</div>\n'
+            f'      <div class="report-summary">{html.escape(str(item.get("summary", "")))}</div>\n'
+            "    </a>"
+            for item in entries
+        )
+        body = f'  <div class="report-list">\n{rows}\n  </div>'
+    else:
+        body = "  <p>Разборов пока нет.</p>"
+
+    count = f"{len(entries)} {_reports_word(len(entries))}"
+    return f"""<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta property="og:title" content="Разборы howborisusesclaudecode.com">
+<meta property="og:description" content="Архив разборов: {count}.">
+<meta name="theme-color" content="#f8fafc">
+<title>Разборы howborisusesclaudecode.com</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+{CSS_PATH.read_text(encoding="utf-8")}</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="eyebrow"><span>архив</span></div>
+  <h1>Разборы howborisusesclaudecode.com</h1>
+  <p class="subtitle">Что появилось на сайте, что это значит и стоит ли оно времени.</p>
+
+{body}
+
+  <footer>
+    <span>наблюдатель за howborisusesclaudecode.com</span>
+    <span>{count}</span>
+  </footer>
+
+</div>
+<script type="application/json" id="reports">{json.dumps(entries, ensure_ascii=False)}</script>
+</body>
+</html>"""
+
+
+def update_index(
+    entry: dict,
+    *,
+    repo: str,
+    token: str,
+    timeout_seconds: float = 30.0,
+    transport: httpx.BaseTransport | None = None,
+) -> None:
+    """Добавить разбор в индекс архива. Бросает PublishFailed.
+
+    Вызывается после того, как страница уже опубликована, поэтому её
+    судьба от исхода не зависит: сломанный индекс — повод для строки в
+    журнале, а не для отмены доставки. Но и молчать нельзя, иначе архив
+    тихо перестанет пополняться.
+    """
+    with _client(timeout_seconds, transport) as client:
+        existing, sha = _read(client, repo, INDEX_NAME, token)
+        entries = merge_entry(index_entries(existing), entry)
+        _write(
+            client,
+            repo,
+            INDEX_NAME,
+            render_index(entries),
+            sha=sha,
+            token=token,
+            message=f"index: {len(entries)} reports",
+        )
+    log.info("индекс архива обновлён: записей %d", len(entries))
+
+
+# --------------------------------------------------------------------------
 # Публикация
 # --------------------------------------------------------------------------
 
@@ -586,38 +760,92 @@ def publish_page(
 
     Токен в сообщение об ошибке не попадает: он живёт только в заголовке.
     """
-    url = f"{GITHUB_API}/repos/{repo}/contents/{name}"
-    headers = {
+    with _client(timeout_seconds, transport) as client:
+        _, sha = _read(client, repo, name, token)
+        _write(
+            client,
+            repo,
+            name,
+            page,
+            sha=sha,
+            token=token,
+            message=f"{'update' if sha else 'add'} report {name}",
+        )
+    log.info("страница опубликована: %s", name)
+
+
+def _client(timeout_seconds: float, transport: httpx.BaseTransport | None) -> httpx.Client:
+    return httpx.Client(timeout=httpx.Timeout(timeout_seconds), transport=transport)
+
+
+def _headers(token: str) -> dict[str, str]:
+    return {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
-    payload: dict[str, str] = {
-        "message": f"add report {name}",
-        "content": base64.b64encode(page.encode("utf-8")).decode("ascii"),
+
+
+def _read(
+    client: httpx.Client, repo: str, name: str, token: str
+) -> tuple[str | None, str | None]:
+    """Прочитать файл из репозитория: текст и sha. Нет файла — (None, None).
+
+    sha обязателен для перезаписи: без него GitHub считает запись
+    конфликтом и отвергает её. Содержимое и sha приходят одним ответом,
+    поэтому второго запроса за ним не нужно — на этом и стоит индекс,
+    который носит свои данные в себе.
+    """
+    try:
+        response = client.get(
+            f"{GITHUB_API}/repos/{repo}/contents/{name}", headers=_headers(token)
+        )
+    except httpx.HTTPError as exc:
+        raise PublishFailed(f"репозиторий отчётов недоступен: {exc}") from exc
+
+    if response.status_code == 404:
+        return None, None
+    if response.status_code != 200:
+        raise PublishFailed(
+            f"репозиторий отчётов не отвечает: HTTP {response.status_code} — {_reason(response)}"
+        )
+
+    payload = response.json()
+    content = payload.get("content") or ""
+    text = base64.b64decode(content).decode("utf-8", errors="replace") if content else None
+    return text, payload.get("sha")
+
+
+def _write(
+    client: httpx.Client,
+    repo: str,
+    name: str,
+    content: str,
+    *,
+    sha: str | None,
+    token: str,
+    message: str,
+) -> None:
+    payload = {
+        "message": message,
+        "content": base64.b64encode(content.encode("utf-8")).decode("ascii"),
     }
+    if sha:
+        payload["sha"] = sha
 
     try:
-        with httpx.Client(timeout=httpx.Timeout(timeout_seconds), transport=transport) as client:
-            existing = client.get(url, headers=headers)
-            if existing.status_code == 200:
-                payload["sha"] = existing.json().get("sha", "")
-                payload["message"] = f"update report {name}"
-            elif existing.status_code != 404:
-                raise PublishFailed(
-                    f"репозиторий отчётов не отвечает: HTTP {existing.status_code} — "
-                    f"{_reason(existing)}"
-                )
-
-            written = client.put(url, headers=headers, json=payload)
+        response = client.put(
+            f"{GITHUB_API}/repos/{repo}/contents/{name}",
+            headers=_headers(token),
+            json=payload,
+        )
     except httpx.HTTPError as exc:
         raise PublishFailed(f"публикация не дошла: {exc}") from exc
 
-    if written.status_code not in (200, 201):
+    if response.status_code not in (200, 201):
         raise PublishFailed(
-            f"страница не записана: HTTP {written.status_code} — {_reason(written)}"
+            f"{name} не записан: HTTP {response.status_code} — {_reason(response)}"
         )
-    log.info("страница опубликована: %s", name)
 
 
 # Расписание опроса: сначала часто, потом реже. Замер 30 июля 2026 — новая

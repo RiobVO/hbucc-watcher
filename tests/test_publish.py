@@ -43,6 +43,10 @@ from watcher.publish import (
     page_url,
     publish_page,
     render_page,
+    index_entries,
+    merge_entry,
+    render_index,
+    update_index,
     wait_for_page,
 )
 
@@ -477,3 +481,112 @@ def test_unreachable_host_is_not_a_ready_page():
     assert not wait_for_page(
         "https://example.com/a.html", delays=(0,), transport=httpx.MockTransport(handler)
     )
+
+
+# ----------------------------------------------------------- индекс архива
+
+
+def entry(name: str, title: str = "Разбор", part: int = 22, date: str = "2026-07-30") -> dict:
+    return {
+        "name": name,
+        "title": title,
+        "summary": "Стоит ли: нет · Windows: работает",
+        "date": date,
+        "part": part,
+        "kind": "новый совет",
+    }
+
+
+def test_index_lists_every_report():
+    page = render_index([entry("a.html", "Первый"), entry("b.html", "Второй", part=21)])
+    assert 'href="a.html"' in page and 'href="b.html"' in page
+    assert "Первый" in page and "Второй" in page
+
+
+def test_index_carries_its_own_data_for_the_next_run():
+    """Индекс — сам себе манифест: отдельный файл рядом однажды разъедется."""
+    entries = [entry("a.html", "Первый")]
+    assert index_entries(render_index(entries)) == entries
+
+
+def test_index_of_an_empty_repository_is_still_a_page():
+    page = render_index([])
+    assert page.startswith("<!DOCTYPE html>")
+    assert index_entries(page) == []
+
+
+def test_missing_index_reads_as_no_entries():
+    assert index_entries(None) == []
+    assert index_entries("<html>руками переписали</html>") == []
+
+
+def test_same_report_published_twice_gets_one_line():
+    entries = merge_entry([entry("a.html", "Старый заголовок")], entry("a.html", "Новый заголовок"))
+    assert len(entries) == 1
+    assert entries[0]["title"] == "Новый заголовок"
+
+
+def test_newest_report_comes_first():
+    entries = merge_entry(
+        [entry("old.html", "Старый", date="2026-07-01")],
+        entry("new.html", "Новый", date="2026-07-30"),
+    )
+    assert [e["name"] for e in entries] == ["new.html", "old.html"]
+
+
+def test_index_escapes_the_model_text():
+    page = render_index([entry("a.html", "<script>alert(1)</script>")])
+    assert "<script>alert(1)</script>" not in page.split("id=\"reports\"")[0]
+    assert balance(page).stack == []
+
+
+def test_index_is_written_back_with_its_sha():
+    seen: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "GET":
+            existing = render_index([entry("old.html", "Старый", date="2026-07-01")])
+            return httpx.Response(
+                200,
+                json={
+                    "sha": "index-sha",
+                    "content": base64.b64encode(existing.encode("utf-8")).decode("ascii"),
+                    "encoding": "base64",
+                },
+            )
+        seen["body"] = json.loads(request.content)
+        return httpx.Response(200, json={"content": {"sha": "new"}})
+
+    update_index(
+        entry("new.html", "Новый"),
+        repo="RiobVO/hbucc-reports",
+        token=FAKE,
+        transport=httpx.MockTransport(handler),
+    )
+    body = seen["body"]
+    assert body["sha"] == "index-sha"
+    written = base64.b64decode(body["content"]).decode("utf-8")
+    assert [e["name"] for e in index_entries(written)] == ["new.html", "old.html"]
+
+
+def test_index_failure_is_reported_not_swallowed(page):
+    """Страница уже опубликована — но молчать о сломанном индексе нельзя."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(500, json={"message": "Internal Server Error"})
+
+    with pytest.raises(PublishFailed):
+        update_index(
+            entry("a.html"),
+            repo="RiobVO/hbucc-reports",
+            token=FAKE,
+            transport=httpx.MockTransport(handler),
+        )
+
+
+def test_the_archive_counts_in_russian():
+    counts = {1: "1 разбор", 2: "2 разбора", 4: "4 разбора", 5: "5 разборов",
+              11: "11 разборов", 21: "21 разбор", 22: "22 разбора", 25: "25 разборов"}
+    for number, expected in counts.items():
+        page = render_index([entry(f"{i}.html") for i in range(number)])
+        assert expected in page, f"{number} -> ожидалось «{expected}»"
