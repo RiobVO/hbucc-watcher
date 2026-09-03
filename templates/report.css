@@ -1,0 +1,172 @@
+/* Вёрстка страницы разбора.
+ *
+ * Файл отдельно от Python намеренно: вид страницы меняется правкой этого
+ * файла, без единой строки кода. Содержимое взято с одобренных страниц
+ * (2026-07-30-postcompact.html и 2026-07-30-domain-knowledge.html) — они и
+ * есть эталон, а не «примерно такой стиль».
+ *
+ * CSS встраивается в страницу, а не подключается ссылкой: страница живёт в
+ * чужом репозитории на GitHub Pages, и внешний файл добавил бы второй
+ * запрос, кеш и целый класс поломок вида «стили не доехали». Страница
+ * обязана открываться одна.
+ *
+ * Блок «дописано» в конце — секции, которых в ручных страницах не было:
+ * ловушки, «рядом», аномалии.
+ */
+
+* { box-sizing: border-box; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f8fafc; color: #334155; line-height: 1.65;
+  padding: 48px 24px; margin: 0; font-size: 15px;
+}
+.container { max-width: 800px; margin: 0 auto; }
+
+.eyebrow {
+  font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  color: #64748b; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.eyebrow .badge {
+  background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe;
+  border-radius: 4px; padding: 2px 7px; letter-spacing: .04em;
+}
+h1 { font-size: 32px; font-weight: 700; color: #0f172a; margin: 0 0 8px; line-height: 1.2; }
+.subtitle { font-size: 16px; color: #64748b; margin: 0; }
+
+.stats-row {
+  display: flex; gap: 32px; flex-wrap: wrap; margin: 28px 0 32px; padding: 18px 0;
+  border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;
+}
+.stat-value { font-size: 22px; font-weight: 700; color: #0f172a; line-height: 1.2; }
+.stat-value.bad { color: #9b2226; }
+.stat-label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
+
+.at-a-glance {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #f59e0b; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px;
+}
+.glance-title {
+  font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: #78350f; margin-bottom: 14px;
+}
+.glance-row { display: flex; gap: 10px; align-items: baseline; margin-bottom: 10px; }
+.glance-row:last-child { margin-bottom: 0; }
+.glance-key {
+  font-size: 12px; font-weight: 600; color: #92400e; min-width: 108px;
+  flex: none; text-transform: uppercase; letter-spacing: .04em;
+}
+.glance-val { color: #422006; font-size: 14px; }
+.glance-val b { color: #78350f; }
+
+.who-wrote {
+  display: flex; align-items: flex-start; gap: 12px; background: #fff;
+  border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 32px;
+}
+.who-avatar {
+  width: 38px; height: 38px; border-radius: 50%; flex: none;
+  background: #1e40af; color: #fff; display: flex; align-items: center;
+  justify-content: center; font-weight: 600; font-size: 15px;
+}
+.who-name { font-weight: 600; color: #0f172a; }
+.who-handle { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #64748b; }
+.who-bio { font-size: 13px; color: #475569; margin-top: 2px; }
+
+.nav-toc {
+  display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 40px; padding: 14px 16px;
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+}
+.nav-toc a {
+  font-size: 12px; color: #475569; text-decoration: none; background: #f1f5f9;
+  border: 1px solid #e2e8f0; border-radius: 999px; padding: 4px 11px; transition: all .15s ease;
+}
+.nav-toc a:hover { background: #e2e8f0; color: #0f172a; }
+
+h2 { font-size: 20px; font-weight: 600; color: #0f172a; margin: 48px 0 16px; scroll-margin-top: 24px; }
+p { margin: 0 0 14px; } p:last-child { margin-bottom: 0; }
+
+.card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px 18px; margin-bottom: 12px; }
+.card-good { background: #f0fdf4; border-color: #86efac; }
+.card-warn { background: #fffbeb; border-color: #fcd34d; }
+.card-head {
+  display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase; color: #64748b; margin-bottom: 8px; flex-wrap: wrap;
+}
+.card-good .card-head { color: #166534; }
+.card-warn .card-head { color: #92400e; }
+.card-head .who { font-family: 'JetBrains Mono', monospace; text-transform: none; letter-spacing: 0; }
+.card p { font-size: 14px; margin: 0; }
+.layers { display: grid; gap: 10px; }
+.layer-num {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; background: #f1f5f9;
+  border: 1px solid #e2e8f0; border-radius: 4px; padding: 1px 6px; color: #64748b;
+}
+
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: .88em; background: #f1f5f9;
+  border: 1px solid #e2e8f0; border-radius: 4px; padding: 1px 5px; color: #1e40af;
+}
+.code-block { position: relative; margin: 14px 0; }
+.code-block pre {
+  background: #fff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 14px 16px;
+  margin: 0; overflow-x: auto; font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; line-height: 1.55; color: #1e40af;
+}
+.code-block .copy-btn { position: absolute; top: 8px; right: 8px; }
+.copy-btn {
+  background: #e2e8f0; border: none; border-radius: 4px; padding: 5px 10px;
+  font-size: 11px; cursor: pointer; color: #475569; font-family: inherit; transition: background .15s ease;
+}
+.copy-btn:hover { background: #cbd5e1; }
+.copy-btn.done { background: #bbf7d0; color: #166534; }
+
+.sources { display: grid; gap: 8px; }
+.sources a {
+  display: flex; align-items: center; gap: 12px; background: #fff; border: 1px solid #e2e8f0;
+  border-radius: 8px; padding: 10px 14px; text-decoration: none; color: #334155;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.sources a:hover { border-color: #94a3b8; transform: translateX(2px); }
+.sources .host { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #64748b; min-width: 140px; flex: none; }
+.sources .what { font-size: 14px; }
+
+footer {
+  margin-top: 48px; padding-top: 16px; border-top: 1px solid #e2e8f0;
+  font-size: 12px; color: #94a3b8; display: flex; flex-wrap: wrap; gap: 6px 20px;
+}
+
+/* --- дописано: секции, которых в ручных страницах не было --- */
+
+/* Ловушки и расхождения — списком, а не абзацем: это перечисление, и
+ * читатель пробегает его глазами, а не читает подряд. */
+ul.plain { margin: 0; padding-left: 20px; }
+ul.plain li { font-size: 14px; margin-bottom: 8px; }
+ul.plain li:last-child { margin-bottom: 0; }
+
+/* «Рядом» — плитками. Строкой через запятую это не читается: в названиях
+ * частей сайта есть и тире, и дефисы, и граница между пунктами пропадает. */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips span {
+  font-size: 12px; color: #475569; background: #fff;
+  border: 1px solid #e2e8f0; border-radius: 999px; padding: 4px 11px;
+}
+
+/* Аномалии — единственная секция над оглавлением и без сворачивания.
+ * Это найденные в чужом тексте обращения к агенту: читатель обязан видеть
+ * их сразу, а не после прокрутки. */
+.card-alert { background: #fef2f2; border-color: #fca5a5; }
+.card-alert .card-head { color: #9b2226; }
+.card-alert blockquote {
+  margin: 0 0 10px; padding-left: 12px; border-left: 3px solid #fca5a5;
+  font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #7f1d1d;
+}
+.card-alert blockquote:last-child { margin-bottom: 0; }
+
+@media (max-width: 640px) {
+  body { padding: 28px 16px; }
+  h1 { font-size: 26px; }
+  .stats-row { gap: 20px; }
+  .glance-row { flex-direction: column; gap: 2px; }
+  .glance-key { min-width: 0; }
+  .sources .host { min-width: 100%; }
+  .sources a { flex-wrap: wrap; gap: 2px; }
+}

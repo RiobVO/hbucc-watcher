@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import json
 import logging
+from dataclasses import dataclass
 from difflib import unified_diff
 from typing import Any, Literal
 
@@ -64,6 +65,7 @@ __all__ = [
     "Analysis",
     "AnalysisFailed",
     "Layers",
+    "Usage",
     "Verdict",
     "Windows",
     "analyze",
@@ -106,6 +108,37 @@ PROBE_FATAL_STATUSES = frozenset({401, 403, 404})
 
 class AnalysisFailed(RuntimeError):
     """Модель не вернула пригодный разбор. Событие остаётся недоставленным."""
+
+
+@dataclass(frozen=True)
+class Usage:
+    """Во что обошёлся разбор: число поисков и токены.
+
+    Живёт рядом с вызовом модели, а не рядом с рендером: это факт о
+    запросе, а не о странице. Раньше эти числа только писались в лог —
+    единственный способ заметить разгон веб-поиска, у которого нет потолка
+    на число вызовов. Теперь они же уходят в ряд метрик на странице
+    разбора, поэтому возвращаются вызывающему, а не остаются в строке лога.
+    """
+
+    searches: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
+
+    def price(
+        self, *, input_per_mtok: float, output_per_mtok: float, per_search: float
+    ) -> float:
+        """Стоимость разбора по ставкам провайдера.
+
+        Ставки приходят параметрами из конфига, а не зашиты здесь: их
+        меняет провайдер без нашего участия, и захардкоженное число тихо
+        врало бы на каждой странице.
+        """
+        return (
+            self.input_tokens / 1_000_000 * input_per_mtok
+            + self.output_tokens / 1_000_000 * output_per_mtok
+            + self.searches * per_search
+        )
 
 
 # --------------------------------------------------------------------------
@@ -530,8 +563,15 @@ def analyze(
     user_agent: str = "hbucc-watcher/1.0",
     site_author: str | None = None,
     author: Author | None = None,
-) -> Analysis:
-    """Получить разбор события. Бросает AnalysisFailed — событие не доставлено."""
+) -> tuple[Analysis, Usage]:
+    """Получить разбор события и цену этого разбора.
+
+    Бросает AnalysisFailed — событие остаётся недоставленным.
+
+    Расход возвращается вторым значением, потому что он нужен снаружи:
+    на странице разбора стоит ряд метрик, и «сколько поисков» и «сколько
+    это стоило» — две из пяти. Строкой лога такое не передать.
+    """
     import openai
     from openai import OpenAI
 
@@ -582,13 +622,18 @@ def analyze(
     if refusal is not None:
         raise AnalysisFailed(f"модель отказалась разбирать материал: {refusal}")
 
-    searches = sum(1 for item in response.output if getattr(item, "type", "") == "web_search_call")
-    usage = response.usage
+    usage = Usage(
+        searches=sum(
+            1 for item in response.output if getattr(item, "type", "") == "web_search_call"
+        ),
+        input_tokens=getattr(response.usage, "input_tokens", 0) or 0,
+        output_tokens=getattr(response.usage, "output_tokens", 0) or 0,
+    )
     log.info(
         "разбор получен: поисков %d, токены вход=%s выход=%s",
-        searches,
-        getattr(usage, "input_tokens", "?"),
-        getattr(usage, "output_tokens", "?"),
+        usage.searches,
+        usage.input_tokens,
+        usage.output_tokens,
     )
 
     if response.status != "completed":
@@ -605,7 +650,7 @@ def analyze(
         raise AnalysisFailed("в ответе модели нет текста")
 
     try:
-        return Analysis.model_validate_json(text)
+        return Analysis.model_validate_json(text), usage
     except ValidationError as exc:
         raise AnalysisFailed(f"ответ не соответствует схеме: {exc}") from exc
     except json.JSONDecodeError as exc:
