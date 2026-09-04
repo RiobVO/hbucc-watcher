@@ -498,3 +498,43 @@ def test_a_cut_backs_off_to_before_the_command(event):
     text = card(analysis, event, "https://example.com/a.html")
     assert "claude --permission-mode…" not in text
     assert "claude --permission" not in text or "<code>" in text
+
+
+# --------------------------------------------------------------------------
+# Обратные кавычки в полном тексте
+# --------------------------------------------------------------------------
+
+
+def test_full_text_turns_backticks_into_code(event):
+    """Запасной путь показывал кавычки буквально, хотя Telegram знает <code>."""
+    analysis = make_analysis(
+        example="Набери `claude --permission-mode auto` в каталоге проекта.",
+        action="Проверь `permissions.defaultMode` в настройках.",
+    )
+    text = render(analysis, event)
+    assert "<code>claude --permission-mode auto</code>" in text
+    assert "<code>permissions.defaultMode</code>" in text
+    assert "`" not in text
+
+
+def test_a_code_span_never_crosses_a_line_break(event):
+    """Строчный тег через перенос строки ломает разбиение на части.
+
+    chunk() режет по границам строк и полагается на то, что строка не
+    содержит незакрытого тега. Многострочная вставка это правило нарушила
+    бы, а Telegram отвергает такое сообщение целиком.
+    """
+    analysis = make_analysis(
+        how_it_works="Конфиг такой: `{\n  \"defaultMode\": \"auto\"\n}` и всё.",
+    )
+    text = render(analysis, event)
+    for line in text.split("\n"):
+        assert inline_balanced(line), line
+
+
+def test_an_unpaired_backtick_leaves_no_open_tag(event):
+    analysis = make_analysis(what_it_is="Тут одна кавычка `и больше ничего")
+    text = render(analysis, event)
+    assert "`" not in text
+    for line in text.split("\n"):
+        assert inline_balanced(line), line
