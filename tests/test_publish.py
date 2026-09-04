@@ -36,7 +36,7 @@ import pytest
 from conftest import make_block, make_part
 
 from watcher.analyze import Analysis, Layers, Usage, Verdict, Windows
-from watcher.detect import BLOCK_ADDED, Event
+from watcher.detect import BLOCK_ADDED, BLOCK_EDITED, Event
 from watcher.original import Author
 from watcher.publish import (
     PublishFailed,
@@ -322,11 +322,13 @@ def test_real_analysis_renders_and_stays_balanced(event):
 
 
 def test_page_name_is_the_same_for_the_same_event(event):
-    assert page_name(event, WHEN) == page_name(event, WHEN)
+    assert page_name(event) == page_name(event)
 
 
-def test_page_name_carries_date_part_and_block(event):
-    assert page_name(event, WHEN) == "2026-07-30-part22-be1681fe.html"
+def test_page_name_carries_part_block_and_event(event):
+    name = page_name(event)
+    assert name.startswith("part22-be1681fe-") and name.endswith(".html")
+    assert event.event_id.removeprefix("sha256:")[:8] in name
 
 
 def test_page_url_joins_base_and_name():
@@ -354,14 +356,14 @@ def test_new_page_is_created_with_its_content(page):
 
     publish_page(
         page,
-        name="2026-07-30-part22-be1681fe.html",
+        name="part22-be1681fe.html",
         repo="RiobVO/hbucc-reports",
         token=FAKE,
         transport=httpx.MockTransport(handler),
     )
 
     assert seen["url"].endswith(
-        "/repos/RiobVO/hbucc-reports/contents/2026-07-30-part22-be1681fe.html"
+        "/repos/RiobVO/hbucc-reports/contents/part22-be1681fe.html"
     )
     assert seen["auth"] == f"Bearer {FAKE}"
     body = seen["body"]
@@ -594,3 +596,90 @@ def test_the_archive_counts_in_russian():
     for number, expected in counts.items():
         page = render_index([entry(f"{i}.html") for i in range(number)])
         assert expected in page, f"{number} -> ожидалось «{expected}»"
+
+
+# --------------------------------------------- находки независимого ревью
+
+
+def test_a_javascript_url_never_becomes_a_clickable_link(event):
+    """`sources` — строки от модели по чужому материалу, схема их не проверяет.
+
+    Экранирование кавычек схему не обезвреживает: javascript:… в href
+    остаётся рабочей ссылкой на публичной странице.
+    """
+    analysis = make_analysis(
+        sources=[
+            "javascript:alert(document.domain)",
+            "data:text/html,<script>alert(1)</script>",
+            "https://code.claude.com/docs/en/hooks",
+        ]
+    )
+    page = render_page(analysis, event, generated_at=WHEN)
+    assert 'href="javascript:' not in page
+    assert 'href="data:' not in page
+    # Адрес не исчезает: читатель обязан видеть, на что ссылался материал,
+    # — просто нажимать на это он не будет.
+    assert "javascript:alert(document.domain)" in page
+    assert 'href="https://code.claude.com/docs/en/hooks"' in page
+    assert balance(page).errors == []
+
+
+def test_a_title_cannot_escape_the_index_data_block():
+    """`</script>` в заголовке закрывает блок данных и делает разметку кодом.
+
+    json.dumps не экранирует `<`, а HTML закрывает script-data на первом
+    же `</script` — то есть заголовок от модели вырывается наружу.
+    """
+    hostile = entry("a.html", "Разбор </script><script>alert(1)</script> и дальше")
+    page = render_index([hostile])
+
+    assert "</script><script>alert(1)" not in page
+    # Данные обязаны пережить круг: иначе архив обнуляется на первом же
+    # заголовке с угловой скобкой.
+    assert index_entries(page) == [hostile]
+
+
+def test_page_name_survives_a_retry_after_midnight(event):
+    """Повтор приходит следующим прогоном — иногда уже в другие сутки.
+
+    Имя, взятое от часов, дало бы вторую страницу того же события и вторую
+    строку в архиве.
+    """
+    assert not re.search(r"20\d\d", page_name(event)), "в имени не должно быть даты"
+
+
+def test_two_events_on_the_same_block_get_different_pages():
+    """Правка того же совета — другое событие и другая страница.
+
+    Иначе разбор правки затёр бы разбор появления, а карточка, отправленная
+    раньше, стала бы вести на чужой текст.
+    """
+    old = make_block("Old text of the advice.", heading="Auto Mode", bid="b-be1681fe")
+    new = make_block("New text of the advice.", heading="Auto Mode", bid="b-be1681fe")
+    added = Event(kind=BLOCK_ADDED, part_number=22, part_title="T", bid=old.bid, new_block=old)
+    edited = Event(
+        kind=BLOCK_EDITED, part_number=22, part_title="T", bid=new.bid,
+        old_block=old, new_block=new,
+    )
+    assert page_name(added) != page_name(edited)
+
+
+def test_waiting_stops_when_the_time_budget_runs_out():
+    """Прогон не должен умирать по таймауту оттого, что Pages задумался.
+
+    Расписание пауз считает только сон; каждый запрос сверх того может
+    висеть до своего таймаута, а событий за прогон до восьми.
+    """
+    calls = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        return httpx.Response(404)
+
+    assert not wait_for_page(
+        "https://example.com/a.html",
+        delays=(30, 30, 30),
+        budget_seconds=0,
+        transport=httpx.MockTransport(handler),
+    )
+    assert len(calls) == 1, "после исчерпанного бюджета опрос не продолжается"

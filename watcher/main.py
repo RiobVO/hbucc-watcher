@@ -546,7 +546,7 @@ class Runner:
 
         model_cfg = self.cfg.section("model")
         now = datetime.now(timezone.utc)
-        name = page_name(event, now)
+        name = page_name(event)
         try:
             publish_page(
                 render_page(

@@ -213,15 +213,23 @@ def _first_sentence(text: str) -> str:
 # --------------------------------------------------------------------------
 
 
-def page_name(event: Event, when: datetime) -> str:
-    """Имя файла страницы: дата, часть и блок.
+def page_name(event: Event) -> str:
+    """Имя файла страницы: часть, блок и идентификатор события.
 
-    Не транслит заголовка: имя обязано быть одинаковым при повторе. Прогон,
-    упавший после публикации, но до отправки, повторится следующим разом —
-    и должен перезаписать ту же страницу, а не создать вторую. `bid`
-    вычислен из содержимого и даёт это даром.
+    Ни транслита заголовка, ни даты — ничего, что зависит от момента
+    вызова. Имя обязано быть одинаковым при повторе: прогон, упавший
+    после публикации, но до отправки, повторится следующим разом и должен
+    перезаписать ту же страницу, а не завести вторую. Часы это ломали —
+    повтор после полуночи по UTC давал другое имя, а прогоны идут раз в
+    шесть часов, так что четверть отказов приходилась бы ровно на такой
+    случай.
+
+    Идентификатор события в имени не для красоты: `bid` переживает правку
+    совета, то есть без него разбор правки затёр бы разбор появления, а
+    отправленная раньше карточка стала бы вести на чужой текст.
     """
-    return f"{when:%Y-%m-%d}-part{event.part_number}-{event.bid.removeprefix('b-')}.html"
+    short = event.event_id.removeprefix("sha256:")[:8]
+    return f"part{event.part_number}-{event.bid.removeprefix('b-')}-{short}.html"
 
 
 def page_url(base_url: str, name: str) -> str:
@@ -546,9 +554,26 @@ def _sources(analysis: Analysis, prose: _Prose) -> str:
         f'    <a href="{html.escape(url, quote=True)}">'
         f'<span class="host">{html.escape(_host(url))}</span>'
         f'<span class="what">{html.escape(source_label(url))}</span></a>'
+        if _is_web_url(url)
+        # Схему, которой тут быть не должно, показываем текстом. Убирать
+        # адрес совсем нельзя: читатель обязан видеть, на что материал
+        # ссылался, — просто нажимать на это он не будет.
+        else f'    <div class="card"><p>{html.escape(url)} — адрес отброшен: '
+        "не http и не https</p></div>"
         for url in urls
     )
     return _section("sources", "Источники", f'  <div class="sources">\n{links}\n  </div>')
+
+
+def _is_web_url(url: str) -> bool:
+    """Только http и https попадают в href.
+
+    `sources` — строки, которые модель составила по чужому материалу;
+    схема проверяет их тип, но не содержание. Экранирование кавычек схему
+    не обезвреживает: `javascript:` в href остаётся рабочей ссылкой, а
+    страница лежит на публичном домене.
+    """
+    return urlparse(url.strip()).scheme in ("http", "https")
 
 
 def _host(url: str) -> str:
@@ -638,6 +663,23 @@ def merge_entry(entries: list[dict], entry: dict) -> list[dict]:
     )
 
 
+def _json_for_html(entries: list[dict]) -> str:
+    """JSON, безопасный внутри <script>.
+
+    `json.dumps` не трогает угловые скобки, а HTML закрывает script-data
+    на первом же `</script` — заголовок от модели с такой подстрокой
+    вырвался бы из блока данных наружу и стал разметкой. Экранируем `<`
+    и `&`: внутри JSON это законные escape-последовательности, читается
+    обратно без потерь.
+    """
+    return (
+        json.dumps(entries, ensure_ascii=False)
+        .replace("&", "\\u0026")
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+    )
+
+
 def _reports_word(count: int) -> str:
     """«1 разбор», «3 разбора», «11 разборов». Русский счёт, не английский."""
     if 11 <= count % 100 <= 14:
@@ -698,7 +740,7 @@ def render_index(entries: list[dict]) -> str:
   </footer>
 
 </div>
-<script type="application/json" id="reports">{json.dumps(entries, ensure_ascii=False)}</script>
+<script type="application/json" id="reports">{_json_for_html(entries)}</script>
 </body>
 </html>"""
 
@@ -853,12 +895,20 @@ def _write(
 # полминуты, и первые короткие паузы экономят время всего прогона.
 PAGE_POLL_DELAYS = (3, 3, 5, 5, 10, 10, 10, 15, 15, 15)
 
+# Потолок ожидания по часам, а не по расписанию пауз. Расписание считает
+# только сон, а каждый запрос может ещё и висеть до своего таймаута —
+# восемь событий за прогон, и такое ожидание втрое перекрывает лимит
+# задачи в GitHub Actions. Прогон не должен умирать по таймауту из-за
+# того, что Pages задумался.
+PAGE_WAIT_BUDGET_SECONDS = 100.0
+
 
 def wait_for_page(
     url: str,
     *,
     delays: tuple[int, ...] = PAGE_POLL_DELAYS,
-    timeout_seconds: float = 15.0,
+    budget_seconds: float = PAGE_WAIT_BUDGET_SECONDS,
+    timeout_seconds: float = 5.0,
     transport: httpx.BaseTransport | None = None,
 ) -> bool:
     """Дождаться, пока страница начнёт отдаваться по своему адресу.
@@ -873,11 +923,14 @@ def wait_for_page(
     файл записан и поднимется сам, но ссылку на него давать уже нельзя,
     и вызывающий уходит на полный текст.
     """
+    deadline = time.monotonic() + budget_seconds
     with httpx.Client(
         timeout=httpx.Timeout(timeout_seconds), transport=transport, follow_redirects=True
     ) as client:
         for index, delay in enumerate((0, *delays)):
             if delay:
+                if time.monotonic() + delay > deadline:
+                    break
                 time.sleep(delay)
             try:
                 response = client.get(url, headers={"Cache-Control": "no-cache"})

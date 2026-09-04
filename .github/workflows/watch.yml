@@ -30,7 +30,9 @@ concurrency:
 jobs:
   watch:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    # Восемь событий за прогон: разбор ~70 с плюс ожидание страницы до
+    # 100 с на каждое. 25 минут упирались в этот потолок вплотную.
+    timeout-minutes: 40
 
     steps:
       - uses: actions/checkout@v4
