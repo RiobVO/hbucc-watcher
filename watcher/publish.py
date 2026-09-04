@@ -228,7 +228,11 @@ def page_name(event: Event) -> str:
     совета, то есть без него разбор правки затёр бы разбор появления, а
     отправленная раньше карточка стала бы вести на чужой текст.
     """
-    short = event.event_id.removeprefix("sha256:")[:8]
+    # Шестнадцать знаков, а не восемь: восемь это 32 бита, и порог дня
+    # рождения для них — 65 тысяч событий. При темпе сайта в 72 события в
+    # год до такого не дожить, но спорить об этом дороже, чем дописать
+    # восемь символов в имя файла.
+    short = event.event_id.removeprefix("sha256:")[:16]
     return f"part{event.part_number}-{event.bid.removeprefix('b-')}-{short}.html"
 
 
@@ -924,16 +928,30 @@ def wait_for_page(
     и вызывающий уходит на полный текст.
     """
     deadline = time.monotonic() + budget_seconds
-    with httpx.Client(
-        timeout=httpx.Timeout(timeout_seconds), transport=transport, follow_redirects=True
-    ) as client:
+    with httpx.Client(transport=transport, follow_redirects=True) as client:
         for index, delay in enumerate((0, *delays)):
             if delay:
                 if time.monotonic() + delay > deadline:
                     break
                 time.sleep(delay)
+            # Таймаут запроса урезается остатком бюджета. httpx.Timeout
+            # ограничивает отдельные операции — соединение, чтение, — а не
+            # вызов целиком: с редиректами и медленной отдачей один GET
+            # уезжает за дедлайн, и обещанная граница перестаёт быть
+            # границей. Проверка перед сном этого не ловит.
+            #
+            # Первая попытка делается всегда, даже при исчерпанном
+            # бюджете: она стоит одного быстрого запроса и закрывает самый
+            # частый случай — страница на месте с прошлого раза.
+            left = deadline - time.monotonic()
+            if index and left <= 0:
+                break
             try:
-                response = client.get(url, headers={"Cache-Control": "no-cache"})
+                response = client.get(
+                    url,
+                    headers={"Cache-Control": "no-cache"},
+                    timeout=httpx.Timeout(timeout_seconds if not index else min(timeout_seconds, left)),
+                )
             except httpx.HTTPError as exc:
                 log.debug("страница ещё не отвечает: %s", exc)
                 continue

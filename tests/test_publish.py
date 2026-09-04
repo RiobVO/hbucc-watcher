@@ -27,6 +27,7 @@ from __future__ import annotations
 import base64
 import json
 import re
+import time
 from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
@@ -683,3 +684,33 @@ def test_waiting_stops_when_the_time_budget_runs_out():
         transport=httpx.MockTransport(handler),
     )
     assert len(calls) == 1, "после исчерпанного бюджета опрос не продолжается"
+
+
+def test_a_slow_page_cannot_stretch_the_wait_past_its_budget():
+    """Бюджет обязан ограничивать и сам запрос, а не только паузы.
+
+    httpx.Timeout ограничивает отдельные операции, а не вызов целиком:
+    с редиректами и медленной отдачей один GET уезжает за дедлайн, и
+    обещанная граница перестаёт быть границей. Восемь событий за прогон —
+    и такое ожидание съедает лимит задачи в GitHub Actions.
+    """
+    def handler(request: httpx.Request) -> httpx.Response:
+        time.sleep(0.2)
+        return httpx.Response(404)
+
+    started = time.monotonic()
+    assert not wait_for_page(
+        "https://example.com/a.html",
+        delays=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+        budget_seconds=0.3,
+        timeout_seconds=5.0,
+        transport=httpx.MockTransport(handler),
+    )
+    spent = time.monotonic() - started
+    assert spent < 1.0, f"ожидание заняло {spent:.2f} с при бюджете 0.3 с"
+
+
+def test_the_event_id_in_the_name_is_wide_enough_to_forget_about(event):
+    """Восемь hex-знаков — 32 бита, порог дня рождения 65 тысяч событий."""
+    suffix = page_name(event).removesuffix(".html").rsplit("-", 1)[1]
+    assert len(suffix) >= 16
