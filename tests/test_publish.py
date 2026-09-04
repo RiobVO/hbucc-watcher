@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import base64
 import json
+import re
 from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
@@ -310,7 +311,10 @@ def test_real_analysis_renders_and_stays_balanced(event):
     assert checked.errors == []
     assert checked.stack == []
     assert "`" not in page, "обратные кавычки модели обязаны стать разметкой"
-    assert "{{" not in page and "}}" not in page, "незаполненное место в шаблоне"
+    # Именно {{ИМЯ}}, а не любые двойные скобки: в примере модели стоит
+    # настоящий JSON вида {"permissions":{"defaultMode":"auto"}}, и он
+    # кончается на «}}» совершенно законно.
+    assert not re.search(r"\{\{[A-Z_]+\}\}", page), "незаполненное место в шаблоне"
     assert len(analysis.pitfalls) == 4 and page.count('<ul class="plain">') >= 1
 
 
