@@ -15,8 +15,13 @@ import httpx
 import pytest
 
 from watcher.original import (
+    STATUS_OK,
+    STATUS_NO_TEXT,
+    STATUS_REDIRECTED,
+    STATUS_REFUSED,
     Original,
     author_handle,
+    domain_allowed,
     extract_text,
     fetch_author,
     fetch_originals,
@@ -294,3 +299,77 @@ def test_author_without_name_in_title_keeps_the_handle():
     html = '<html><head><title>X</title><meta property="og:description" content="био"></head></html>'
     author = fetch_author("@ghost", ["x.com"], transport=transport(always(html)))
     assert author is not None and author.name == "" and author.bio == "био"
+
+
+# --------------------------------------------------------------------------
+# Находки независимого ревью границы доверия
+# --------------------------------------------------------------------------
+
+
+def test_a_malformed_link_is_refused_not_fatal():
+    """Одна битая ссылка на сайте роняла разбор всего события.
+
+    `urlparse('https://[::1').hostname` бросает ValueError, а он не
+    httpx.HTTPError — значит не ловится и уносит прогон до вызова модели.
+    Ссылка обязана стать честным отказом, как любой чужой домен.
+    """
+    results = fetch_originals(["https://[::1", "https://x.com/a/status/1"], ["x.com"],
+                              transport=httpx.MockTransport(
+                                  lambda r: httpx.Response(200, text="<html></html>")))
+    assert len(results) == 2
+    assert results[0].status == STATUS_REFUSED
+    assert results[0].url == "https://[::1"
+
+
+def test_a_non_http_scheme_is_refused_before_the_request():
+    """Хост разрешён, схема — нет. До транспорта это доходить не должно."""
+    assert not domain_allowed("file://x.com/etc/passwd", ["x.com"])
+    assert not domain_allowed("ftp://x.com/resource", ["x.com"])
+    assert domain_allowed("https://x.com/a", ["x.com"])
+    assert domain_allowed("http://x.com/a", ["x.com"])
+
+
+def test_a_lookalike_host_does_not_yield_an_x_handle():
+    """`endswith('x.com')` принимал notx.com за X.
+
+    Ссылка с запрещённого домена давала хендл, по которому код затем
+    открывал НАСТОЯЩИЙ профиль X — и приписывал разбору чужого автора.
+    """
+    assert author_handle("https://notx.com/anthropic/status/123") is None
+    assert author_handle("https://evil-x.com/bcherny/status/1") is None
+    assert author_handle("https://x.com.evil.ru/bcherny/status/1") is None
+    assert author_handle("https://x.com/bcherny/status/1") == "@bcherny"
+    assert author_handle("https://mobile.x.com/bcherny/status/1") == "@bcherny"
+
+
+def test_a_huge_body_is_cut_before_it_is_read_into_memory():
+    """max_source_chars резал текст ПОСЛЕ загрузки — то есть не резал трафик."""
+    huge = "<html><body>" + ("а" * 5_000_000) + "</body></html>"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, text=huge)
+
+    results = fetch_originals(
+        ["https://x.com/a/status/1"], ["x.com"],
+        max_bytes=64_000, transport=httpx.MockTransport(handler),
+    )
+    assert results[0].status in (STATUS_OK, STATUS_NO_TEXT)
+    assert len(results[0].text) <= 1200
+
+
+def test_the_refused_redirect_target_reaches_the_analysis():
+    """Ссылку, которую не открыли, читатель обязан увидеть как факт.
+
+    Иначе белый список делает неизвестный адрес невидимым — ровно то, чего
+    вся эта конструкция избегает.
+    """
+    def handler(request: httpx.Request) -> httpx.Response:
+        if "x.com" in str(request.url):
+            return httpx.Response(302, headers={"location": "https://evil.ru/payload"})
+        raise AssertionError(f"запрос на запрещённый домен: {request.url}")
+
+    results = fetch_originals(
+        ["https://x.com/a/status/1"], ["x.com"], transport=httpx.MockTransport(handler)
+    )
+    assert results[0].status == STATUS_REDIRECTED
+    assert results[0].redirect_to == "https://evil.ru/payload"

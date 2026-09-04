@@ -35,6 +35,13 @@ log = logging.getLogger(__name__)
 # в которой уже нельзя понять, куда мы идём.
 MAX_REDIRECTS = 3
 
+# Потолок на тело чужой страницы. Нам от неё нужен один мета-тег, а
+# страница X — полмегабайта JS-бандла; двух мегабайт хватает с запасом на
+# любую документацию. Читается потоком: без потолка многогигабайтный или
+# бесконечный ответ с разрешённого домена съел бы память раннера раньше,
+# чем дошло бы до обрезки текста.
+PROFILE_MAX_BYTES = 2_000_000
+
 STATUS_OK = "ok"
 STATUS_REFUSED = "refused_domain"
 STATUS_REDIRECTED = "redirected_off_whitelist"
@@ -71,6 +78,11 @@ class Original:
     host: str
     status: str
     text: str = ""
+    # Куда увёл редирект, если увёл за белый список. Адрес не запрашивался,
+    # но обязан попасть в разбор как факт: белый список не должен делать
+    # неизвестную ссылку невидимой — ни исходную, ни ту, на которую её
+    # молча перенаправили.
+    redirect_to: str = ""
 
 
 @dataclass(frozen=True)
@@ -99,11 +111,17 @@ def author_handle(url: str) -> str | None:
     Профиль сам по себе (`x.com/bcherny`) сюда не годится: адрес автора
     нужен нам как свойство ПОСТА, и брать его следует только оттуда, где
     он однозначен — из ссылки вида `/handle/status/…`.
+
+    Хост проверяется так же строго, как в белом списке, и по той же
+    причине: `endswith("x.com")` принимал за X и `notx.com`, и
+    `evil-x.com`. Хендл, вынутый из чужой ссылки, вёл к загрузке
+    НАСТОЯЩЕГО профиля X — и разбор приписывал первоисточник постороннему
+    человеку.
     """
-    parsed = urlparse(url)
-    if not (parsed.hostname or "").removeprefix("www.").endswith("x.com"):
+    host = host_of(url).removeprefix("www.")
+    if not (host == "x.com" or host.endswith(".x.com")):
         return None
-    parts = [p for p in parsed.path.split("/") if p]
+    parts = [p for p in urlparse(url).path.split("/") if p]
     if len(parts) >= 2 and parts[1] == "status":
         return f"@{parts[0]}"
     return None
@@ -136,7 +154,8 @@ def fetch_author(
         transport=transport,
     ) as client:
         try:
-            status, body = _get(client, url, allowed)
+            # Профиль — такая же чужая страница: потолок на тело тот же.
+            status, body, _ = _get(client, url, allowed, PROFILE_MAX_BYTES)
         except httpx.HTTPError as exc:
             log.info("профиль %s не открылся: %s", handle, exc)
             return None
@@ -152,17 +171,39 @@ def fetch_author(
     return Author(handle=handle, name=name, bio=extract_text(body))
 
 
-def domain_allowed(url: str, allowed: list[str]) -> bool:
-    """Разрешён ли домен ссылки.
+def host_of(url: str) -> str:
+    """Хост ссылки или пустая строка. Никогда не бросает.
 
-    Сравниваем хост целиком или как поддомен: 'x.com' разрешает
+    Разбор чужого адреса — тоже недоверенная операция: `urlparse` на
+    строке вида `https://[::1` бросает ValueError. Один такой адрес на
+    сайте ронял разбор всего события до вызова модели, потому что ValueError
+    не httpx.HTTPError и не ловился нигде по пути.
+    """
+    try:
+        return (urlparse(url).hostname or "").lower()
+    except ValueError:
+        log.info("адрес не разбирается, считаю запрещённым: %.80s", url)
+        return ""
+
+
+def domain_allowed(url: str, allowed: list[str]) -> bool:
+    """Разрешена ли ссылка: сначала схема, потом домен.
+
+    Схема проверяется первой. Хост у `file://x.com/etc/passwd` разрешённый,
+    и без этой проверки такой адрес доходил до транспорта и тратил слот из
+    лимита загрузок — то есть граница полагалась на то, что httpx откажет
+    сам.
+
+    Домен сравниваем целиком или как поддомен: 'x.com' разрешает
     'x.com' и 'mobile.x.com', но НЕ 'evil-x.com' и не 'x.com.evil.ru'.
     Наивная проверка через `in` пропустила бы оба.
     """
     try:
-        host = (urlparse(url).hostname or "").lower()
+        if urlparse(url).scheme.lower() not in ("http", "https"):
+            return False
     except ValueError:
         return False
+    host = host_of(url)
     if not host:
         return False
     return any(host == d or host.endswith("." + d) for d in (x.lower() for x in allowed))
@@ -198,29 +239,49 @@ def extract_text(html: str) -> str:
 
 
 def _get(
-    client: httpx.Client, url: str, allowed: list[str]
-) -> tuple[str, str]:
+    client: httpx.Client, url: str, allowed: list[str], max_bytes: int
+) -> tuple[str, str, str]:
     """Пройти по редиректам вручную, проверяя домен на каждом шаге.
 
     httpx умеет follow_redirects сам, но тогда проверка домена случилась бы
     только для первого адреса — а доверие наследовать нельзя.
+
+    Возвращает статус, текст и адрес отвергнутого редиректа. Третье
+    значение существует затем, чтобы отказ не превращался в молчание:
+    читатель должен узнать, куда его пытались увести.
+
+    Тело читается потоком с потолком в байтах. Раньше ответ загружался
+    целиком, а лимит применялся к уже полученной строке — то есть
+    ограничивал промт, но не трафик и не память. Многогигабайтный ответ с
+    разрешённого домена клал бы раннер до того, как лимит вообще
+    применится.
     """
     current = url
     for _ in range(MAX_REDIRECTS + 1):
-        response = client.get(current)
-        if response.status_code in (301, 302, 303, 307, 308):
-            location = response.headers.get("location", "")
-            if not location:
-                return STATUS_UNAVAILABLE, ""
-            current = urljoin(current, location)
-            if not domain_allowed(current, allowed):
-                log.info("редирект увёл за белый список: %s", urlparse(current).hostname)
-                return STATUS_REDIRECTED, ""
-            continue
-        if response.status_code != 200:
-            return STATUS_UNAVAILABLE, ""
-        return STATUS_OK, response.text
-    return STATUS_UNAVAILABLE, ""
+        with client.stream("GET", current) as response:
+            if response.status_code in (301, 302, 303, 307, 308):
+                location = response.headers.get("location", "")
+                if not location:
+                    return STATUS_UNAVAILABLE, "", ""
+                current = urljoin(current, location)
+                if not domain_allowed(current, allowed):
+                    log.info("редирект увёл за белый список: %s", host_of(current))
+                    return STATUS_REDIRECTED, "", current
+                continue
+            if response.status_code != 200:
+                return STATUS_UNAVAILABLE, "", ""
+
+            chunks: list[bytes] = []
+            size = 0
+            for chunk in response.iter_bytes():
+                chunks.append(chunk)
+                size += len(chunk)
+                if size >= max_bytes:
+                    log.info("тело первоисточника обрезано на %d байтах: %s", size, current)
+                    break
+            body = b"".join(chunks)[:max_bytes]
+            return STATUS_OK, body.decode(response.encoding or "utf-8", errors="replace"), ""
+    return STATUS_UNAVAILABLE, "", ""
 
 
 def fetch_originals(
@@ -230,6 +291,7 @@ def fetch_originals(
     timeout_seconds: float = 15.0,
     max_urls: int = 6,
     max_chars: int = 1200,
+    max_bytes: int = 2_000_000,
     user_agent: str = "hbucc-watcher/1.0",
     transport: httpx.BaseTransport | None = None,
 ) -> list[Original]:
@@ -256,7 +318,7 @@ def fetch_originals(
         transport=transport,
     ) as client:
         for url in unique:
-            host = (urlparse(url).hostname or "") if "//" in url else ""
+            host = host_of(url)
             if not domain_allowed(url, allowed):
                 results.append(Original(url=url, host=host, status=STATUS_REFUSED))
                 continue
@@ -266,14 +328,16 @@ def fetch_originals(
 
             attempted += 1
             try:
-                status, body = _get(client, url, allowed)
+                status, body, blocked = _get(client, url, allowed, max_bytes)
             except httpx.HTTPError as exc:
                 log.info("первоисточник недоступен (%s): %s", host, exc)
                 results.append(Original(url=url, host=host, status=STATUS_UNAVAILABLE))
                 continue
 
             if status != STATUS_OK:
-                results.append(Original(url=url, host=host, status=status))
+                results.append(
+                    Original(url=url, host=host, status=status, redirect_to=blocked)
+                )
                 continue
 
             text = extract_text(body)[:max_chars]

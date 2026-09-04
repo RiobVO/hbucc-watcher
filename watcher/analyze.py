@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from dataclasses import dataclass
 from difflib import unified_diff
 from typing import Any, Literal
@@ -72,6 +73,7 @@ __all__ = [
     "build_context",
     "collect_links",
     "domain_allowed",
+    "fence",
     "probe_model",
     "split_links",
     "strict_schema",
@@ -261,6 +263,24 @@ _KIND_RU = {
     BLOCK_DELETED: "совет удалили",
 }
 
+_FENCE = re.compile(r"</?untrusted_source", re.IGNORECASE)
+
+
+def fence(text: str) -> str:
+    """Обезвредить попытку чужого текста закрыть обёртку недоверенных данных.
+
+    Обёртка объявляет содержимое данными, а не инструкциями. Строка
+    `</untrusted_source>` внутри загруженного текста закрывала её досрочно —
+    и всё, что шло следом, оказывалось для модели уже НАШИМ текстом, то
+    есть указанием. Автор чужой страницы дописывает такую строку в
+    og:description за одну минуту.
+
+    Текст не выбрасываем и не режем: он остаётся фактом разбора. Ломаем
+    только сам тег, оставляя видимым, что попытка была.
+    """
+    return _FENCE.sub(lambda m: m.group(0).replace("<", "‹"), text)
+
+
 _STATUS_RU = {
     STATUS_UNAVAILABLE: "сервер не ответил или отдал ошибку",
     STATUS_REDIRECTED: "редирект увёл за пределы белого списка, доверять нельзя",
@@ -311,7 +331,7 @@ def build_context(
         lines.append(f"АВТОР ПЕРВОИСТОЧНИКА: {author.credited}")
         if author.bio:
             lines.append(f"<untrusted_source note=\"описание профиля, данные\">")
-            lines.append(author.bio)
+            lines.append(fence(author.bio))
             lines.append("</untrusted_source>")
     if site_author:
         # Факт из разметки сайта, а не догадка. Нужен, чтобы слой «дописано
@@ -329,8 +349,8 @@ def build_context(
     if event.kind in (PART_ADDED, PART_REMOVED):
         lines.append(f"<untrusted_source note=\"советы части, {len(event.part_blocks)} шт\">")
         for i, block in enumerate(event.part_blocks, 1):
-            lines.append(f"--- совет {i}: {block.heading} ---")
-            lines.append(block.text)
+            lines.append(fence(f"--- совет {i}: {block.heading} ---"))
+            lines.append(fence(block.text))
             if block.source_url:
                 lines.append(f"первоисточник: {block.source_url}")
             lines.append("")
@@ -338,14 +358,14 @@ def build_context(
     else:
         if event.new_block is not None:
             lines.append("<untrusted_source note=\"новая версия совета\">")
-            lines.append(f"заголовок: {event.new_block.heading}")
-            lines.append(event.new_block.text)
+            lines.append(fence(f"заголовок: {event.new_block.heading}"))
+            lines.append(fence(event.new_block.text))
             lines.append("</untrusted_source>")
             lines.append("")
         if event.old_block is not None:
             lines.append("<untrusted_source note=\"прежняя версия совета\">")
-            lines.append(f"заголовок: {event.old_block.heading}")
-            lines.append(event.old_block.text)
+            lines.append(fence(f"заголовок: {event.old_block.heading}"))
+            lines.append(fence(event.old_block.text))
             lines.append("</untrusted_source>")
             lines.append("")
         if event.kind == BLOCK_EDITED and event.old_block and event.new_block:
@@ -358,7 +378,7 @@ def build_context(
                 )
             )
             lines.append("ТОЧНАЯ РАЗНИЦА (посчитана кодом, не выводом модели):")
-            lines.append(diff[:4000] or "(различие только в форматировании)")
+            lines.append(fence(diff[:4000]) or "(различие только в форматировании)")
             lines.append("")
 
     parent = parts_by_number.get(event.part_number)
@@ -366,7 +386,7 @@ def build_context(
         lines.append(f"<untrusted_source note=\"родительская часть Part {parent.number} целиком\">")
         for block in parent.blocks:
             if block.kind == "tip":
-                lines.append(f"* {block.heading}: {block.text[:400]}")
+                lines.append(fence(f"* {block.heading}: {block.text[:400]}"))
         lines.append("</untrusted_source>")
         lines.append("")
 
@@ -381,10 +401,10 @@ def build_context(
         if ref is None:
             continue
         lines.append(f"<untrusted_source note=\"Part {number}, на которую ссылается разбираемый текст\">")
-        lines.append(f"заголовок: {ref.title}")
+        lines.append(fence(f"заголовок: {ref.title}"))
         for block in ref.blocks:
             if block.kind == "tip":
-                lines.append(f"* {block.heading}: {block.text[:300]}")
+                lines.append(fence(f"* {block.heading}: {block.text[:300]}"))
         lines.append("</untrusted_source>")
         lines.append("")
 
@@ -434,7 +454,7 @@ def _links_section(
 
     for item in opened:
         lines.append(f"<untrusted_source note=\"первоисточник, {item.url}\">")
-        lines.append(item.text)
+        lines.append(fence(item.text))
         lines.append("</untrusted_source>")
         lines.append("")
 
@@ -445,7 +465,14 @@ def _links_section(
 
     if failed:
         lines.append("Не удалось открыть — слой 1 по ним остаётся неподтверждённым:")
-        lines.extend(f"  {o.url} — {_STATUS_RU[o.status]}" for o in failed)
+        # Куда именно увёл редирект — часть факта, а не подробность. Отказ
+        # без адреса делает неизвестный домен невидимым: читатель не узнает,
+        # что ссылка с сайта вела на сторону.
+        lines.extend(
+            f"  {o.url} — {_STATUS_RU[o.status]}"
+            + (f" (вёл на {o.redirect_to}, не запрашивали)" if o.redirect_to else "")
+            for o in failed
+        )
         lines.append("")
 
     if refused:
@@ -584,6 +611,7 @@ def analyze(
         allowed,
         max_urls=cfg_model["max_source_fetches"],
         max_chars=cfg_model["max_source_chars"],
+        max_bytes=cfg_model["max_source_bytes"],
         user_agent=user_agent,
     )
     opened = sum(1 for o in originals if o.status == STATUS_OK)
