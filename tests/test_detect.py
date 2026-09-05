@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import copy
+import string
 
 from conftest import make_block, make_document, make_part
 
@@ -26,9 +27,15 @@ from watcher.detect import (
     check_structure,
     diff_documents,
     flag_injections,
+    similarity,
+    split_minor_edits,
 )
 
 THRESHOLD = 0.55
+# Порог значимости правки — из config.toml, detect.minor_edit_ratio.
+MINOR_RATIO = 0.99
+# Медиана реального совета на сайте: 127 советов, от 43 до 572 слов.
+TYPICAL_TIP_WORDS = 119
 
 
 def kinds(events) -> list[str]:
@@ -330,6 +337,261 @@ def test_mass_change_silent_on_normal_single_edit(simple_parts):
 
     events = diff_documents(simple_parts, new, threshold=THRESHOLD)
     assert check_diff_scale(events, previous_blocks_count=3, max_changed_pct=60) == []
+
+
+# --------------------------------------------------------------------------
+# Значимость правки
+# --------------------------------------------------------------------------
+
+
+def words_of(count: int) -> list[str]:
+    """Столько-то непохожих слов из одних букв — текст, как в совете.
+
+    Именно из букв: токен с цифрой или знаком препинания внутри словом не
+    считается, и на таком «тексте» проверялся бы не порог, а исключение.
+    """
+    a = string.ascii_lowercase
+    return [f"{a[i // 676 % 26]}{a[i // 26 % 26]}{a[i % 26]}" for i in range(count)]
+
+
+def tip_of(words: list[str]):
+    """Часть из одного совета заданными словами — сцена для мерки ratio."""
+    return make_part(1, [make_block(" ".join(words), heading="Long tip")])
+
+
+def test_edited_block_carries_its_ratio(simple_parts):
+    """Похожесть правки доезжает до события, а не остаётся в debug-логе.
+
+    Значение обязано совпадать с similarity(): матчер и мерка значимости
+    расходиться не имеют права, иначе порог калибруется по одному числу,
+    а решение принимается по другому.
+    """
+    new = copy.deepcopy(simple_parts)
+    new[0].blocks[1] = make_block(
+        "Start every complex task in auto mode first.", heading="Plan mode"
+    )
+    new[0] = make_part(1, new[0].blocks, title=new[0].title)
+
+    event = diff_documents(simple_parts, new, threshold=THRESHOLD)[0]
+    assert event.ratio == similarity(event.old_block.text, event.new_block.text)
+
+
+def test_events_without_a_pair_have_no_ratio(simple_parts):
+    """У добавления и удаления сравнивать нечего — ratio отсутствует."""
+    new = copy.deepcopy(simple_parts)
+    new[0].blocks.append(make_block("A brand new tip appeared here.", heading="Fresh"))
+    new[0] = make_part(1, new[0].blocks, title=new[0].title)
+
+    assert diff_documents(simple_parts, new, threshold=THRESHOLD)[0].ratio is None
+
+
+def test_one_word_fix_in_a_typical_tip_is_minor():
+    """Исправленная опечатка не стоит разбора за $0.20 и сообщения.
+
+    Одно слово из 119 даёт ratio 0.992 — выше порога значимости.
+    """
+    words = words_of(TYPICAL_TIP_WORDS)
+    fixed = list(words)
+    fixed[42] = "receive"
+
+    events = diff_documents([tip_of(words)], [tip_of(fixed)], threshold=THRESHOLD)
+    minor, significant = split_minor_edits(events, MINOR_RATIO)
+
+    assert [e.kind for e in minor] == [BLOCK_EDITED]
+    assert significant == []
+
+
+def test_inserted_word_is_never_minor():
+    """Вставленное «not» переворачивает смысл, а похожесть почти не двигает.
+
+    Замер по всем 127 советам сайта: вставка одного слова даёт ratio от
+    0.989, то есть выше любого разумного порога — на 126 советах из 127 она
+    прошла бы молча. Поэтому мелочью считается только ЗАМЕНА слова: при
+    вставке ничего не теряется, и мера похожести тут бессильна.
+    """
+    words = words_of(TYPICAL_TIP_WORDS)
+    negated = words[:60] + ["not"] + words[60:]
+
+    events = diff_documents([tip_of(words)], [tip_of(negated)], threshold=THRESHOLD)
+    minor, significant = split_minor_edits(events, MINOR_RATIO)
+
+    assert events[0].ratio > MINOR_RATIO
+    assert minor == []
+    assert [e.kind for e in significant] == [BLOCK_EDITED]
+
+
+def test_deleted_word_is_never_minor():
+    """Выброшенное слово — та же вставка наоборот: похожесть её не видит."""
+    words = words_of(TYPICAL_TIP_WORDS)
+    shortened = words[:60] + words[61:]
+
+    events = diff_documents([tip_of(words)], [tip_of(shortened)], threshold=THRESHOLD)
+    minor, significant = split_minor_edits(events, MINOR_RATIO)
+
+    assert events[0].ratio > MINOR_RATIO
+    assert minor == []
+    assert [e.kind for e in significant] == [BLOCK_EDITED]
+
+
+def test_rewritten_run_in_a_very_long_tip_is_never_minor():
+    """Пять слов подряд в самом длинном совете сайта — уже предложение.
+
+    Порог по доле от длины на 572 словах даёт 0.991 и пропустил бы это
+    молча. Ограничение «ровно одно слово» не зависит от длины совета.
+    """
+    words = words_of(572)
+    changed = list(words)
+    changed[200:205] = ["rewritten"] * 5
+
+    events = diff_documents([tip_of(words)], [tip_of(changed)], threshold=THRESHOLD)
+    minor, significant = split_minor_edits(events, MINOR_RATIO)
+
+    assert events[0].ratio > MINOR_RATIO
+    assert minor == []
+    assert [e.kind for e in significant] == [BLOCK_EDITED]
+
+
+def test_token_carrying_code_is_never_minor():
+    """Один токен умеет нести несколько значимых величин сразу.
+
+    Похожесть считается по словам, а слово — это то, что отделено
+    пробелами. `allow=true,mode=safe` -> `allow=false,mode=unsafe` это
+    формально замена одного слова с ratio 0.992, а по сути — две правки
+    настройки. Так же выглядят флаг, путь, версия и адрес.
+    """
+    words = words_of(TYPICAL_TIP_WORDS)
+    old = list(words)
+    old[50] = "allow=true,mode=safe"
+    new = list(words)
+    new[50] = "allow=false,mode=unsafe"
+
+    events = diff_documents([tip_of(old)], [tip_of(new)], threshold=THRESHOLD)
+    minor, significant = split_minor_edits(events, MINOR_RATIO)
+
+    assert events[0].ratio > MINOR_RATIO
+    assert minor == []
+    assert [e.kind for e in significant] == [BLOCK_EDITED]
+
+
+def test_flag_value_change_is_never_minor():
+    """`--effort=high` -> `--effort=low` — правка команды, а не опечатка."""
+    words = words_of(TYPICAL_TIP_WORDS)
+    old = list(words)
+    old[50] = "--effort=high"
+    new = list(words)
+    new[50] = "--effort=low"
+
+    events = diff_documents([tip_of(old)], [tip_of(new)], threshold=THRESHOLD)
+    minor, _ = split_minor_edits(events, MINOR_RATIO)
+
+    assert events[0].ratio > MINOR_RATIO
+    assert minor == []
+
+
+def test_camel_case_identifier_is_never_minor():
+    """`allowSafeMode` -> `denyUnsafeMode`: одни буквы, а величин две.
+
+    Заглавная буква внутри слова — признак идентификатора, а не прозы.
+    Сайт полон таких: `PostCompact`, `PreToolUse`, `defaultMode`.
+    """
+    words = words_of(TYPICAL_TIP_WORDS)
+    old = list(words)
+    old[50] = "allowSafeMode"
+    new = list(words)
+    new[50] = "denyUnsafeMode"
+
+    events = diff_documents([tip_of(old)], [tip_of(new)], threshold=THRESHOLD)
+    minor, _ = split_minor_edits(events, MINOR_RATIO)
+
+    assert events[0].ratio > MINOR_RATIO
+    assert minor == []
+
+
+def test_token_outside_latin_is_never_minor():
+    """Письменность без пробелов кладёт в один токен целую фразу.
+
+    Проза сайта английская, поэтому дешевле требовать латиницу, чем
+    гадать, сколько слов внутри токена.
+    """
+    words = words_of(TYPICAL_TIP_WORDS)
+    old = list(words)
+    old[50] = "配置模式安全"
+    new = list(words)
+    new[50] = "配置模式危险"
+
+    events = diff_documents([tip_of(old)], [tip_of(new)], threshold=THRESHOLD)
+    minor, _ = split_minor_edits(events, MINOR_RATIO)
+
+    assert events[0].ratio > MINOR_RATIO
+    assert minor == []
+
+
+def test_capitalised_word_is_still_minor():
+    """Слово с заглавной первой буквой остаётся словом.
+
+    Иначе правило выбросило бы начало каждого предложения и имя
+    собственное, а это ровно там, где опечатки и живут.
+    """
+    words = words_of(TYPICAL_TIP_WORDS)
+    old = list(words)
+    old[50] = "Recieve"
+    new = list(words)
+    new[50] = "Receive"
+
+    events = diff_documents([tip_of(old)], [tip_of(new)], threshold=THRESHOLD)
+    minor, significant = split_minor_edits(events, MINOR_RATIO)
+
+    assert [e.kind for e in minor] == [BLOCK_EDITED]
+    assert significant == []
+
+
+def test_typo_at_the_end_of_a_sentence_is_still_minor():
+    """Точка и запятая прилипают к слову — и не делают его кодом.
+
+    Иначе порог не срабатывал бы ровно там, где опечатки и случаются, —
+    в конце предложения.
+    """
+    words = words_of(TYPICAL_TIP_WORDS)
+    old = list(words)
+    old[50] = "recieve."
+    new = list(words)
+    new[50] = "receive."
+
+    events = diff_documents([tip_of(old)], [tip_of(new)], threshold=THRESHOLD)
+    minor, significant = split_minor_edits(events, MINOR_RATIO)
+
+    assert [e.kind for e in minor] == [BLOCK_EDITED]
+    assert significant == []
+
+
+def test_rewritten_sentence_stays_significant():
+    """Переписанное предложение — уже не типографика, модель будим."""
+    words = words_of(TYPICAL_TIP_WORDS)
+    changed = list(words)
+    changed[10:20] = ["rewritten"] * 10
+
+    events = diff_documents([tip_of(words)], [tip_of(changed)], threshold=THRESHOLD)
+    minor, significant = split_minor_edits(events, MINOR_RATIO)
+
+    assert minor == []
+    assert [e.kind for e in significant] == [BLOCK_EDITED]
+
+
+def test_added_block_is_never_minor(simple_parts):
+    """Мелочью бывает только правка: у нового совета сравнивать не с чем.
+
+    Без явной проверки «ratio есть» отсутствующее значение легко принять за
+    ноль или за единицу — и в одну сторону это молча съело бы новый совет.
+    """
+    new = copy.deepcopy(simple_parts)
+    new[0].blocks.append(make_block("A brand new tip appeared here.", heading="Fresh"))
+    new[0] = make_part(1, new[0].blocks, title=new[0].title)
+
+    events = diff_documents(simple_parts, new, threshold=THRESHOLD)
+    minor, significant = split_minor_edits(events, MINOR_RATIO)
+
+    assert minor == []
+    assert [e.kind for e in significant] == [BLOCK_ADDED]
 
 
 # --------------------------------------------------------------------------

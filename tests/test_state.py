@@ -108,12 +108,50 @@ def test_ledger_roundtrip_and_ids(store):
     assert loaded.delivered[0]["sent_at"].endswith("Z")
 
 
+def test_ledger_records_why_nothing_was_sent(store):
+    """Правка ниже порога значимости попадает в журнал с причиной.
+
+    Без записи она не оставила бы следа вообще, и на вопрос «почему по
+    этому совету ничего не пришло» отвечало бы только чтение кода. С
+    записью ответ лежит в `git diff state/delivered.json`.
+    """
+    ledger = Ledger()
+    ledger.add(
+        "sha256:ccc", "block_edited", 22, "b-3", messages=0,
+        note="правка ниже порога значимости (ratio 0.993) — модель не вызывалась",
+    )
+    store.save_ledger(ledger)
+
+    entry = store.load_ledger().delivered[0]
+    assert entry["messages"] == 0
+    assert "0.993" in entry["note"]
+
+
 def test_ledger_trim_keeps_newest(store):
     ledger = Ledger()
     for i in range(10):
         ledger.add(f"sha256:{i}", "block_added", 1, f"b-{i}", messages=1)
     ledger.trim(keep=3)
     assert [e["event_id"] for e in ledger.delivered] == ["sha256:7", "sha256:8", "sha256:9"]
+
+
+def test_minor_records_never_evict_a_delivered_id(store):
+    """Мелочь не имеет права вытеснить единственную защиту от дубля.
+
+    Сценарий: событие доставлено, но снапшот застрял (переполнение лимита
+    или упавшая доставка), и пока он стоит, сайт правит опечатки. Общий
+    срез по последним keep записям выбросил бы id доставленного события —
+    и следующий прогон отправил бы его второй раз.
+    """
+    ledger = Ledger()
+    ledger.add("sha256:delivered", "block_edited", 22, "b-1", messages=2)
+    for i in range(600):
+        ledger.add(f"sha256:minor{i}", "block_edited", 1, f"b-{i}", messages=0, note="мелочь")
+    ledger.trim(keep=500)
+
+    assert "sha256:delivered" in ledger.ids
+    assert "sha256:minor599" in ledger.ids
+    assert "sha256:minor0" not in ledger.ids
 
 
 def test_missing_ledger_is_empty_not_error(store):

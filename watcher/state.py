@@ -176,7 +176,16 @@ class Ledger:
     def ids(self) -> set[str]:
         return {entry["event_id"] for entry in self.delivered}
 
-    def add(self, event_id: str, kind: str, part: int, bid: str, messages: int) -> None:
+    def add(
+        self, event_id: str, kind: str, part: int, bid: str, messages: int,
+        note: str = "",
+    ) -> None:
+        """Записать событие как отработанное.
+
+        `note` заполняется, когда сообщений ноль: событие закрыто, но
+        читателю ничего не ушло. Так в `git diff state/delivered.json`
+        видно не только что система промолчала, но и почему.
+        """
         self.delivered.append(
             {
                 "event_id": event_id,
@@ -185,12 +194,27 @@ class Ledger:
                 "bid": bid,
                 "sent_at": utcnow(),
                 "messages": messages,
+                "note": note,
             }
         )
 
     def trim(self, keep: int) -> None:
-        if len(self.delivered) > keep:
-            self.delivered = self.delivered[-keep:]
+        """Обрезать журнал, считая записи двух сортов по отдельности.
+
+        Сортов ровно два: событие доставлено (messages > 0) и событие
+        закрыто молча (мелкая правка). Общий срез по последним keep
+        записям означал бы, что поток мелочи вытесняет id уже доставленного
+        события — а это единственная защита от повторной отправки, и она
+        нужна ровно тогда, когда снапшот застрял и диф считается заново.
+
+        Порядок записей сохраняется: журнал читают глазами через git diff.
+        """
+        if len(self.delivered) <= keep:
+            return
+        sent = [i for i, e in enumerate(self.delivered) if e.get("messages")]
+        silent = [i for i, e in enumerate(self.delivered) if not e.get("messages")]
+        survivors = set(sent[-keep:]) | set(silent[-keep:])
+        self.delivered = [e for i, e in enumerate(self.delivered) if i in survivors]
 
     def to_dict(self) -> dict:
         return {"schema_version": SCHEMA_VERSION, "delivered": self.delivered}

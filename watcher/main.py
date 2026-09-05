@@ -48,6 +48,7 @@ from watcher.detect import (
     check_structure,
     diff_documents,
     flag_injections,
+    split_minor_edits,
 )
 from watcher.original import author_handle, fetch_author
 from watcher.publish import (
@@ -386,11 +387,18 @@ class Runner:
         fresh = [e for e in events if e.event_id not in ledger.ids]
         log.info("событий: %d, из них новых: %d", len(events), len(fresh))
 
+        # Порог значимости — до лимита событий на прогон: исправленная
+        # запятая не имеет права занимать место в очереди разборов.
+        minor, fresh = split_minor_edits(fresh, detect_cfg["minor_edit_ratio"])
+        if minor:
+            self._record_minor(minor, ledger)
+
         if not fresh:
-            # Контент изменился, но всё содержательное уже доставлено
-            # (например, поменялась только служебная разметка). Двигаем
+            # Контент изменился, но содержательного нет: либо всё уже
+            # доставлено, либо это правки ниже порога значимости. Двигаем
             # снапшот: иначе диф будет пересчитываться вечно.
-            self._advance(snapshot, doc, result, note="без новых событий")
+            note = f"только мелкие правки: {len(minor)}" if minor else "без новых событий"
+            self._advance(snapshot, doc, result, note=note)
             return self.finish(ok=True)
 
         flag_injections(fresh)
@@ -427,6 +435,38 @@ class Runner:
         return self.finish(ok=True, model_used=True)
 
     # ------------------------------------------------------------ внутреннее
+
+    def _record_minor(self, events, ledger) -> None:
+        """Закрыть мелкие правки журналом, не будя модель.
+
+        Запись обязательна: без неё правка ниже порога не оставила бы следа
+        совсем, и «почему по этому совету ничего не пришло» выяснялось бы
+        чтением кода. С ней ответ лежит в `git diff state/delivered.json`.
+
+        Незапушенная запись здесь, в отличие от журнала настоящей доставки,
+        дублей не создаёт: снапшот двинется — правки в дифе не станет; не
+        двинется — следующий прогон посчитает ту же похожесть и снова
+        промолчит. Поэтому отказ git тут предупреждение, а не провал
+        прогона.
+        """
+        keep = self.cfg.get("state", "ledger_keep")
+        for event in events:
+            ledger.add(
+                event.event_id, event.kind, event.part_number, event.bid,
+                messages=0,
+                note=f"правка ниже порога значимости (ratio {event.ratio:.3f}) — "
+                     f"модель не вызывалась",
+            )
+        ledger.trim(keep)
+        self.store.save_ledger(ledger)
+        log.info("мелких правок: %d — в журнал, без разбора и без сообщения", len(events))
+        try:
+            self.store.commit_and_push(
+                [self.store.ledger_path],
+                f"chore(state): {len(events)} minor edits skipped",
+            )
+        except GitError as exc:
+            log.warning("журнал мелких правок не сохранён: %s", exc)
 
     def _deliver_batch(self, batch, snapshot, doc, ledger, overflow: int):
         """Разобрать и доставить события по одному.
