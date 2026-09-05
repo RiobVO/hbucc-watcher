@@ -164,7 +164,6 @@ def test_render_contains_all_required_sections(event):
     text = render(make_analysis(), event)
     for marker in (
         "Стоит ли тебе:",
-        "Windows:",
         "Что это и как работает",
         "Слои достоверности",
     ):
@@ -409,16 +408,15 @@ def test_card_fits_the_size_of_a_glance(event):
     """Смысл карточки в том, что её читают целиком, не разворачивая."""
     text = card(make_analysis(), event, "https://riobvo.github.io/hbucc-reports/a.html")
     # Нижняя граница ниже целевых 400: разбор в этой фикстуре короче
-    # настоящего. Что важно — потолок и одно сообщение.
-    assert 250 <= len(text) <= 700, f"карточка на {len(text)} символов"
+    # настоящего, а строки про Windows в нём нет — статус works молчит.
+    assert 200 <= len(text) <= 700, f"карточка на {len(text)} символов"
     assert len(chunk(text, LIMIT)) == 1
 
 
-def test_card_carries_the_verdict_windows_and_the_link(event):
+def test_card_carries_the_verdict_and_the_link(event):
     text = card(make_analysis(), event, "https://riobvo.github.io/hbucc-reports/a.html")
     assert "Субагентам дают по одному файлу" in text
     assert "нет, пропускай" in text
-    assert "работает" in text
     assert '<a href="https://riobvo.github.io/hbucc-reports/a.html">' in text
 
 
@@ -538,3 +536,34 @@ def test_an_unpaired_backtick_leaves_no_open_tag(event):
     assert "`" not in text
     for line in text.split("\n"):
         assert inline_balanced(line), line
+
+
+# --------------------------------------------------------------------------
+# Windows: печатаем, только когда это что-то меняет
+# --------------------------------------------------------------------------
+
+
+def test_windows_line_is_silent_when_everything_just_works(event):
+    """«Windows: работает» — ноль бит информации и четверть карточки.
+
+    Проверку это не отменяет: модель по-прежнему обязана разобраться с
+    Windows на каждом разборе. Молчание и означает «работает как есть».
+    """
+    analysis = make_analysis(windows=Windows(status="works", detail="Механизм не зависит от ОС."))
+    assert "Windows" not in render(analysis, event)
+    assert "Windows" not in card(analysis, event, "https://example.com/a.html")
+
+
+def test_windows_line_appears_when_it_changes_what_you_do(event):
+    for status, label in (
+        ("needs_adaptation", "работает с оговорками"),
+        ("macos_only", "только macOS"),
+        ("unconfirmed", "не удалось выяснить"),
+    ):
+        analysis = make_analysis(
+            windows=Windows(status=status, detail="Ставь shell powershell вместо echo.")
+        )
+        text = render(analysis, event)
+        assert f"<b>Windows:</b> {label}" in text, status
+        assert "Ставь shell powershell вместо echo." in text, status
+        assert label in card(analysis, event, "https://example.com/a.html"), status

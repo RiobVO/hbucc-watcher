@@ -714,3 +714,23 @@ def test_the_event_id_in_the_name_is_wide_enough_to_forget_about(event):
     """Восемь hex-знаков — 32 бита, порог дня рождения 65 тысяч событий."""
     suffix = page_name(event).removesuffix(".html").rsplit("-", 1)[1]
     assert len(suffix) >= 16
+
+
+def test_the_page_keeps_the_windows_tile_but_drops_the_duplicate_row(event):
+    """На странице места хватает: тайл сканируется глазами и стоит бесплатно.
+
+    А строка в «Коротко» повторяла его словами — и ради статуса works
+    занимала место, ничего не добавляя.
+    """
+    works = render_page(make_analysis(), event, generated_at=WHEN)
+    glance = works.split('class="at-a-glance"')[1].split("</div>\n  <nav")[0]
+    assert "работает" in works.split('class="stats-row"')[1][:600], "тайл обязан остаться"
+    assert "Windows" not in glance, "строка в «Коротко» дублирует тайл"
+
+    adapted = render_page(
+        make_analysis(windows=Windows(status="needs_adaptation", detail="Ставь shell powershell.")),
+        event, generated_at=WHEN,
+    )
+    glance = adapted.split('class="at-a-glance"')[1].split("</div>\n  <nav")[0]
+    assert "Windows" in glance
+    assert "Ставь shell powershell." in glance

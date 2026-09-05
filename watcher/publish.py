@@ -379,10 +379,12 @@ def _stats(analysis: Analysis, usage: Usage | None, price_usd: float | None) -> 
 
 
 def _glance(analysis: Analysis, prose: _Prose) -> str:
-    rows = [
-        ("Стоит ли", prose(analysis.verdict.why)),
-        ("Windows", prose(analysis.windows.detail)),
-    ]
+    rows = [("Стоит ли", prose(analysis.verdict.why))]
+    # Тайл в ряду метрик уже сказал «работает». Повторять это строкой в
+    # «Коротко» — занимать место ради ожидаемого; строка нужна там, где
+    # Windows меняет то, что читатель будет делать.
+    if analysis.windows.status != "works":
+        rows.append(("Windows", prose(analysis.windows.detail)))
     if analysis.action.strip():
         rows.append(("Что сделать", f"<b>{prose(analysis.action)}</b>"))
 

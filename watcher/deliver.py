@@ -172,10 +172,19 @@ def render(
         "",
         f"<b>Стоит ли тебе:</b> {_VERDICT_LABEL[analysis.verdict.worth_it]}",
         clean(analysis.verdict.why),
-        "",
-        f"<b>Windows:</b> {_WINDOWS_LABEL[analysis.windows.status]}",
-        clean(analysis.windows.detail),
     ]
+
+    # Windows печатается, только когда меняет то, что читатель будет
+    # делать. «Работает» — это и есть ожидание по умолчанию, и строка про
+    # него занимала место, не сообщая ничего. Саму проверку это не
+    # отменяет: промт по-прежнему требует разобраться с Windows на каждом
+    # разборе, и молчание здесь означает «разобрались, всё как есть».
+    if analysis.windows.status != "works":
+        lines += [
+            "",
+            f"<b>Windows:</b> {_WINDOWS_LABEL[analysis.windows.status]}",
+            clean(analysis.windows.detail),
+        ]
 
     if analysis.action.strip():
         lines += ["", "<b>Что сделать</b>", clean(analysis.action)]
@@ -328,9 +337,15 @@ def card(analysis: Analysis, event: Event, url: str) -> str:
         "",
         f"<b>Стоит ли:</b> {_VERDICT_LABEL[analysis.verdict.worth_it]} — "
         f"{_short(analysis.verdict.why, CARD_WHY_CHARS)}",
-        f"<b>Windows:</b> {_WINDOWS_LABEL[analysis.windows.status]} — "
-        f"{_short(analysis.windows.detail, CARD_WINDOWS_CHARS)}",
     ]
+
+    # Та же экономия, что и в полном тексте, но здесь она весомее: строка
+    # про Windows занимала четверть карточки, чтобы сообщить ожидаемое.
+    if analysis.windows.status != "works":
+        lines.append(
+            f"<b>Windows:</b> {_WINDOWS_LABEL[analysis.windows.status]} — "
+            f"{_short(analysis.windows.detail, CARD_WINDOWS_CHARS)}"
+        )
 
     if analysis.action.strip():
         lines.append(f"<b>Что сделать:</b> {_short(analysis.action, CARD_ACTION_CHARS)}")
