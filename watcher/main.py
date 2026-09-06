@@ -51,6 +51,7 @@ from watcher.detect import (
     split_minor_edits,
 )
 from watcher.original import author_handle, fetch_author
+from watcher.quality import check as check_analysis
 from watcher.publish import (
     PublishFailed,
     index_entry,
@@ -552,7 +553,15 @@ class Runner:
                 failed.append(f"{event.headline}: не доставлено — {exc}")
                 break
 
-            ledger.add(event.event_id, event.kind, event.part_number, event.bid, messages)
+            # Автопроверка после доставки, а не до неё: замечание к
+            # формулировке не повод оставить читателя без новости. Результат
+            # ложится в журнал и виден в git diff — так каждое живое
+            # событие становится бесплатными данными о качестве промта.
+            notes = check_analysis(analysis, allowed_domains=model_cfg["allowed_domains"])
+            ledger.add(
+                event.event_id, event.kind, event.part_number, event.bid, messages,
+                note=("автопроверка: " + "; ".join(notes)) if notes else "",
+            )
             ledger.trim(keep)
             self.store.save_ledger(ledger)
             try:
