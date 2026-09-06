@@ -29,12 +29,11 @@ import json
 import re
 import time
 from datetime import datetime, timezone
-from html.parser import HTMLParser
 from pathlib import Path
 
 import httpx
 import pytest
-from conftest import make_block, make_part
+from conftest import balance, make_block, make_part
 
 from watcher.analyze import Analysis, Layers, Usage, Verdict, Windows
 from watcher.detect import BLOCK_ADDED, BLOCK_EDITED, Event
@@ -58,11 +57,6 @@ WHEN = datetime(2026, 7, 30, 22, 26, tzinfo=timezone.utc)
 # Заглушка вместо настоящего PAT. Живёт константой, чтобы в тестах не
 # появлялось ничего похожего на записанный в код секрет.
 FAKE = "not-a-real-value"
-
-# Пустые элементы: закрывающего тега у них нет по стандарту, и стек
-# проверки баланса не должен их ждать.
-VOID = {"meta", "link", "br", "img", "input", "hr", "source"}
-
 
 def make_analysis(**overrides) -> Analysis:
     data = {
@@ -118,35 +112,6 @@ def page(event) -> str:
         price_usd=0.2339,
         generated_at=WHEN,
     )
-
-
-class TagBalance(HTMLParser):
-    """Стек открытых тегов. Пустой в конце — разметка сошлась."""
-
-    def __init__(self) -> None:
-        super().__init__(convert_charrefs=True)
-        self.stack: list[str] = []
-        self.errors: list[str] = []
-
-    def handle_starttag(self, tag, attrs):
-        if tag not in VOID:
-            self.stack.append(tag)
-
-    def handle_endtag(self, tag):
-        if tag in VOID:
-            return
-        if not self.stack:
-            self.errors.append(f"закрыт непокрытый тег </{tag}>")
-        elif self.stack[-1] != tag:
-            self.errors.append(f"ожидался </{self.stack[-1]}>, встретился </{tag}>")
-        else:
-            self.stack.pop()
-
-
-def balance(html: str) -> TagBalance:
-    parser = TagBalance()
-    parser.feed(html)
-    return parser
 
 
 def body_of(page: str) -> str:
