@@ -144,6 +144,53 @@ def test_all_three_new_fields_have_their_place(page):
     assert "Рядом" in page
 
 
+def stats_row(page: str) -> str:
+    """Только ряд метрик: дальше идёт блок «Коротко», и он не в счёт."""
+    return page.split('class="stats-row"', 1)[1].split("at-a-glance", 1)[0]
+
+
+def test_stats_row_is_about_the_reader_not_the_bill(page):
+    """Ряд метрик отвечает на «читать ли дальше», а не «сколько стоило».
+
+    Число поисков и цена уже стоят в футере. В самом заметном месте
+    страницы они занимали два тайла из пяти, на вопрос читателя не
+    отвечали, а на узком экране вытесняли то, что отвечает.
+    """
+    row = stats_row(page)
+    assert "поисков" not in row
+    assert "стоил разбор" not in row
+    assert "поиска" in page.split("<footer>", 1)[1], "расход пропал со страницы совсем"
+
+
+def test_stats_row_counts_pitfalls(page):
+    """Число ловушек — величина про читателя, ей место в ряду метрик."""
+    assert "ловушек" in stats_row(page)
+
+
+def test_verdict_and_windows_carry_their_tone(event):
+    """Цвет стоит там, где решение, а не только на расхождениях.
+
+    «Не стоит» и «только macOS» — то, ради чего страницу открывают, и
+    нейтральными они читались наравне с подписью «поисков по докам».
+    """
+    page = render_page(
+        make_analysis(
+            verdict=Verdict(worth_it="no", why="Ничего нового."),
+            windows=Windows(status="macos_only", detail="Хоткей только для macOS."),
+        ),
+        event,
+        generated_at=WHEN,
+    )
+    row = stats_row(page)
+    assert "stat-value muted" in row, "вердикт «не стоит» ничем не отмечен"
+    assert "stat-value bad" in row, "«только macOS» ничем не отмечен"
+
+
+def test_footer_leads_back_to_the_archive(page):
+    """Со страницы разбора должно быть куда пойти дальше."""
+    assert 'href="index.html"' in page.split("<footer>", 1)[1]
+
+
 def test_pitfalls_are_a_list_not_a_paragraph(page):
     assert '<ul class="plain">' in page
     assert "Граница из чата теряется после compaction." in page
@@ -213,10 +260,17 @@ def test_author_card_degrades_without_a_profile(event):
     assert balance(page).stack == []
 
 
-def test_stats_row_shows_searches_price_and_unconfirmed(page):
-    assert "$0.23" in page
-    assert ">3<" in page, "число поисков"
-    assert "расхождени" in page.lower()
+def test_cost_lives_in_the_footer_only(page):
+    """Расход со страницы не пропал, но ушёл туда, где ему место.
+
+    Раньше цена и число поисков стояли в ряду метрик. Это ответ на вопрос
+    «во что обошлось владельцу», а ряд метрик отвечает на «стоит ли это
+    твоего времени» — и два тайла из пяти уходили не на того читателя.
+    """
+    footer = page.split("<footer>", 1)[1]
+    assert "$0.23" in footer
+    assert "3 поиска" in footer
+    assert "расхождени" in stats_row(page).lower()
 
 
 def test_action_row_disappears_when_there_is_nothing_to_do(event):

@@ -542,6 +542,11 @@ class Runner:
                     chat_id=self.secrets.telegram_chat_id,
                     chunk_chars=tg_cfg["chunk_chars"],
                     parse_mode=tg_cfg["parse_mode"],
+                    # Превью — только у карточки: за ссылкой стоит наша
+                    # страница с og-разметкой. У полного текста ссылки
+                    # ведут на x.com, и там превью — карточка твита на
+                    # пол-экрана под каждым разбором.
+                    preview=bool(url),
                 )
             except DeliveryFailed as exc:
                 failed.append(f"{event.headline}: не доставлено — {exc}")

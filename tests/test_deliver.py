@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import re
 
+import httpx
+import json
 import pytest
 from conftest import make_block, make_part
 
@@ -26,6 +28,7 @@ from watcher.deliver import (
     esc,
     post_handle,
     render,
+    send_message,
     source_label,
     strip_citations,
 )
@@ -567,3 +570,43 @@ def test_windows_line_appears_when_it_changes_what_you_do(event):
         assert f"<b>Windows:</b> {label}" in text, status
         assert "Ставь shell powershell вместо echo." in text, status
         assert label in card(analysis, event, "https://example.com/a.html"), status
+
+
+# --------------------------------------------------------------------------
+# Превью ссылки
+# --------------------------------------------------------------------------
+
+
+def capture(payloads: list[dict]) -> httpx.MockTransport:
+    """Транспорт, который ничего не отправляет, но помнит тело запроса."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        payloads.append(json.loads(request.content))
+        return httpx.Response(200, json={"ok": True})
+
+    return httpx.MockTransport(handler)
+
+
+def test_card_asks_telegram_for_a_preview():
+    """У страницы разбора есть og-разметка ровно под превью.
+
+    Карточка — это ссылка и полтысячи символов; превью показывает
+    заголовок и вердикт прямо в ленте, до открытия.
+    """
+    payloads: list[dict] = []
+    send_message(
+        "<b>карточка</b>", bot_token="t", chat_id="1", preview=True,
+        transport=capture(payloads),
+    )
+    assert payloads[0]["link_preview_options"] == {"is_disabled": False}
+
+
+def test_full_text_keeps_the_preview_off():
+    """Простыня остаётся без превью — ради этого его и глушили.
+
+    В полном тексте ссылки ведут на x.com, и превью рисовало карточку
+    твита на пол-экрана под каждым разбором.
+    """
+    payloads: list[dict] = []
+    send_message("<b>простыня</b>", bot_token="t", chat_id="1", transport=capture(payloads))
+    assert payloads[0]["link_preview_options"] == {"is_disabled": True}

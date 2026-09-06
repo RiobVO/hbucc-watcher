@@ -443,21 +443,29 @@ def send_message(
     chat_id: str,
     parse_mode: str = "HTML",
     retries: int = 3,
+    preview: bool = False,
+    transport: httpx.BaseTransport | None = None,
 ) -> None:
-    """Отправить одно сообщение. Бросает DeliveryFailed."""
+    """Отправить одно сообщение. Бросает DeliveryFailed.
+
+    Превью выключено по умолчанию и включается только для карточки.
+    В полном тексте ссылки ведут на x.com, и превью рисовало карточку
+    твита на пол-экрана под каждым разбором; у страницы разбора, наоборот,
+    есть `og:title` и `og:description` ровно под превью — заголовок и
+    вердикт видно в ленте, не открывая ссылку.
+    """
     url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
     payload = {
         "chat_id": chat_id,
         "text": text,
         "parse_mode": parse_mode,
-        # Превью подтянуло бы карточку x.com на пол-экрана под каждым разбором.
-        "link_preview_options": {"is_disabled": True},
+        "link_preview_options": {"is_disabled": not preview},
     }
 
     last_error = ""
     for attempt in range(1, retries + 1):
         try:
-            with httpx.Client(timeout=httpx.Timeout(30.0)) as client:
+            with httpx.Client(timeout=httpx.Timeout(30.0), transport=transport) as client:
                 response = client.post(url, json=payload)
             if response.status_code == 200:
                 return
@@ -481,7 +489,8 @@ def send_message(
 
 
 def deliver(
-    text: str, *, bot_token: str, chat_id: str, chunk_chars: int, parse_mode: str = "HTML"
+    text: str, *, bot_token: str, chat_id: str, chunk_chars: int,
+    parse_mode: str = "HTML", preview: bool = False,
 ) -> int:
     """Отправить разбор целиком, разбив на части. Возвращает число сообщений.
 
@@ -494,7 +503,10 @@ def deliver(
     for i, part in enumerate(parts):
         if i:
             time.sleep(0.5)
-        send_message(part, bot_token=bot_token, chat_id=chat_id, parse_mode=parse_mode)
+        send_message(
+            part, bot_token=bot_token, chat_id=chat_id, parse_mode=parse_mode,
+            preview=preview,
+        )
     log.info("доставлено сообщений: %d", len(parts))
     return len(parts)
 

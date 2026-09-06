@@ -38,7 +38,13 @@ h1 { font-size: 32px; font-weight: 700; color: #0f172a; margin: 0 0 8px; line-he
   border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;
 }
 .stat-value { font-size: 22px; font-weight: 700; color: #0f172a; line-height: 1.2; }
+/* Тон стоит там, где решение. Красный — только «у тебя не заработает» и
+ * «сайт расходится с документацией»; «не стоит» гасится, потому что это
+ * не поломка, а сэкономленное время. */
+.stat-value.good { color: #166534; }
+.stat-value.warn { color: #92400e; }
 .stat-value.bad { color: #9b2226; }
+.stat-value.muted { color: #94a3b8; }
 .stat-label { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: .05em; margin-top: 2px; }
 
 .at-a-glance {
@@ -133,6 +139,10 @@ footer {
   margin-top: 48px; padding-top: 16px; border-top: 1px solid #e2e8f0;
   font-size: 12px; color: #94a3b8; display: flex; flex-wrap: wrap; gap: 6px 20px;
 }
+/* Единственная ссылка в футере ведёт в архив: со страницы разбора должно
+ * быть куда пойти дальше, иначе она тупик. */
+footer a { color: #64748b; text-decoration: none; border-bottom: 1px solid #cbd5e1; }
+footer a:hover { color: #0f172a; border-bottom-color: #94a3b8; }
 
 /* --- дописано: секции, которых в ручных страницах не было --- */
 

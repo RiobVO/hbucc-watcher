@@ -228,7 +228,11 @@ def test_no_foreign_scheme_reaches_href():
     """
     for seed in range(ROUNDS):
         for href in HREF.findall(page_for(seed)):
-            assert href.startswith(("http://", "https://", "#")), f"seed={seed}: {href}"
+            # index.html — единственная относительная ссылка на странице:
+            # её пишет шаблон, а не модель, и ведёт она в архив.
+            assert href == "index.html" or href.startswith(
+                ("http://", "https://", "#")
+            ), f"seed={seed}: {href}"
 
 
 # --------------------------------------------------------------------------

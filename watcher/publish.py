@@ -99,6 +99,18 @@ _WINDOWS_SHORT = {
     "needs_adaptation": "с оговоркой",
     "unconfirmed": "неизвестно",
 }
+
+# Тон тайла в ряду метрик. «Не стоит» гасится, а не краснеет: красный
+# читается как поломка, а это сэкономленное время. «Только macOS» —
+# наоборот, красный: у читателя Windows, и это единственная метрика,
+# которая говорит «у тебя не заработает».
+_VERDICT_TONE = {"yes": "good", "maybe": "warn", "no": "muted"}
+_WINDOWS_TONE = {
+    "works": "good",
+    "needs_adaptation": "warn",
+    "unconfirmed": "warn",
+    "macos_only": "bad",
+}
 _KIND_BADGE = {
     PART_ADDED: "новая часть",
     PART_REMOVED: "часть удалена",
@@ -276,7 +288,7 @@ def render_page(
         _eyebrow(event),
         f"  <h1>{headline}</h1>",
         f'  <p class="subtitle">{subtitle}</p>',
-        _stats(analysis, usage, price_usd),
+        _stats(analysis),
         glance,
         # Аномалии стоят до оглавления и не сворачиваются: это найденные в
         # чужом тексте обращения к агенту, и читатель обязан увидеть их
@@ -357,23 +369,41 @@ def _eyebrow(event: Event) -> str:
     )
 
 
-def _stats(analysis: Analysis, usage: Usage | None, price_usd: float | None) -> str:
-    cells: list[tuple[str, str, bool]] = [
-        (_VERDICT_SHORT[analysis.verdict.worth_it], "стоит ли тебе", False),
-        (_WINDOWS_SHORT[analysis.windows.status], "на Windows", False),
-    ]
-    if usage is not None:
-        cells.append((str(usage.searches), "поисков по докам", False))
-    cells.append(
-        (str(len(analysis.unconfirmed)), "расхождения с докой", bool(analysis.unconfirmed))
+def _stats(analysis: Analysis) -> str:
+    """Ряд метрик: четыре величины, по которым решают, читать ли дальше.
+
+    Числа поисков и цены здесь нет намеренно, хотя раньше были. Они уже
+    стоят в футере, отвечают на вопрос «во что обошлось мне», а не «стоит
+    ли это твоего времени», и занимали два тайла из пяти в самом заметном
+    месте страницы — на узком экране вытесняя те, что отвечают.
+
+    Тон вместо одного признака `bad`: цвет обязан стоять там, где решение.
+    «Не стоит» гасится, а не краснеет: это не поломка, а сэкономленные
+    двадцать минут — читатель имеет право закрыть страницу и уйти.
+    """
+    cells = (
+        (
+            _VERDICT_SHORT[analysis.verdict.worth_it],
+            "стоит ли тебе",
+            _VERDICT_TONE[analysis.verdict.worth_it],
+        ),
+        (
+            _WINDOWS_SHORT[analysis.windows.status],
+            "на Windows",
+            _WINDOWS_TONE[analysis.windows.status],
+        ),
+        (str(len(analysis.pitfalls)), "ловушек", "warn" if analysis.pitfalls else ""),
+        (
+            str(len(analysis.unconfirmed)),
+            "расхождения с докой",
+            "bad" if analysis.unconfirmed else "",
+        ),
     )
-    if price_usd is not None:
-        cells.append((f"${price_usd:.2f}", "стоил разбор", False))
 
     rendered = "\n".join(
-        f'    <div><div class="stat-value{" bad" if bad else ""}">{html.escape(value)}</div>'
+        f'    <div><div class="stat-value{" " + tone if tone else ""}">{html.escape(value)}</div>'
         f'<div class="stat-label">{label}</div></div>'
-        for value, label, bad in cells
+        for value, label, tone in cells
     )
     return f'  <div class="stats-row">\n{rendered}\n  </div>'
 
@@ -597,7 +627,7 @@ def _toc(sections: list[tuple[str, str, str]], with_sources: bool) -> str:
 
 def _footer(when: datetime, usage: Usage | None, price_usd: float | None) -> str:
     parts = [
-        "    <span>наблюдатель за howborisusesclaudecode.com</span>",
+        '    <span><a href="index.html">все разборы</a></span>',
         f"    <span>{when:%d.%m.%Y, %H:%M} UTC</span>",
     ]
     if usage is not None:
