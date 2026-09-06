@@ -75,6 +75,24 @@ def test_markdown_link_is_reported_too():
     assert any("what_it_is" in note for note in found)
 
 
+def test_citation_the_safety_net_removes_is_not_reported():
+    """Модель врезает markdown-цитаты вида ([домен](url)) вопреки промту.
+
+    Это известное и обезвреженное поведение: strip_citations выкусывает их
+    и переносит адреса в источники. Первый же живой разбор дал пять таких
+    вставок — если ругаться на каждую, проверку перестанут читать раньше,
+    чем она поймает первую настоящую ошибку.
+    """
+    found = check(
+        make_analysis(
+            what_it_is="Команда живёт только в сессии. "
+                       "([code.claude.com](https://code.claude.com/docs/en/commands))"
+        ),
+        allowed_domains=DOMAINS,
+    )
+    assert found == []
+
+
 def test_pitfall_repeating_a_claim_is_reported():
     """Один факт не стоит одновременно в pitfalls и unconfirmed.
 

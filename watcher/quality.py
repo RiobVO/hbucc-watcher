@@ -26,6 +26,7 @@ import re
 from typing import Iterable
 
 from watcher.analyze import Analysis
+from watcher.deliver import strip_citations
 from watcher.detect import similarity
 from watcher.original import domain_allowed
 
@@ -100,7 +101,15 @@ def check(analysis: Analysis, *, allowed_domains: Iterable[str]) -> list[str]:
     fields["verdict.why"] = analysis.verdict.why
     fields["windows.detail"] = analysis.windows.detail
 
-    for name, text in fields.items():
+    for name, raw in fields.items():
+        # Смотрим текст ПОСЛЕ страховки. Модель врезает markdown-цитаты
+        # вида ([домен](url)) вопреки промту — это известное поведение, и
+        # strip_citations выкусывает их, перенося адреса в источники.
+        # Первый живой разбор дал пять таких вставок разом: ругаться на
+        # каждую значит утопить проверку в шуме на первом же событии.
+        # Ссылка, пережившая страховку, — другое дело: она доедет до
+        # читателя и промт её запрещает прямо.
+        text, _ = strip_citations(raw)
         if _URL.search(text) or _MARKDOWN_LINK.search(text):
             notes.append(f"ссылка в поле {name} — адреса живут только в sources")
         for label, pattern in _SLOP:
