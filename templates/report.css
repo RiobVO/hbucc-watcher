@@ -196,3 +196,16 @@ ul.plain li:last-child { margin-bottom: 0; }
 }
 .report-title { font-weight: 600; color: #0f172a; margin-bottom: 4px; }
 .report-summary { font-size: 13px; color: #475569; }
+
+/* --- страница расхождений --- */
+
+/* Карточка здесь не ссылка целиком, как в архиве: внутри список
+ * утверждений, и оборачивать список в <a> нельзя. Ссылкой остаётся
+ * заголовок — до самого разбора одно нажатие. */
+.divergence {
+  background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px;
+  border-left: 3px solid #fca5a5;
+}
+.divergence .report-title a { color: #0f172a; text-decoration: none; }
+.divergence .report-title a:hover { border-bottom: 1px solid #94a3b8; }
+.divergence ul.plain { margin-top: 8px; }

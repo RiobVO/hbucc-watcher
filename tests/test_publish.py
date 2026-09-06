@@ -45,7 +45,9 @@ from watcher.publish import (
     publish_page,
     render_page,
     index_entries,
+    index_entry,
     merge_entry,
+    render_divergences,
     render_index,
     update_index,
     wait_for_page,
@@ -512,7 +514,8 @@ def test_unreachable_host_is_not_a_ready_page():
 # ----------------------------------------------------------- индекс архива
 
 
-def entry(name: str, title: str = "Разбор", part: int = 22, date: str = "2026-07-30") -> dict:
+def entry(name: str, title: str = "Разбор", part: int = 22, date: str = "2026-07-30",
+          unconfirmed: list[str] | None = None) -> dict:
     return {
         "name": name,
         "title": title,
@@ -520,6 +523,9 @@ def entry(name: str, title: str = "Разбор", part: int = 22, date: str = "2
         "date": date,
         "part": part,
         "kind": "новый совет",
+        "unconfirmed": ["Совместимость Opus 5 с Auto Mode не подтверждена."]
+        if unconfirmed is None
+        else unconfirmed,
     }
 
 
@@ -580,7 +586,9 @@ def test_index_is_written_back_with_its_sha():
                     "encoding": "base64",
                 },
             )
-        seen["body"] = json.loads(request.content)
+        # Запись теперь не одна: рядом с индексом пишется страница
+        # расхождений, и брать «последнее тело» больше нельзя.
+        seen[request.url.path.rsplit("/", 1)[-1]] = json.loads(request.content)
         return httpx.Response(200, json={"content": {"sha": "new"}})
 
     update_index(
@@ -589,7 +597,7 @@ def test_index_is_written_back_with_its_sha():
         token=FAKE,
         transport=httpx.MockTransport(handler),
     )
-    body = seen["body"]
+    body = seen["index.html"]
     assert body["sha"] == "index-sha"
     written = base64.b64decode(body["content"]).decode("utf-8")
     assert [e["name"] for e in index_entries(written)] == ["new.html", "old.html"]
@@ -753,3 +761,85 @@ def test_the_page_keeps_the_windows_tile_but_drops_the_duplicate_row(event):
     glance = adapted.split('class="at-a-glance"')[1].split("</div>\n  <nav")[0]
     assert "Windows" in glance
     assert "Ставь shell powershell." in glance
+
+
+# --------------------------------------------------------------------------
+# Страница расхождений
+# --------------------------------------------------------------------------
+
+
+def test_index_entry_carries_the_claims_themselves(event):
+    """В архив едет не только счётчик расхождений, но и сами утверждения.
+
+    Иначе страницу расхождений пришлось бы собирать из отдельного файла,
+    который обязан совпадать с индексом, — а два таких файла однажды
+    расходятся.
+    """
+    row = index_entry(make_analysis(), event, "a.html", WHEN)
+    assert row["unconfirmed"] == ["Совместимость Opus 5 с Auto Mode не подтверждена."]
+
+
+def test_divergences_page_groups_claims_by_report():
+    page = render_divergences([entry("a.html", "Про Auto Mode")])
+    assert "Совместимость Opus 5 с Auto Mode не подтверждена." in page
+    assert 'href="a.html"' in page, "до самого разбора должно быть одно нажатие"
+    assert "Про Auto Mode" in page
+    assert balance(page).stack == []
+
+
+def test_divergences_page_skips_reports_without_claims():
+    page = render_divergences([
+        entry("a.html", "С расхождением"),
+        entry("b.html", "Без расхождений", unconfirmed=[]),
+    ])
+    assert "С расхождением" in page
+    assert "Без расхождений" not in page
+
+
+def test_divergences_page_reads_entries_written_before_this_feature():
+    """В архиве уже лежат записи без этого поля — страница обязана открыться."""
+    old = entry("a.html")
+    del old["unconfirmed"]
+    page = render_divergences([old])
+    assert balance(page).stack == []
+    assert "пока нет" in page
+
+
+def test_divergences_page_says_so_when_the_site_agrees_with_the_docs():
+    page = render_divergences([entry("a.html", unconfirmed=[])])
+    assert "пока нет" in page
+    assert balance(page).stack == []
+
+
+def test_index_offers_the_divergences_page_when_there_is_something_to_show():
+    page = render_index([entry("a.html")])
+    assert 'href="divergences.html"' in page
+
+
+def test_index_stays_silent_about_divergences_when_there_are_none():
+    page = render_index([entry("a.html", unconfirmed=[])])
+    assert "divergences.html" not in page
+
+
+def test_update_index_writes_the_divergences_page_too():
+    """Обе страницы считаются из одного списка и пишутся одним вызовом."""
+    written: dict[str, str] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "GET":
+            return httpx.Response(404, json={"message": "Not Found"})
+        body = json.loads(request.content)
+        written[request.url.path.rsplit("/", 1)[-1]] = base64.b64decode(
+            body["content"]
+        ).decode("utf-8")
+        return httpx.Response(200, json={"content": {"sha": "new"}})
+
+    update_index(
+        entry("new.html", "Свежий"),
+        repo="RiobVO/hbucc-reports",
+        token=FAKE,
+        transport=httpx.MockTransport(handler),
+    )
+    assert "index.html" in written
+    assert "divergences.html" in written
+    assert "Совместимость Opus 5 с Auto Mode не подтверждена." in written["divergences.html"]

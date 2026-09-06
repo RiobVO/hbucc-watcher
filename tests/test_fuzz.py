@@ -39,6 +39,7 @@ from watcher.publish import (
     index_entries,
     index_entry,
     merge_entry,
+    render_divergences,
     render_index,
     render_page,
 )
@@ -270,6 +271,35 @@ def test_index_survives_a_round_trip():
     assert checked.stack == [], checked.stack[:3]
     assert checked.tags.count("script") == 1
     assert not FORBIDDEN_TAGS.intersection(checked.tags)
+
+
+def test_divergences_page_survives_hostile_claims():
+    """Расхождения — это цитаты с чужого сайта, попадающие на нашу страницу.
+
+    Путь у них тот же, что у остального текста разбора, поэтому и проверка
+    та же: разметка сходится, новых элементов не завелось, ни в одной
+    ссылке нет чужой схемы.
+    """
+    entries: list[dict] = []
+    for seed in range(ROUNDS):
+        rnd = random.Random(seed)
+        entries = merge_entry(
+            entries,
+            index_entry(hostile_analysis(rnd), hostile_event(rnd), f"r-{seed:02d}.html", WHEN),
+        )
+
+    page = render_divergences(entries)
+    checked = balance(page)
+    assert checked.errors == [], checked.errors[:2]
+    assert checked.stack == [], checked.stack[:3]
+    assert "script" not in checked.tags, "на этой странице скриптов нет вовсе"
+    assert not FORBIDDEN_TAGS.intersection(checked.tags)
+    for href in HREF.findall(page):
+        # Ссылки тут либо на соседнюю страницу, либо на шрифты. Схемы,
+        # написанной чужим текстом, не бывает ни в одной.
+        assert ":" not in href.split("/")[0] or href.startswith(
+            ("http://", "https://")
+        ), href
 
 
 def test_republished_event_keeps_one_row():

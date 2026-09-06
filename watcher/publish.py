@@ -69,6 +69,7 @@ __all__ = [
     "index_entry",
     "merge_entry",
     "publish_page",
+    "render_divergences",
     "render_index",
     "render_page",
     "update_index",
@@ -76,6 +77,8 @@ __all__ = [
 ]
 
 INDEX_NAME = "index.html"
+# Страница расхождений считается из записей архива и живёт рядом с ним.
+DIVERGENCES_NAME = "divergences.html"
 
 # Индекс носит свои данные в себе. Отдельный манифест рядом со страницей
 # — это два файла, которые обязаны совпадать, а значит однажды разойдутся;
@@ -328,6 +331,10 @@ def index_entry(analysis: Analysis, event: Event, name: str, when: datetime) -> 
         "date": f"{when:%Y-%m-%d}",
         "part": event.part_number,
         "kind": _KIND_BADGE.get(event.kind, event.kind),
+        # Сами утверждения, а не только их число: из них собирается
+        # страница расхождений, и держать её данные отдельно от архива
+        # означало бы завести второй файл, обязанный совпадать с первым.
+        "unconfirmed": list(analysis.unconfirmed),
     }
 
 
@@ -716,16 +723,124 @@ def _json_for_html(entries: list[dict]) -> str:
     )
 
 
-def _reports_word(count: int) -> str:
-    """«1 разбор», «3 разбора», «11 разборов». Русский счёт, не английский."""
+def _plural(count: int, one: str, few: str, many: str) -> str:
+    """Русский счёт: 1 разбор, 3 разбора, 11 разборов."""
     if 11 <= count % 100 <= 14:
-        return "разборов"
+        return many
     last = count % 10
     if last == 1:
-        return "разбор"
+        return one
     if 2 <= last <= 4:
-        return "разбора"
-    return "разборов"
+        return few
+    return many
+
+
+def _reports_word(count: int) -> str:
+    return _plural(count, "разбор", "разбора", "разборов")
+
+
+def _claims_word(count: int) -> str:
+    return _plural(count, "расхождение", "расхождения", "расхождений")
+
+
+def _shell(
+    *, eyebrow: str, title: str, subtitle: str, description: str,
+    body: str, footer: str, tail: str = "",
+) -> str:
+    """Скелет страницы без разбора: архив и расхождения.
+
+    Одна копия на обе: `<head>` тут содержательный — og-разметка под превью
+    в Telegram, встроенный CSS, — и две копии разошлись бы молча, а заметно
+    это стало бы только в чужой ленте.
+    """
+    return f"""<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta property="og:title" content="{html.escape(title, quote=True)}">
+<meta property="og:description" content="{html.escape(description, quote=True)}">
+<meta name="theme-color" content="#f8fafc">
+<title>{html.escape(title)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+{CSS_PATH.read_text(encoding="utf-8")}</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="eyebrow"><span>{html.escape(eyebrow)}</span></div>
+  <h1>{html.escape(title)}</h1>
+  <p class="subtitle">{html.escape(subtitle)}</p>
+
+{body}
+
+  <footer>
+{footer}
+  </footer>
+
+</div>{tail}
+</body>
+</html>"""
+
+
+def render_divergences(entries: list[dict]) -> str:
+    """Страница «где сайт расходится с документацией».
+
+    Самое редкое, что умеет система: поймать фан-сайт на утверждении,
+    которого официальная документация не подтверждает. По одному разбору
+    такая находка теряется среди механики и примеров, а собранные вместе
+    они и есть ответ на вопрос «насколько вообще можно верить сайту».
+
+    Данные берутся из записей архива и ниоткуда больше: второй файл рядом
+    с индексом обязан был бы с ним совпадать, а значит однажды разошёлся бы.
+    Записи, сделанные до появления поля, поле просто не имеют — страница
+    обязана открыться и без него.
+    """
+    found = [item for item in entries if item.get("unconfirmed")]
+    total = sum(len(item["unconfirmed"]) for item in found)
+
+    if found:
+        cards = "\n".join(
+            '    <div class="divergence">\n'
+            f'      <div class="report-meta">{html.escape(str(item.get("date", "")))} · '
+            f'Part {html.escape(str(item.get("part", "")))} · '
+            f'{html.escape(str(item.get("kind", "")))}</div>\n'
+            f'      <div class="report-title">'
+            f'<a href="{html.escape(str(item["name"]), quote=True)}">'
+            f'{html.escape(str(item.get("title", "")))}</a></div>\n'
+            '      <ul class="plain">\n'
+            + "\n".join(
+                f"        <li>{html.escape(str(claim))}</li>"
+                for claim in item["unconfirmed"]
+            )
+            + "\n      </ul>\n    </div>"
+            for item in found
+        )
+        body = f'  <div class="report-list">\n{cards}\n  </div>'
+        description = (
+            f"{total} {_claims_word(total)} с официальной документацией "
+            f"в {len(found)} {_reports_word(len(found))}."
+        )
+    else:
+        body = (
+            "  <p>Расхождений пока нет: всё, что сайт утверждал, "
+            "документация подтвердила.</p>"
+        )
+        description = "Расхождений с официальной документацией пока не нашлось."
+
+    return _shell(
+        eyebrow="расхождения",
+        title="Где сайт расходится с документацией",
+        subtitle="Утверждения с сайта, которые не удалось подтвердить по официальной "
+                 "документации Claude Code. Не обязательно ложь — но и не факт.",
+        description=description,
+        body=body,
+        footer='    <span><a href="index.html">все разборы</a></span>\n'
+               f"    <span>{description}</span>",
+    )
 
 
 def render_index(entries: list[dict]) -> str:
@@ -746,39 +861,29 @@ def render_index(entries: list[dict]) -> str:
         body = "  <p>Разборов пока нет.</p>"
 
     count = f"{len(entries)} {_reports_word(len(entries))}"
-    return f"""<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta property="og:title" content="Разборы howborisusesclaudecode.com">
-<meta property="og:description" content="Архив разборов: {count}.">
-<meta name="theme-color" content="#f8fafc">
-<title>Разборы howborisusesclaudecode.com</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<style>
-{CSS_PATH.read_text(encoding="utf-8")}</style>
-</head>
-<body>
-<div class="container">
 
-  <div class="eyebrow"><span>архив</span></div>
-  <h1>Разборы howborisusesclaudecode.com</h1>
-  <p class="subtitle">Что появилось на сайте, что это значит и стоит ли оно времени.</p>
+    # Ссылка на расхождения стоит над списком, а не в футере: это самое
+    # редкое, что система умеет, и ради него архив открывают чаще, чем
+    # ради конкретной даты. Расхождений нет — нет и ссылки: пустая
+    # страница по обещанию хуже отсутствия обещания.
+    claims = sum(len(item.get("unconfirmed") or ()) for item in entries)
+    if claims:
+        body = (
+            f'  <div class="nav-toc"><a href="{DIVERGENCES_NAME}">'
+            f"сайт против документации · {claims} {_claims_word(claims)}</a></div>\n"
+            f"{body}"
+        )
 
-{body}
-
-  <footer>
-    <span>наблюдатель за howborisusesclaudecode.com</span>
-    <span>{count}</span>
-  </footer>
-
-</div>
-<script type="application/json" id="reports">{_json_for_html(entries)}</script>
-</body>
-</html>"""
+    return _shell(
+        eyebrow="архив",
+        title="Разборы howborisusesclaudecode.com",
+        subtitle="Что появилось на сайте, что это значит и стоит ли оно времени.",
+        description=f"Архив разборов: {count}.",
+        body=body,
+        footer="    <span>наблюдатель за howborisusesclaudecode.com</span>\n"
+               f"    <span>{count}</span>",
+        tail=f'\n<script type="application/json" id="reports">{_json_for_html(entries)}</script>',
+    )
 
 
 def update_index(
@@ -808,6 +913,22 @@ def update_index(
             token=token,
             message=f"index: {len(entries)} reports",
         )
+        # Страница расхождений — производная от того же списка, поэтому
+        # разойтись с архивом не может. Её отказ архив не отменяет: индекс
+        # уже записан, а разборы лежат на своих адресах.
+        try:
+            _, claims_sha = _read(client, repo, DIVERGENCES_NAME, token)
+            _write(
+                client,
+                repo,
+                DIVERGENCES_NAME,
+                render_divergences(entries),
+                sha=claims_sha,
+                token=token,
+                message="divergences: site vs docs",
+            )
+        except PublishFailed as exc:
+            log.warning("страница расхождений не обновлена: %s", exc)
     log.info("индекс архива обновлён: записей %d", len(entries))
 
 
