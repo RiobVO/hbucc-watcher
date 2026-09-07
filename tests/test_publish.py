@@ -701,6 +701,24 @@ def test_empty_archive_has_no_metrics():
     assert "chart-card" not in page
 
 
+def test_unhashable_machine_fields_do_not_crash_the_index():
+    """Находка Codex: `"verdict": []` в рукописной записи ронял рендер.
+
+    `[] not in dict` — это TypeError, а не False: membership по словарю
+    хеширует ключ. Кривая запись обязана остаться в общем счёте и не
+    попасть в распределения — как и любая другая нечитаемая.
+    """
+    broken = entry("a.html")
+    broken["verdict"] = []
+    broken["windows"] = {}
+    broken["summary"] = "руками переписали"
+    full = render_index([broken])
+    page = body_of(full)
+    assert "1 разбор" in page
+    assert "chart-card" not in page
+    assert balance(full).stack == []
+
+
 # --------------------------------------------- находки независимого ревью
 
 

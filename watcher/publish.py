@@ -873,8 +873,14 @@ def _entry_keys(item: dict) -> tuple[str | None, str | None]:
     Не разобралось ни из поля, ни из summary — индекс переписали руками;
     запись остаётся в общем счёте, но в распределения не попадает.
     """
+    # Только строки: `[] not in dict` — это TypeError, а не False, и
+    # рукописная запись с «"verdict": []» роняла бы весь рендер индекса.
     verdict = item.get("verdict")
     windows = item.get("windows")
+    if not isinstance(verdict, str):
+        verdict = None
+    if not isinstance(windows, str):
+        windows = None
     if verdict not in _VERDICT_SHORT or windows not in _WINDOWS_SHORT:
         found = _SUMMARY_KEYS.match(str(item.get("summary", "")))
         if found:
