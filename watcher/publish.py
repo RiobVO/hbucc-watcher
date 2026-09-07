@@ -36,6 +36,7 @@ import json
 import logging
 import re
 import time
+from collections import Counter
 from datetime import datetime
 from typing import Iterable
 from urllib.parse import urlparse
@@ -335,6 +336,10 @@ def index_entry(analysis: Analysis, event: Event, name: str, when: datetime) -> 
         # страница расхождений, и держать её данные отдельно от архива
         # означало бы завести второй файл, обязанный совпадать с первым.
         "unconfirmed": list(analysis.unconfirmed),
+        # Машинные ключи, а не русские ярлыки: из них считаются метрики
+        # архива, а ярлык — презентация, которая имеет право поменяться.
+        "verdict": analysis.verdict.worth_it,
+        "windows": analysis.windows.status,
     }
 
 
@@ -843,6 +848,109 @@ def render_divergences(entries: list[dict]) -> str:
     )
 
 
+# Обратные словари ярлыков: записи, сделанные до появления машинных полей,
+# несут вердикт и Windows-статус только в строке summary. Строку собирал
+# этот же код из этих же словарей, поэтому чтение назад однозначно.
+_VERDICT_FROM_SHORT = {label: key for key, label in _VERDICT_SHORT.items()}
+_WINDOWS_FROM_SHORT = {label: key for key, label in _WINDOWS_SHORT.items()}
+_SUMMARY_KEYS = re.compile(r"Стоит ли: (.+?) · Windows: (.+?)(?: · |$)")
+
+# Порядок полосок — по решению, а не по величине: сверху то, что читателю
+# приятнее увидеть. Тона — те же, что в тайлах страницы разбора: «нет»
+# гасится, а не краснеет, красное — только «у тебя не заработает».
+_VERDICT_ORDER = (("yes", "good"), ("maybe", "warn"), ("no", "muted"))
+_WINDOWS_ORDER = (
+    ("works", "good"),
+    ("needs_adaptation", "warn"),
+    ("unconfirmed", "warn"),
+    ("macos_only", "bad"),
+)
+
+
+def _entry_keys(item: dict) -> tuple[str | None, str | None]:
+    """Вердикт и Windows-статус записи, старой или новой.
+
+    Не разобралось ни из поля, ни из summary — индекс переписали руками;
+    запись остаётся в общем счёте, но в распределения не попадает.
+    """
+    verdict = item.get("verdict")
+    windows = item.get("windows")
+    if verdict not in _VERDICT_SHORT or windows not in _WINDOWS_SHORT:
+        found = _SUMMARY_KEYS.match(str(item.get("summary", "")))
+        if found:
+            if verdict not in _VERDICT_SHORT:
+                verdict = _VERDICT_FROM_SHORT.get(found.group(1))
+            if windows not in _WINDOWS_SHORT:
+                windows = _WINDOWS_FROM_SHORT.get(found.group(2))
+    return (
+        verdict if verdict in _VERDICT_SHORT else None,
+        windows if windows in _WINDOWS_SHORT else None,
+    )
+
+
+def _chart(title: str, counts: Counter, order: tuple, labels: dict) -> str:
+    """Одна карточка с полосками. Пустая категория не рисуется:
+    полоса нулевой ширины выглядит поломкой, а не фактом."""
+    if not counts:
+        return ""
+    peak = max(counts.values())
+    rows = "\n".join(
+        f'    <div class="bar-row"><span class="bar-label">{html.escape(labels[key])}</span>'
+        f'<span class="bar-track"><span class="bar-fill {tone}" '
+        f'style="width:{round(counts[key] / peak * 100)}%"></span></span>'
+        f'<span class="bar-value">{counts[key]}</span></div>'
+        for key, tone in order
+        if counts.get(key)
+    )
+    return (
+        '  <div class="chart-card">\n'
+        f'    <div class="chart-title">{html.escape(title)}</div>\n'
+        f"{rows}\n"
+        "  </div>"
+    )
+
+
+def _metrics(entries: list[dict], claims: int) -> str:
+    """Ряд метрик и распределения: что архив говорит в сумме.
+
+    Плоский список отвечает «что появлялось», метрики — «стоит ли сайту
+    верить и работает ли это у читателя». Данные лежат в самих записях,
+    второго источника нет — расходиться нечему.
+    """
+    verdicts: Counter = Counter()
+    windows: Counter = Counter()
+    for item in entries:
+        verdict, win = _entry_keys(item)
+        if verdict:
+            verdicts[verdict] += 1
+        if win:
+            windows[win] += 1
+
+    worth = verdicts.get("yes", 0)
+    works = windows.get("works", 0)
+    tiles = (
+        (str(len(entries)), "разборов", ""),
+        (str(worth), "стоит времени", "good" if worth else ""),
+        (str(works), "работает на Windows", "good" if works else ""),
+        (str(claims), "расхождений с докой", "bad" if claims else ""),
+    )
+    rendered = "\n".join(
+        f'    <div><div class="stat-value{" " + tone if tone else ""}">{value}</div>'
+        f'<div class="stat-label">{label}</div></div>'
+        for value, label, tone in tiles
+    )
+    out = [f'  <div class="stats-row">\n{rendered}\n  </div>']
+
+    charts = [
+        _chart("стоит ли времени", verdicts, _VERDICT_ORDER, _VERDICT_SHORT),
+        _chart("на Windows", windows, _WINDOWS_ORDER, _WINDOWS_SHORT),
+    ]
+    charts = [chart for chart in charts if chart]
+    if charts:
+        out.append('  <div class="charts-row">\n' + "\n".join(charts) + "\n  </div>")
+    return "\n".join(out)
+
+
 def render_index(entries: list[dict]) -> str:
     """Собрать индексную страницу архива."""
     if entries:
@@ -873,6 +981,8 @@ def render_index(entries: list[dict]) -> str:
             f"сайт против документации · {claims} {_claims_word(claims)}</a></div>\n"
             f"{body}"
         )
+    if entries:
+        body = f"{_metrics(entries, claims)}\n{body}"
 
     return _shell(
         eyebrow="архив",

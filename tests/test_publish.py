@@ -515,8 +515,9 @@ def test_unreachable_host_is_not_a_ready_page():
 
 
 def entry(name: str, title: str = "Разбор", part: int = 22, date: str = "2026-07-30",
-          unconfirmed: list[str] | None = None) -> dict:
-    return {
+          unconfirmed: list[str] | None = None, verdict: str | None = None,
+          windows: str | None = None) -> dict:
+    row = {
         "name": name,
         "title": title,
         "summary": "Стоит ли: нет · Windows: работает",
@@ -527,6 +528,13 @@ def entry(name: str, title: str = "Разбор", part: int = 22, date: str = "2
         if unconfirmed is None
         else unconfirmed,
     }
+    # Без аргументов — запись старого образца, до машинных полей: таких в
+    # живом архиве большинство, и рендер обязан переваривать их всегда.
+    if verdict is not None:
+        row["verdict"] = verdict
+    if windows is not None:
+        row["windows"] = windows
+    return row
 
 
 def test_index_lists_every_report():
@@ -624,6 +632,73 @@ def test_the_archive_counts_in_russian():
     for number, expected in counts.items():
         page = render_index([entry(f"{i}.html") for i in range(number)])
         assert expected in page, f"{number} -> ожидалось «{expected}»"
+
+
+# ---------------------------------------------------------- метрики архива
+
+
+def test_index_entry_carries_verdict_and_windows(event):
+    """Машинные ключи, а не русские ярлыки: ярлык — презентация, ключ — данные."""
+    row = index_entry(make_analysis(), event, "a.html", WHEN)
+    assert row["verdict"] == "maybe"
+    assert row["windows"] == "works"
+
+
+def test_index_shows_the_stats_row():
+    page = body_of(render_index([
+        entry("a.html", verdict="yes", windows="works"),
+        entry("b.html", verdict="no", windows="macos_only", unconfirmed=[]),
+        entry("c.html", verdict="maybe", windows="works", unconfirmed=[]),
+    ]))
+    assert '<div class="stat-value">3</div><div class="stat-label">разборов</div>' in page
+    assert '<div class="stat-value good">1</div><div class="stat-label">стоит времени</div>' in page
+    assert '<div class="stat-value good">2</div><div class="stat-label">работает на Windows</div>' in page
+    assert '<div class="stat-value bad">1</div><div class="stat-label">расхождений с докой</div>' in page
+
+
+def test_index_bars_split_verdict_and_windows():
+    page = body_of(render_index([
+        entry("a.html", verdict="yes", windows="works"),
+        entry("b.html", verdict="yes", windows="needs_adaptation"),
+        entry("c.html", verdict="no", windows="works"),
+    ]))
+    # Самая частая категория и есть 100%, остальные — доля от неё.
+    assert '<span class="bar-label">да</span>' in page
+    assert 'class="bar-fill good" style="width:100%"' in page
+    assert '<span class="bar-label">нет</span>' in page
+    assert 'class="bar-fill muted" style="width:50%"' in page
+    assert '<span class="bar-label">с оговоркой</span>' in page
+    # Пустая категория не рисуется: полоса нулевой ширины выглядит поломкой.
+    assert "смотря по чему" not in page
+    assert "только macOS" not in page
+
+
+def test_old_entries_feed_the_metrics_through_their_summary():
+    """Записи, сделанные до машинных полей, несут вердикт только в summary.
+
+    Строка сгенерирована этим же кодом, поэтому обратное отображение
+    однозначно — и пять живых записей архива не выпадают из метрик.
+    """
+    page = body_of(render_index([entry("a.html")]))
+    assert '<span class="bar-label">нет</span>' in page
+    assert '<div class="stat-value good">1</div><div class="stat-label">работает на Windows</div>' in page
+
+
+def test_unreadable_entry_counts_in_total_but_not_in_bars():
+    """Переписанный руками индекс не должен ронять страницу целиком."""
+    broken = entry("a.html")
+    broken["summary"] = "руками переписали"
+    full = render_index([broken])
+    page = body_of(full)
+    assert "1 разбор" in page
+    assert "chart-card" not in page, "распределение не из чего собрать"
+    assert balance(full).stack == []
+
+
+def test_empty_archive_has_no_metrics():
+    page = body_of(render_index([]))
+    assert "stats-row" not in page
+    assert "chart-card" not in page
 
 
 # --------------------------------------------- находки независимого ревью

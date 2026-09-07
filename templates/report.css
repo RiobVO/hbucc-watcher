@@ -197,6 +197,30 @@ ul.plain li:last-child { margin-bottom: 0; }
 .report-title { font-weight: 600; color: #0f172a; margin-bottom: 4px; }
 .report-summary { font-size: 13px; color: #475569; }
 
+/* Метрики архива: распределения вердиктов и Windows-статусов полосками.
+ * Цвет полосы — тон решения, тот же, что у .stat-value; полоса никогда не
+ * остаётся единственным носителем: рядом всегда подпись и число. */
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.chart-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; }
+.chart-title {
+  font-size: 11px; font-weight: 600; letter-spacing: .05em;
+  text-transform: uppercase; color: #64748b; margin-bottom: 10px;
+}
+.bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.bar-row:last-child { margin-bottom: 0; }
+.bar-label { width: 96px; flex: none; font-size: 12px; color: #475569; }
+.bar-track { flex: 1; height: 6px; background: #f1f5f9; border-radius: 3px; overflow: hidden; }
+.bar-fill { display: block; height: 100%; border-radius: 3px; }
+.bar-fill.good { background: #16a34a; }
+.bar-fill.warn { background: #d97706; }
+.bar-fill.bad { background: #9b2226; }
+.bar-fill.muted { background: #94a3b8; }
+.bar-value {
+  width: 24px; flex: none; font-size: 12px; font-weight: 500;
+  color: #64748b; text-align: right; font-variant-numeric: tabular-nums;
+}
+@media (max-width: 640px) { .charts-row { grid-template-columns: 1fr; } }
+
 /* --- страница расхождений --- */
 
 /* Карточка здесь не ссылка целиком, как в архиве: внутри список
