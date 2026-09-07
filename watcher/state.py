@@ -171,6 +171,11 @@ class Ledger:
     """Журнал доставленных событий — единственная гарантия против дублей."""
 
     delivered: list[dict[str, Any]] = field(default_factory=list)
+    # Курсор чтения реакций из getUpdates. Живёт в журнале, а не отдельным
+    # файлом: реакция — атрибут доставки, и сдвиг курсора фиксируется тем
+    # же пушем, что и сами реакции. Не запушилось — следующий прогон
+    # перечитает те же обновления и придёт к тому же журналу.
+    reactions_offset: int | None = None
 
     @property
     def ids(self) -> set[str]:
@@ -178,25 +183,54 @@ class Ledger:
 
     def add(
         self, event_id: str, kind: str, part: int, bid: str, messages: int,
-        note: str = "",
+        note: str = "", message_ids: list[int] | None = None,
     ) -> None:
         """Записать событие как отработанное.
 
         `note` заполняется, когда сообщений ноль: событие закрыто, но
         читателю ничего не ушло. Так в `git diff state/delivered.json`
         видно не только что система промолчала, но и почему.
+
+        `message_ids` — id сообщений Telegram: по ним следующий прогон
+        привязывает реакции читателя. У молчаливой записи их нет.
         """
-        self.delivered.append(
-            {
-                "event_id": event_id,
-                "kind": kind,
-                "part": part,
-                "bid": bid,
-                "sent_at": utcnow(),
-                "messages": messages,
-                "note": note,
-            }
-        )
+        entry = {
+            "event_id": event_id,
+            "kind": kind,
+            "part": part,
+            "bid": bid,
+            "sent_at": utcnow(),
+            "messages": messages,
+            "note": note,
+        }
+        if message_ids:
+            entry["message_ids"] = list(message_ids)
+        self.delivered.append(entry)
+
+    def attach_reactions(self, message_id: int, emojis: list[str]) -> bool:
+        """Приписать реакции записи, которой принадлежит сообщение.
+
+        Возвращает, изменился ли журнал: по этому признаку прогон решает,
+        коммитить ли его. Пустой список — реакцию сняли, и запись об этом
+        стирается: журнал хранит текущее состояние, историю хранит git.
+        """
+        for entry in reversed(self.delivered):
+            if message_id not in (entry.get("message_ids") or ()):
+                continue
+            reactions = entry.get("reactions") or {}
+            key = str(message_id)
+            if emojis:
+                changed = reactions.get(key) != emojis
+                reactions[key] = list(emojis)
+            else:
+                changed = key in reactions
+                reactions.pop(key, None)
+            if reactions:
+                entry["reactions"] = reactions
+            else:
+                entry.pop("reactions", None)
+            return changed
+        return False
 
     def trim(self, keep: int) -> None:
         """Обрезать журнал, считая записи двух сортов по отдельности.
@@ -217,11 +251,18 @@ class Ledger:
         self.delivered = [e for i, e in enumerate(self.delivered) if i in survivors]
 
     def to_dict(self) -> dict:
-        return {"schema_version": SCHEMA_VERSION, "delivered": self.delivered}
+        data = {"schema_version": SCHEMA_VERSION, "delivered": self.delivered}
+        if self.reactions_offset is not None:
+            data["reactions_offset"] = self.reactions_offset
+        return data
 
     @classmethod
     def from_dict(cls, data: dict) -> "Ledger":
-        return cls(delivered=list(data.get("delivered", [])))
+        offset = data.get("reactions_offset")
+        return cls(
+            delivered=list(data.get("delivered", [])),
+            reactions_offset=offset if isinstance(offset, int) else None,
+        )
 
 
 @dataclass

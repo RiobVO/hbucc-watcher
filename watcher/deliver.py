@@ -445,8 +445,12 @@ def send_message(
     retries: int = 3,
     preview: bool = False,
     transport: httpx.BaseTransport | None = None,
-) -> None:
+) -> int | None:
     """Отправить одно сообщение. Бросает DeliveryFailed.
+
+    Возвращает message_id доставленного сообщения: журнал хранит id,
+    чтобы реакцию читателя было к чему привязать. Ответ без id — не
+    отказ: доставка состоялась, вернётся None.
 
     Превью выключено по умолчанию и включается только для карточки.
     В полном тексте ссылки ведут на x.com, и превью рисовало карточку
@@ -468,7 +472,11 @@ def send_message(
             with httpx.Client(timeout=httpx.Timeout(30.0), transport=transport) as client:
                 response = client.post(url, json=payload)
             if response.status_code == 200:
-                return
+                try:
+                    message_id = response.json().get("result", {}).get("message_id")
+                except ValueError:
+                    return None
+                return message_id if isinstance(message_id, int) else None
             last_error = f"HTTP {response.status_code}: {response.text[:300]}"
             if response.status_code == 429:
                 # Telegram сам говорит, сколько ждать.
@@ -491,8 +499,13 @@ def send_message(
 def deliver(
     text: str, *, bot_token: str, chat_id: str, chunk_chars: int,
     parse_mode: str = "HTML", preview: bool = False,
-) -> int:
-    """Отправить разбор целиком, разбив на части. Возвращает число сообщений.
+) -> tuple[int, list[int]]:
+    """Отправить разбор целиком, разбив на части.
+
+    Возвращает число отправленных сообщений и их id. Число — отдельно:
+    «доставлено» в журнале не имеет права зависеть от того, вернул ли
+    Telegram id, а id нужны, чтобы реакцию читателя было к чему привязать.
+    Сообщение без id из второго списка просто выпадает.
 
     Критерий «разбор длиннее лимита Telegram доходит целиком» выполняется
     здесь. Части отправляются последовательно с паузой: Telegram
@@ -500,15 +513,18 @@ def deliver(
     прийти раньше первой.
     """
     parts = chunk(text, chunk_chars)
+    message_ids: list[int] = []
     for i, part in enumerate(parts):
         if i:
             time.sleep(0.5)
-        send_message(
+        message_id = send_message(
             part, bot_token=bot_token, chat_id=chat_id, parse_mode=parse_mode,
             preview=preview,
         )
+        if message_id is not None:
+            message_ids.append(message_id)
     log.info("доставлено сообщений: %d", len(parts))
-    return len(parts)
+    return len(parts), message_ids
 
 
 def send_alert(lines: Iterable[str], *, bot_token: str, chat_id: str) -> None:

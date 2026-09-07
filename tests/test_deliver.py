@@ -587,6 +587,24 @@ def capture(payloads: list[dict]) -> httpx.MockTransport:
     return httpx.MockTransport(handler)
 
 
+def test_send_message_returns_the_message_id():
+    """Id нужен журналу: без него реакцию читателя не к чему привязать."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"ok": True, "result": {"message_id": 42}})
+
+    assert (
+        send_message("текст", bot_token="t", chat_id="1", transport=httpx.MockTransport(handler))
+        == 42
+    )
+
+
+def test_send_message_survives_a_reply_without_an_id():
+    """Ответ без result — доставка состоялась, id просто нет."""
+    payloads: list[dict] = []
+    assert send_message("текст", bot_token="t", chat_id="1", transport=capture(payloads)) is None
+
+
 def test_card_asks_telegram_for_a_preview():
     """У страницы разбора есть og-разметка ровно под превью.
 

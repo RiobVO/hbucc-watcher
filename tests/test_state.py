@@ -227,3 +227,70 @@ def test_raw_html_roundtrip_is_compressed(store):
 
 def test_missing_raw_html_returns_none(store):
     assert store.load_raw_html() is None
+
+
+# --------------------------------------------------------------------------
+# Реакции читателя в журнале
+# --------------------------------------------------------------------------
+
+
+def test_ledger_records_message_ids():
+    """Без id сообщений реакцию не к чему привязать."""
+    ledger = Ledger()
+    ledger.add("id1", "block_added", 22, "b-1", 2, message_ids=[10, 11])
+    assert ledger.delivered[0]["message_ids"] == [10, 11]
+
+
+def test_silent_entry_carries_no_message_ids():
+    ledger = Ledger()
+    ledger.add("id1", "block_edited", 22, "b-1", 0, note="мелкая правка")
+    assert "message_ids" not in ledger.delivered[0]
+
+
+def test_reactions_attach_to_the_entry_that_owns_the_message():
+    ledger = Ledger()
+    ledger.add("id1", "block_added", 22, "b-1", 1, message_ids=[10])
+    ledger.add("id2", "block_added", 22, "b-2", 1, message_ids=[20])
+    assert ledger.attach_reactions(20, ["👍"])
+    assert ledger.delivered[1]["reactions"] == {"20": ["👍"]}
+    assert "reactions" not in ledger.delivered[0]
+
+
+def test_removed_reaction_clears_the_journal():
+    ledger = Ledger()
+    ledger.add("id1", "block_added", 22, "b-1", 1, message_ids=[10])
+    ledger.attach_reactions(10, ["👍"])
+    assert ledger.attach_reactions(10, [])
+    assert "reactions" not in ledger.delivered[0]
+    assert not ledger.attach_reactions(10, []), "повтор снятия — не изменение"
+
+
+def test_same_reaction_twice_is_not_a_change():
+    ledger = Ledger()
+    ledger.add("id1", "block_added", 22, "b-1", 1, message_ids=[10])
+    assert ledger.attach_reactions(10, ["👍"])
+    assert not ledger.attach_reactions(10, ["👍"])
+
+
+def test_reaction_to_an_unknown_message_changes_nothing():
+    ledger = Ledger()
+    ledger.add("id1", "block_added", 22, "b-1", 1, message_ids=[10])
+    assert not ledger.attach_reactions(99, ["👍"])
+    assert "reactions" not in ledger.delivered[0]
+
+
+def test_entries_written_before_message_ids_do_not_break_attach():
+    """В живом журнале лежат записи без этого поля."""
+    ledger = Ledger(delivered=[{"event_id": "old", "messages": 1}])
+    assert not ledger.attach_reactions(10, ["👍"])
+
+
+def test_reactions_offset_survives_the_roundtrip(store):
+    ledger = Ledger()
+    ledger.reactions_offset = 123456
+    store.save_ledger(ledger)
+    assert store.load_ledger().reactions_offset == 123456
+
+
+def test_missing_offset_reads_as_none():
+    assert Ledger.from_dict({"delivered": []}).reactions_offset is None

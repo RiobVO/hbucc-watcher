@@ -50,6 +50,7 @@ from watcher.detect import (
     flag_injections,
     split_minor_edits,
 )
+from watcher.feedback import FeedbackFailed, fetch_reactions
 from watcher.original import author_handle, fetch_author
 from watcher.quality import check as check_analysis
 from watcher.publish import (
@@ -274,6 +275,11 @@ class Runner:
             )
             return self.finish(ok=False)
 
+        # Реакции читателя — до каскада: обычный прогон выходит на 304 или
+        # совпавшем хеше, а реакции на прошлые карточки приходят именно
+        # между такими прогонами и живут в очереди Telegram 24 часа.
+        self._collect_reactions()
+
         # --- уровень 1 каскада: условный GET ---
         try:
             result = fetch(
@@ -437,6 +443,40 @@ class Runner:
 
     # ------------------------------------------------------------ внутреннее
 
+    def _collect_reactions(self) -> None:
+        """Прочитать реакции читателя и дописать их в журнал доставок.
+
+        Вспомогательный контур: его отказ не делает прогон грязным и не
+        гасит пинг — инварианты доставки он не трогает. Сдвиг offset
+        фиксируется только пушем журнала: не запушилось — следующий
+        прогон перечитает те же обновления и придёт к тому же журналу.
+        """
+        ledger = self.store.load_ledger()
+        try:
+            states, offset = fetch_reactions(
+                bot_token=self.secrets.telegram_bot_token,
+                chat_id=self.secrets.telegram_chat_id,
+                offset=ledger.reactions_offset,
+            )
+        except FeedbackFailed as exc:
+            log.warning("реакции не прочитаны: %s", exc)
+            return
+
+        changed = False
+        for message_id, emojis in states.items():
+            changed = ledger.attach_reactions(message_id, emojis) or changed
+        if not changed and offset == ledger.reactions_offset:
+            return
+
+        ledger.reactions_offset = offset
+        self.store.save_ledger(ledger)
+        try:
+            self.store.commit_and_push(
+                [self.store.ledger_path], "chore(state): reader reactions"
+            )
+        except GitError as exc:
+            log.warning("реакции не сохранены в git, перечитаются следующим прогоном: %s", exc)
+
     def _record_minor(self, events, ledger) -> None:
         """Закрыть мелкие правки журналом, не будя модель.
 
@@ -537,7 +577,7 @@ class Runner:
                 )
 
             try:
-                messages = deliver(
+                messages, message_ids = deliver(
                     text,
                     bot_token=self.secrets.telegram_bot_token,
                     chat_id=self.secrets.telegram_chat_id,
@@ -561,6 +601,7 @@ class Runner:
             ledger.add(
                 event.event_id, event.kind, event.part_number, event.bid, messages,
                 note=("автопроверка: " + "; ".join(notes)) if notes else "",
+                message_ids=message_ids,
             )
             ledger.trim(keep)
             self.store.save_ledger(ledger)
