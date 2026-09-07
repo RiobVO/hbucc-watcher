@@ -92,6 +92,30 @@ _SLOP = tuple(
 
 _NOT_CONFIRMED = "не удалось подтвердить"
 
+# «Все текстовые поля — по-русски» — prompts/system.md. Проверяется только
+# ЗАГОЛОВОК, и это решение калибровки, а не лени.
+#
+# Первая версия смотрела все поля и утонула: под «английские слова» попали
+# имена (Boris Cherny), хендлы, идентификаторы вроде bypassPermissions и
+# названия частей сайта, которые по-английски и есть. На разборах terra
+# выходило по шесть замечаний, а пример из самого промта переставал
+# проходить проверку — то есть сигнал умирал ровно так, как описано выше.
+#
+# Заголовок — другое дело. Он короткий, он один уезжает в Telegram и в
+# архив, у него в промте отдельное правило, и имени собственному там взяться
+# почти неоткуда.
+_CODE_SPAN_ANY = re.compile(r"`[^`]*`")
+_LATIN_WORD = re.compile(r"[A-Za-z][A-Za-z-]{2,}")
+_PRODUCT_NAMES = {
+    "claude", "code", "anthropic", "windows", "macos", "linux", "powershell",
+    "bash", "mcp", "git", "github", "python", "json", "cli", "api", "url",
+    "raycast", "vim", "emacs", "opus", "sonnet", "haiku", "auto", "mode",
+    "pull", "request", "part", "http", "https", "markdown",
+}
+# Три слова на поле: одно-два непереведённых термина в живой речи бывают
+# («режим auto mode»), а три подряд — уже жаргон вместо объяснения.
+_LATIN_LIMIT = 3
+
 
 def check(analysis: Analysis, *, allowed_domains: Iterable[str]) -> list[str]:
     """Замечания к разбору. Пустой список — разбор написан по промту."""
@@ -100,6 +124,16 @@ def check(analysis: Analysis, *, allowed_domains: Iterable[str]) -> list[str]:
     fields.update(analysis.layers.model_dump())
     fields["verdict.why"] = analysis.verdict.why
     fields["windows.detail"] = analysis.windows.detail
+    # Пункты списков — тот же текст, что и проза, и правило для них то же.
+    # Проверка их не смотрела, пока замер luna не показал три ловушки из
+    # трёх со вставками внутри: цитату страховка снимет, а голый адрес
+    # доедет до страницы незамеченным.
+    # anomalies сюда не входят намеренно: это дословные цитаты чужого
+    # текста, и промт требует приводить их как есть. Ссылка внутри такой
+    # цитаты — выполненное требование, а не нарушение.
+    for name in ("pitfalls", "related", "unconfirmed"):
+        for index, item in enumerate(getattr(analysis, name)):
+            fields[f"{name}[{index}]"] = item
 
     for name, raw in fields.items():
         # Смотрим текст ПОСЛЕ страховки. Модель врезает markdown-цитаты
@@ -115,6 +149,15 @@ def check(analysis: Analysis, *, allowed_domains: Iterable[str]) -> list[str]:
         for label, pattern in _SLOP:
             if pattern.search(text):
                 notes.append(f"слоп «{label}» в поле {name}")
+
+
+    foreign = [
+        word
+        for word in _LATIN_WORD.findall(_CODE_SPAN_ANY.sub(" ", analysis.headline))
+        if word.lower() not in _PRODUCT_NAMES
+    ]
+    if len(foreign) >= _LATIN_LIMIT:
+        notes.append("заголовок не по-русски: " + ", ".join(sorted(set(foreign))))
 
     if len(analysis.headline) > _HEADLINE_LIMIT:
         notes.append(

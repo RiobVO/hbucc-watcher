@@ -30,9 +30,15 @@ from watcher.analyze import (
     split_links,
     strict_schema,
 )
-from watcher.config import PROMPTS_DIR
+from watcher.config import PROMPTS_DIR, Config
 from watcher.detect import BLOCK_ADDED, BLOCK_EDITED, PART_ADDED, Event
 from watcher.original import STATUS_OK, STATUS_REDIRECTED, Original
+from watcher.quality import check
+
+# Белый список берётся из config.toml, а не из литерала: примеры в промте
+# показывают адреса источников, и проверять их надо против того же списка,
+# по которому живёт система.
+ALLOWED_DOMAINS = Config.load().section("model")["allowed_domains"]
 
 ALLOWED = ["x.com", "docs.claude.com", "code.claude.com", "claude.com", "support.claude.com"]
 
@@ -325,6 +331,20 @@ def test_prompt_example_matches_the_schema(raw: str):
 def test_both_examples_are_found():
     """Регулярка выше молча вернула бы пустой список, и параметризация исчезла бы."""
     assert len(_prompt_examples()) == 2
+
+
+@pytest.mark.parametrize("raw", _prompt_examples())
+def test_prompt_example_passes_the_quality_check(raw: str):
+    """Образец в промте не имеет права нарушать автопроверку.
+
+    Проверки в quality.py стоят на прямых цитатах из этого же промта.
+    Пример, который их не проходит, учит модель ровно тому, за что её потом
+    отмечает журнал: слоп, ссылка в тексте, расхождение названо в прозе и
+    потеряно для unconfirmed. Живой прогон это ловит за деньги, здесь —
+    бесплатно.
+    """
+    notes = check(Analysis.model_validate_json(raw), allowed_domains=ALLOWED_DOMAINS)
+    assert notes == []
 
 
 # --------------------------------------------------------------------------

@@ -9,7 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Команды
 
 ```bash
-.venv/Scripts/python -m pytest tests/ -q            # сейчас 274 теста
+.venv/Scripts/python -m pytest tests/ -q            # сейчас 281 тест
 .venv/Scripts/python -m pytest tests/test_publish.py::test_page_name_is_the_same_for_the_same_event -q
 
 NO_GIT=1 VERBOSE=1 python -m watcher.main           # прогон без записи в git и без рассылки
