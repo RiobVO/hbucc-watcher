@@ -1,0 +1,534 @@
+{
+  "generated_at": "2026-07-31T18:52:50+00:00",
+  "model": "gpt-5.6-luna",
+  "advice_total": 127,
+  "usage": {
+    "input_tokens": 27663,
+    "output_tokens": 4597
+  },
+  "items": [
+    {
+      "part": 1,
+      "bid": "b-de5f404f",
+      "category": "claude_md",
+      "artifact": "CLAUDE.md",
+      "recommendation": "Хранить общую документацию и правила команды в CLAUDE.md, чтобы Claude не повторял ошибки.",
+      "quote": "Anytime we see Claude do something incorrectly we add it to the CLAUDE.md"
+    },
+    {
+      "part": 1,
+      "bid": "b-0fa6a918",
+      "category": "slash_commands",
+      "artifact": "/install-github-action",
+      "recommendation": "Установить Claude Code GitHub Action для автоматического обновления CLAUDE.md из code review.",
+      "quote": "They use the Claude Code GitHub Action ( /install-github-action ) for this"
+    },
+    {
+      "part": 1,
+      "bid": "b-7471ef45",
+      "category": "permission_modes",
+      "artifact": "Plan mode",
+      "recommendation": "Начинать сессии в Plan mode, затем переключаться в auto-accept mode для внесения изменений.",
+      "quote": "The workflow Plan mode → Refine plan → Auto-accept edits"
+    },
+    {
+      "part": 1,
+      "bid": "b-5ed65ad9",
+      "category": "slash_commands",
+      "artifact": ".claude/commands/",
+      "recommendation": "Создавать повторяемые slash-команды для часто используемых рабочих процессов и хранить их в git.",
+      "quote": "Commands are checked into git under .claude/commands/ and shared with the team"
+    },
+    {
+      "part": 1,
+      "bid": "b-5ed65ad9",
+      "category": "slash_commands",
+      "artifact": "/commit-push-pr",
+      "recommendation": "Создать slash-команду для коммита, отправки изменений и открытия PR.",
+      "quote": "/commit-push-pr Commit, push, and open a PR"
+    },
+    {
+      "part": 1,
+      "bid": "b-c9746421",
+      "category": "skills",
+      "artifact": ".claude/agents",
+      "recommendation": "Создавать агентов для часто повторяющихся рабочих процессов PR.",
+      "quote": "▼ .claude ▼ agents ↓ build-validator.md ↓ code-architect.md"
+    },
+    {
+      "part": 1,
+      "bid": "b-7f8e643a",
+      "category": "hooks",
+      "artifact": "PostToolUse",
+      "recommendation": "Настроить PostToolUse-хук для автоматического форматирования после Write или Edit.",
+      "quote": "The team uses a PostToolUse hook to auto-format Claude's code"
+    },
+    {
+      "part": 1,
+      "bid": "b-7f8e643a",
+      "category": "hooks",
+      "artifact": "bun run format || true",
+      "recommendation": "Запускать форматирование через команду bun run format после операций Write или Edit.",
+      "quote": "\"command\" : \"bun run format || true\""
+    },
+    {
+      "part": 1,
+      "bid": "b-74a21f6d",
+      "category": "permission_modes",
+      "artifact": "/permissions",
+      "recommendation": "Предварительно разрешить безопасные команды через /permissions вместо отключения проверок разрешений.",
+      "quote": "Instead of --dangerously-skip-permissions , Boris uses /permissions to pre-allow common safe commands"
+    },
+    {
+      "part": 1,
+      "bid": "b-74a21f6d",
+      "category": "settings_json",
+      "artifact": ".claude/settings.json",
+      "recommendation": "Хранить общие разрешения команды в .claude/settings.json.",
+      "quote": "Most are shared in .claude/settings.json"
+    },
+    {
+      "part": 1,
+      "bid": "b-c2102352",
+      "category": "mcp",
+      "artifact": ".mcp.json",
+      "recommendation": "Настроить Slack MCP-сервер через .mcp.json для поиска и публикации сообщений.",
+      "quote": "claude-cli-2 $ cat .mcp.json { \"mcpServers\" : { \"slack\""
+    },
+    {
+      "part": 1,
+      "bid": "b-79fbe188",
+      "category": "hooks",
+      "artifact": "Stop hook",
+      "recommendation": "Настроить Stop-хук для выполнения детерминированных проверок после завершения работы.",
+      "quote": "Use an agent Stop hook for deterministic checks"
+    },
+    {
+      "part": 1,
+      "bid": "b-79fbe188",
+      "category": "permission_modes",
+      "artifact": "--permission-mode=dontAsk",
+      "recommendation": "Использовать режим dontAsk в песочнице, чтобы Claude не блокировался запросами разрешений.",
+      "quote": "For sandboxed environments, he'll use --permission-mode=dontAsk"
+    },
+    {
+      "part": 2,
+      "bid": "b-51304160",
+      "category": "other",
+      "artifact": "za, zb, zc",
+      "recommendation": "Настроить shell-алиасы для быстрого переключения между именованными worktree.",
+      "quote": "Some people also name their worktrees and set up shell aliases (za, zb, zc)"
+    },
+    {
+      "part": 2,
+      "bid": "b-1ffcff36",
+      "category": "claude_md",
+      "artifact": "CLAUDE.md",
+      "recommendation": "После каждой коррекции обновлять CLAUDE.md, чтобы Claude не повторял ошибку.",
+      "quote": "After every correction, end with: \"Update your CLAUDE.md so you don't make that mistake again.\""
+    },
+    {
+      "part": 2,
+      "bid": "b-1ffcff36",
+      "category": "claude_md",
+      "artifact": "notes directory",
+      "recommendation": "Вести каталог заметок по каждой задаче или проекту и указывать его в CLAUDE.md.",
+      "quote": "One engineer tells Claude to maintain a notes directory for every task/project"
+    },
+    {
+      "part": 2,
+      "bid": "b-56e2d399",
+      "category": "skills",
+      "artifact": "skills",
+      "recommendation": "Создавать собственные skills и коммитить их в git для повторного использования.",
+      "quote": "Create your own skills and commit them to git"
+    },
+    {
+      "part": 2,
+      "bid": "b-56e2d399",
+      "category": "slash_commands",
+      "artifact": "/techdebt",
+      "recommendation": "Создать slash-команду /techdebt для поиска и устранения дублированного кода.",
+      "quote": "Build a /techdebt slash command and run it at the end of every session"
+    },
+    {
+      "part": 2,
+      "bid": "b-61ffec3e",
+      "category": "mcp",
+      "artifact": "Slack MCP",
+      "recommendation": "Включить Slack MCP, чтобы Claude мог искать контекст в потоках исправления ошибок.",
+      "quote": "Enable the Slack MCP , then paste a Slack bug thread into Claude"
+    },
+    {
+      "part": 2,
+      "bid": "b-838cc798",
+      "category": "slash_commands",
+      "artifact": "/statusline",
+      "recommendation": "Настроить status bar через /statusline для отображения использования контекста и текущей ветки git.",
+      "quote": "use /statusline to customize your status bar to always show context usage and current git branch"
+    },
+    {
+      "part": 2,
+      "bid": "b-648c9255",
+      "category": "hooks",
+      "artifact": "hook",
+      "recommendation": "Настроить хук для маршрутизации запросов разрешений к Opus 4.5.",
+      "quote": "Route permission requests to Opus 4.5 via a hook"
+    },
+    {
+      "part": 2,
+      "bid": "b-a064c0c3",
+      "category": "skills",
+      "artifact": "BigQuery skill",
+      "recommendation": "Добавить в кодовую базу BigQuery skill для аналитических запросов через Claude Code.",
+      "quote": "We have a BigQuery skill checked into the codebase"
+    },
+    {
+      "part": 2,
+      "bid": "b-a68b6670",
+      "category": "settings_json",
+      "artifact": "/config",
+      "recommendation": "Включить стиль вывода Explanatory или Learning через /config, чтобы Claude объяснял причины изменений.",
+      "quote": "Enable the \"Explanatory\" or \"Learning\" output style in /config"
+    },
+    {
+      "part": 2,
+      "bid": "b-a68b6670",
+      "category": "skills",
+      "artifact": "spaced-repetition learning skill",
+      "recommendation": "Создать skill для интервального обучения с сохранением результатов.",
+      "quote": "Build a spaced-repetition learning skill"
+    },
+    {
+      "part": 3,
+      "bid": "b-0b649dfa",
+      "category": "settings_json",
+      "artifact": "/config",
+      "recommendation": "Настроить тему интерфейса через /config.",
+      "quote": "Theme: Run /config to set light/dark mode"
+    },
+    {
+      "part": 3,
+      "bid": "b-0b649dfa",
+      "category": "hooks",
+      "artifact": "custom notifs hook",
+      "recommendation": "Настроить custom notifs hook для уведомлений о событиях Claude Code.",
+      "quote": "Notifications: Enable notifications for iTerm2, or use a custom notifs hook"
+    },
+    {
+      "part": 3,
+      "bid": "b-0b649dfa",
+      "category": "settings_json",
+      "artifact": "/terminal-setup",
+      "recommendation": "Запустить /terminal-setup для включения Shift+Enter в терминале.",
+      "quote": "run /terminal-setup to enable shift+enter for newlines"
+    },
+    {
+      "part": 3,
+      "bid": "b-0b649dfa",
+      "category": "settings_json",
+      "artifact": "/vim",
+      "recommendation": "Включить Vim mode через /vim.",
+      "quote": "Vim mode: Run /vim"
+    },
+    {
+      "part": 3,
+      "bid": "b-28985122",
+      "category": "settings_json",
+      "artifact": "/model",
+      "recommendation": "Выбрать предпочтительный уровень effort через /model.",
+      "quote": "Run /model to pick your preferred effort level"
+    },
+    {
+      "part": 3,
+      "bid": "b-217c634e",
+      "category": "settings_json",
+      "artifact": "settings.json",
+      "recommendation": "Закоммитить settings.json, чтобы автоматически добавлять командные plugin marketplaces.",
+      "quote": "check the settings.json into your codebase to auto-add the marketplaces for your team"
+    },
+    {
+      "part": 3,
+      "bid": "b-217c634e",
+      "category": "skills",
+      "artifact": "/plugin",
+      "recommendation": "Устанавливать плагины через /plugin из официального marketplace или собственного marketplace.",
+      "quote": "Run /plugin to browse and install plugins"
+    },
+    {
+      "part": 3,
+      "bid": "b-d72ae7d5",
+      "category": "skills",
+      "artifact": ".claude/agents",
+      "recommendation": "Создавать custom agents в виде .md-файлов внутри .claude/agents.",
+      "quote": "To create custom agents, drop .md files in .claude/agents"
+    },
+    {
+      "part": 3,
+      "bid": "b-d72ae7d5",
+      "category": "settings_json",
+      "artifact": "agent",
+      "recommendation": "Задать агента по умолчанию для основного диалога через поле agent в settings.json.",
+      "quote": "Just set the \"agent\" field in your settings.json"
+    },
+    {
+      "part": 3,
+      "bid": "b-3ed1e597",
+      "category": "permission_modes",
+      "artifact": "/permissions",
+      "recommendation": "Добавить команды в allow и block lists через /permissions.",
+      "quote": "To pre-approve more, run /permissions and add to the allow and block lists"
+    },
+    {
+      "part": 3,
+      "bid": "b-306ff628",
+      "category": "permission_modes",
+      "artifact": "/sandbox",
+      "recommendation": "Включить sandbox runtime через /sandbox для изоляции файлов и сети.",
+      "quote": "Run /sandbox to enable it"
+    },
+    {
+      "part": 3,
+      "bid": "b-aa850358",
+      "category": "slash_commands",
+      "artifact": "/statusline",
+      "recommendation": "Создать custom status line через /statusline с моделью, каталогом и оставшимся контекстом.",
+      "quote": "Use /statusline to get started, to have Claude generate a statusline"
+    },
+    {
+      "part": 3,
+      "bid": "b-92df0614",
+      "category": "settings_json",
+      "artifact": "~/.claude/keybindings.json",
+      "recommendation": "Хранить пользовательские переназначения клавиш в ~/.claude/keybindings.json.",
+      "quote": "Keybindings are stored in ~/.claude/keybindings.json"
+    },
+    {
+      "part": 3,
+      "bid": "b-92df0614",
+      "category": "slash_commands",
+      "artifact": "/keybindings",
+      "recommendation": "Переназначать клавиши Claude Code через /keybindings.",
+      "quote": "Run /keybindings to re-map any key"
+    },
+    {
+      "part": 3,
+      "bid": "b-422ee0e4",
+      "category": "settings_json",
+      "artifact": "spinner verbs",
+      "recommendation": "Настроить собственные spinner verbs в settings.json и поделиться ими с командой.",
+      "quote": "Check the settings.json into source control to share verbs with your team"
+    },
+    {
+      "part": 3,
+      "bid": "b-376fdad5",
+      "category": "settings_json",
+      "artifact": "/config",
+      "recommendation": "Выбрать output style через /config или создать собственный стиль.",
+      "quote": "Run /config and set an output style"
+    },
+    {
+      "part": 3,
+      "bid": "b-f8c93df8",
+      "category": "env",
+      "artifact": "env",
+      "recommendation": "Задавать переменные окружения через поле env в settings.json вместо wrapper scripts.",
+      "quote": "use the \"env\" field in your settings.json to avoid wrapper scripts"
+    },
+    {
+      "part": 4,
+      "bid": "b-df844fb5",
+      "category": "skills",
+      "artifact": "isolation: worktree",
+      "recommendation": "Добавить isolation: worktree во frontmatter агента для запуска в отдельном worktree.",
+      "quote": "just add isolation: worktree to your agent frontmatter"
+    },
+    {
+      "part": 4,
+      "bid": "b-4ea5310a",
+      "category": "hooks",
+      "artifact": "WorktreeCreate",
+      "recommendation": "Настроить WorktreeCreate hook для создания worktree в Mercurial, Perforce или SVN.",
+      "quote": "define worktree hooks to benefit from isolation without having to use Git"
+    },
+    {
+      "part": 4,
+      "bid": "b-4ea5310a",
+      "category": "hooks",
+      "artifact": "WorktreeRemove",
+      "recommendation": "Настроить WorktreeRemove hook для удаления или забывания не-Git workspace.",
+      "quote": "\"WorktreeRemove\" : [ { \"command\" : \"jj workspace forget"
+    },
+    {
+      "part": 7,
+      "bid": "b-3bef0a6c",
+      "category": "env",
+      "artifact": "Setup script",
+      "recommendation": "Добавить setup script для установки зависимостей, конфигурации и переменных окружения в cloud environment.",
+      "quote": "Add a setup script in Claude Code on the web and desktop"
+    },
+    {
+      "part": 9,
+      "bid": "b-bc64f6bc",
+      "category": "settings_json",
+      "artifact": "Enable Remote Control for all sessions",
+      "recommendation": "Включить Remote Control для всех сессий через /config.",
+      "quote": "I have 'Enable Remote Control for all sessions' set in my /config"
+    },
+    {
+      "part": 9,
+      "bid": "b-b8dcebd8",
+      "category": "hooks",
+      "artifact": "SessionStart",
+      "recommendation": "Настроить SessionStart hook для динамической загрузки контекста при запуске Claude.",
+      "quote": "Dynamically load in context each time you start Claude"
+    },
+    {
+      "part": 9,
+      "bid": "b-b8dcebd8",
+      "category": "hooks",
+      "artifact": "PreToolUse",
+      "recommendation": "Настроить PreToolUse hook для журналирования каждой Bash-команды модели.",
+      "quote": "Log every bash command the model runs ( PreToolUse )"
+    },
+    {
+      "part": 9,
+      "bid": "b-b8dcebd8",
+      "category": "hooks",
+      "artifact": "PermissionRequest",
+      "recommendation": "Настроить PermissionRequest hook для маршрутизации запросов разрешений в WhatsApp.",
+      "quote": "Route permission prompts to WhatsApp for you to approve/deny"
+    },
+    {
+      "part": 9,
+      "bid": "b-b8dcebd8",
+      "category": "hooks",
+      "artifact": "Stop",
+      "recommendation": "Настроить Stop hook, чтобы побуждать Claude продолжать работу при остановке.",
+      "quote": "Poke Claude to keep going whenever it stops ( Stop )"
+    },
+    {
+      "part": 9,
+      "bid": "b-3a84ae5b",
+      "category": "hooks",
+      "artifact": "WorktreeCreate",
+      "recommendation": "Использовать WorktreeCreate hook для собственной логики создания worktree в не-Git VCS.",
+      "quote": "For non-git VCS users, use the WorktreeCreate hook"
+    },
+    {
+      "part": 9,
+      "bid": "b-72d90bd3",
+      "category": "permission_modes",
+      "artifact": "--bare",
+      "recommendation": "Использовать флаг --bare для запуска SDK без загрузки локальных CLAUDE.md, settings и MCP.",
+      "quote": "For now, opt in with the flag to get up to 10x faster startup"
+    },
+    {
+      "part": 9,
+      "bid": "b-e89f5665",
+      "category": "settings_json",
+      "artifact": "additionalDirectories",
+      "recommendation": "Добавить additionalDirectories в team settings.json для постоянного доступа к дополнительным папкам.",
+      "quote": "Add \"additionalDirectories\" to your team's settings.json"
+    },
+    {
+      "part": 10,
+      "bid": "b-82f93eed",
+      "category": "env",
+      "artifact": "CLAUDE_CODE_AUTO_COMPACT_WINDOW",
+      "recommendation": "Задать CLAUDE_CODE_AUTO_COMPACT_WINDOW=400000 для более раннего сжатия контекста.",
+      "quote": "CLAUDE_CODE_AUTO_COMPACT_WINDOW=400000 claude"
+    },
+    {
+      "part": 11,
+      "bid": "b-767f2740",
+      "category": "skills",
+      "artifact": "/fewer-permission-prompts",
+      "recommendation": "Запустить skill /fewer-permission-prompts для поиска команд, которые стоит добавить в allowlist.",
+      "quote": "Recommends a list of commands to add to your permissions allowlist"
+    },
+    {
+      "part": 11,
+      "bid": "b-3a1fed9a",
+      "category": "settings_json",
+      "artifact": "/config",
+      "recommendation": "Отключить recaps через /config, если не нужны автоматические сводки.",
+      "quote": "disable recaps in /config"
+    },
+    {
+      "part": 12,
+      "bid": "b-b7bb97ff",
+      "category": "hooks",
+      "artifact": "UserPromptSubmit",
+      "recommendation": "Настроить UserPromptSubmit hook для автоматического переименования сессий.",
+      "quote": "set up a UserPromptSubmit hook to auto-rename"
+    },
+    {
+      "part": 14,
+      "bid": "b-beb0902d",
+      "category": "skills",
+      "artifact": "~/.claude/workflows",
+      "recommendation": "Сохранять переиспользуемые JavaScript workflows в ~/.claude/workflows.",
+      "quote": "Check the files into ~/.claude/workflows , or distribute them via a skill"
+    },
+    {
+      "part": 14,
+      "bid": "b-beb0902d",
+      "category": "skills",
+      "artifact": "SKILL.md",
+      "recommendation": "Распространять workflow через skill и ссылаться на workflow-файлы в SKILL.md.",
+      "quote": "Put your JavaScript workflow files in the skill folder and reference them in the SKILL.md"
+    },
+    {
+      "part": 16,
+      "bid": "b-e2ce4773",
+      "category": "skills",
+      "artifact": "fork: true",
+      "recommendation": "Добавить fork: true во frontmatter skill для запуска в отдельном контексте.",
+      "quote": "add 'fork:true' to a skill's frontmatter to have it run in its own context window"
+    },
+    {
+      "part": 19,
+      "bid": "b-befe3f1c",
+      "category": "skills",
+      "artifact": "verify-frontend-change",
+      "recommendation": "Создать skill verify-frontend-change для запуска сервера, проверки UI, console errors и performance trace.",
+      "quote": "Create a verify-frontend-change skill: never call a UI change done"
+    },
+    {
+      "part": 20,
+      "bid": "b-7a79722d",
+      "category": "slash_commands",
+      "artifact": "/checkup",
+      "recommendation": "Запустить /checkup для очистки неиспользуемых skills, MCP и plugins и настройки окружения.",
+      "quote": "Run /checkup and Claude Code inspects your setup for waste, staleness, and breakage"
+    },
+    {
+      "part": 20,
+      "bid": "b-7a79722d",
+      "category": "permission_modes",
+      "artifact": "auto mode",
+      "recommendation": "Включить auto mode по умолчанию, чтобы безопасная работа не прерывалась запросами разрешений.",
+      "quote": "Enable auto mode by default so it stops asking permission for safe work"
+    },
+    {
+      "part": 22,
+      "bid": "b-ba8e93b9",
+      "category": "slash_commands",
+      "artifact": "/doctor",
+      "recommendation": "Запустить /doctor для автоматического подбора размера skills и CLAUDE.md.",
+      "quote": "The new claude doctor command ( /doctor in Claude Code) rightsizes your skills and CLAUDE.md automatically"
+    }
+  ],
+  "unverified": [
+    {
+      "part": 3,
+      "bid": "b-ded83310",
+      "category": "hooks",
+      "artifact": "hooks",
+      "recommendation": "Настраивать hooks для маршрутизации разрешений, продолжения работы и обработки tool calls.",
+      "quote": "Use hooks to: Use cases Automatically route permission requests to Slack or Opus",
+      "reason": "цитата не сошлась"
+    }
+  ]
+}
