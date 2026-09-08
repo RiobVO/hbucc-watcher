@@ -92,6 +92,30 @@ def find_artifact(artifact: str, surface: dict[str, str]) -> str | None:
     return None
 
 
+def _is_link(path: Path) -> bool:
+    """Симлинк или junction. Находка ревью: белый список имён ничего не
+    стоит, если имя — ссылка на чужой файл (`settings.json ->
+    .credentials.json` читал бы секреты, а `hooks -> ~/.claude` заставил
+    бы перечисление прочитать всё подряд). Junction на Windows создаётся
+    без прав администратора, поэтому проверяются оба вида."""
+    return path.is_symlink() or path.is_junction()
+
+
+def _safe_read(path: Path) -> str | None:
+    """Содержимое файла, если его можно и допустимо читать.
+
+    Залоченный файл на Windows — быт, а не повод ронять сверку: он
+    пропускается со строкой в логе. Ссылки не читаются вовсе.
+    """
+    if _is_link(path) or not path.is_file():
+        return None
+    try:
+        return path.read_text(encoding="utf-8", errors="replace")
+    except OSError as exc:
+        log.warning("не читается, пропускаю: %s (%s)", path.name, exc)
+        return None
+
+
 def collect_surface(home: Path) -> dict[str, str]:
     """Поверхность конфигурации: путь → содержимое (или пусто для имён).
 
@@ -100,33 +124,59 @@ def collect_surface(home: Path) -> dict[str, str]:
     """
     surface: dict[str, str] = {}
     for name in _CONTENT_FILES:
-        path = home / name
-        if path.is_file():
-            surface[name] = path.read_text(encoding="utf-8", errors="replace")
+        content = _safe_read(home / name)
+        if content is not None:
+            surface[name] = content
     for dirname in _CONTENT_DIRS:
         folder = home / dirname
-        if folder.is_dir():
-            for path in sorted(folder.iterdir()):
-                if path.is_file():
-                    surface[f"{dirname}/{path.name}"] = path.read_text(
-                        encoding="utf-8", errors="replace"
-                    )
+        if not folder.is_dir() or _is_link(folder):
+            continue
+        try:
+            children = sorted(folder.iterdir())
+        except OSError as exc:
+            log.warning("каталог не перечисляется, пропускаю: %s (%s)", dirname, exc)
+            continue
+        for path in children:
+            content = _safe_read(path)
+            if content is not None:
+                surface[f"{dirname}/{path.name}"] = content
     for dirname in _NAME_DIRS:
         folder = home / dirname
-        if folder.is_dir():
+        if not folder.is_dir() or _is_link(folder):
+            continue
+        try:
             names = sorted(item.name for item in folder.iterdir())
-            if names:
-                surface[f"{dirname}/"] = "\n".join(names)
+        except OSError as exc:
+            log.warning("каталог не перечисляется, пропускаю: %s (%s)", dirname, exc)
+            continue
+        if names:
+            surface[f"{dirname}/"] = "\n".join(names)
     return surface
 
 
-def run(home: Path) -> int:
-    audit_path = STATE_DIR / "audit.json"
+# В отчёт попадает текст, который модель писала по чужому сайту: терминал
+# надо беречь от управляющих последовательностей так же, как страницу — от
+# угловых скобок. Печатаемые символы и пробел; переводы строк — в пробел.
+def _clean(value: object) -> str:
+    return "".join(
+        ch if ch.isprintable() else " " for ch in str(value)
+    ).strip()
+
+
+def run(home: Path, audit_path: Path | None = None) -> int:
+    audit_path = audit_path or STATE_DIR / "audit.json"
     if not audit_path.is_file():
         log.error("эталона нет: %s — сначала python tools/audit.py --run", audit_path)
         return 1
-    audit = json.loads(audit_path.read_text(encoding="utf-8"))
-    items = audit.get("items", [])
+    # Эталон мог быть перезаписан руками: битый JSON — внятная строка и
+    # код 1, не трейсбек. Тот же контракт, что у состояния наблюдателя.
+    try:
+        audit = json.loads(audit_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        log.error("эталон не читается: %s — %s", audit_path, exc)
+        return 1
+    items = [item for item in (audit.get("items") if isinstance(audit, dict) else None) or []
+             if isinstance(item, dict)]
     surface = collect_surface(home)
     if not surface:
         log.error("в %s не нашлось ни одного файла конфигурации", home)
@@ -137,28 +187,28 @@ def run(home: Path) -> int:
     found: list[tuple[dict, str]] = []
     missing: list[dict] = []
     for item in items:
-        where = find_artifact(item.get("artifact", ""), surface)
+        where = find_artifact(str(item.get("artifact", "")), surface)
         if where:
             found.append((item, where))
         else:
             missing.append(item)
 
-    covered_bids = {item["bid"] for item, _ in found}
-    all_bids = {item["bid"] for item in items}
+    covered_bids = {item.get("bid") for item, _ in found}
+    all_bids = {item.get("bid") for item in items}
     log.info(
         "НАСТРОЕНО: %d записей из %d (советов покрыто %d из %d)",
         len(found), len(items), len(covered_bids), len(all_bids),
     )
     for item, where in found:
-        log.info("  + %-28s -> %s", item["artifact"], where)
+        log.info("  + %-28s -> %s", _clean(item.get("artifact", "")), _clean(where))
 
     if missing:
         log.info("\nНЕ НАСТРОЕНО: %d записей", len(missing))
         for item in missing:
             log.info(
                 "  - Part %-3s %-28s %s",
-                item.get("part", "?"), item.get("artifact", ""),
-                item.get("recommendation", ""),
+                _clean(item.get("part", "?")), _clean(item.get("artifact", "")),
+                _clean(item.get("recommendation", "")),
             )
     else:
         log.info("\nНЕ НАСТРОЕНО: ничего — эталон покрыт целиком")
