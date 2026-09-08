@@ -105,15 +105,26 @@ def _safe_read(path: Path) -> str | None:
     """Содержимое файла, если его можно и допустимо читать.
 
     Залоченный файл на Windows — быт, а не повод ронять сверку: он
-    пропускается со строкой в логе. Ссылки не читаются вовсе.
+    пропускается со строкой в логе. Ссылки не читаются вовсе. Даже
+    `is_file()` внутри try: stat() под deny-ACL пропагирует
+    PermissionError, а не возвращает False.
     """
-    if _is_link(path) or not path.is_file():
-        return None
     try:
+        if _is_link(path) or not path.is_file():
+            return None
         return path.read_text(encoding="utf-8", errors="replace")
     except OSError as exc:
-        log.warning("не читается, пропускаю: %s (%s)", path.name, exc)
+        log.warning("не читается, пропускаю: %s (%s)", _clean(path.name), _clean(exc))
         return None
+
+
+def _usable_dir(folder: Path) -> bool:
+    """Каталог, в который допустимо заглядывать: не ссылка и stat жив."""
+    try:
+        return folder.is_dir() and not _is_link(folder)
+    except OSError as exc:
+        log.warning("каталог недоступен, пропускаю: %s (%s)", _clean(folder.name), _clean(exc))
+        return False
 
 
 def collect_surface(home: Path) -> dict[str, str]:
@@ -129,12 +140,12 @@ def collect_surface(home: Path) -> dict[str, str]:
             surface[name] = content
     for dirname in _CONTENT_DIRS:
         folder = home / dirname
-        if not folder.is_dir() or _is_link(folder):
+        if not _usable_dir(folder):
             continue
         try:
             children = sorted(folder.iterdir())
         except OSError as exc:
-            log.warning("каталог не перечисляется, пропускаю: %s (%s)", dirname, exc)
+            log.warning("каталог не перечисляется, пропускаю: %s (%s)", dirname, _clean(exc))
             continue
         for path in children:
             content = _safe_read(path)
@@ -142,12 +153,12 @@ def collect_surface(home: Path) -> dict[str, str]:
                 surface[f"{dirname}/{path.name}"] = content
     for dirname in _NAME_DIRS:
         folder = home / dirname
-        if not folder.is_dir() or _is_link(folder):
+        if not _usable_dir(folder):
             continue
         try:
             names = sorted(item.name for item in folder.iterdir())
         except OSError as exc:
-            log.warning("каталог не перечисляется, пропускаю: %s (%s)", dirname, exc)
+            log.warning("каталог не перечисляется, пропускаю: %s (%s)", dirname, _clean(exc))
             continue
         if names:
             surface[f"{dirname}/"] = "\n".join(names)
@@ -175,14 +186,17 @@ def run(home: Path, audit_path: Path | None = None) -> int:
     except (OSError, json.JSONDecodeError) as exc:
         log.error("эталон не читается: %s — %s", audit_path, exc)
         return 1
-    items = [item for item in (audit.get("items") if isinstance(audit, dict) else None) or []
-             if isinstance(item, dict)]
+    raw_items = audit.get("items") if isinstance(audit, dict) else None
+    if not isinstance(raw_items, list):
+        log.error("эталон неожиданной формы: %s — нет списка items", audit_path)
+        return 1
+    items = [item for item in raw_items if isinstance(item, dict)]
     surface = collect_surface(home)
     if not surface:
         log.error("в %s не нашлось ни одного файла конфигурации", home)
         return 1
     log.info("конфигурация: %s — файлов в поверхности %d", home, len(surface))
-    log.info("эталон: %d записей от %s\n", len(items), audit.get("generated_at", "?"))
+    log.info("эталон: %d записей от %s\n", len(items), _clean(audit.get("generated_at", "?")))
 
     found: list[tuple[dict, str]] = []
     missing: list[dict] = []

@@ -167,6 +167,46 @@ def test_audit_entry_without_bid_does_not_crash_the_report(tmp_path):
     assert run(tmp_path, audit_path=audit) == 0
 
 
+def test_array_root_audit_is_a_clean_error(tmp_path):
+    from tools.checkup import run
+
+    (tmp_path / "CLAUDE.md").write_text("правила", encoding="utf-8")
+    audit = tmp_path / "audit.json"
+    audit.write_text("[1, 2]", encoding="utf-8")
+    assert run(tmp_path, audit_path=audit) == 1
+
+
+def test_numeric_items_is_a_clean_error(tmp_path):
+    import json as jsonlib
+
+    from tools.checkup import run
+
+    (tmp_path / "CLAUDE.md").write_text("правила", encoding="utf-8")
+    audit = tmp_path / "audit.json"
+    audit.write_text(jsonlib.dumps({"items": 5}), encoding="utf-8")
+    assert run(tmp_path, audit_path=audit) == 1
+
+
+def test_permission_error_on_stat_is_skipped_not_fatal(tmp_path, monkeypatch):
+    """`is_file()` пропагирует PermissionError из stat() — deny-ACL на
+    Windows не имеет права ронять сверку целиком."""
+    from pathlib import Path
+
+    (tmp_path / "CLAUDE.md").write_text("правила", encoding="utf-8")
+    (tmp_path / "settings.json").write_text("{}", encoding="utf-8")
+    original = Path.is_file
+
+    def denied(self):
+        if self.name == "settings.json":
+            raise PermissionError("stat запрещён ACL")
+        return original(self)
+
+    monkeypatch.setattr(Path, "is_file", denied)
+    surface = collect_surface(tmp_path)
+    assert "CLAUDE.md" in surface
+    assert "settings.json" not in surface
+
+
 def test_control_characters_never_reach_the_report(tmp_path, caplog):
     """recommendation пишет модель по чужому сайту — терминал надо беречь."""
     import json as jsonlib
