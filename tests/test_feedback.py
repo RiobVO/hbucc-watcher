@@ -129,6 +129,49 @@ def test_telegram_error_raises_feedback_failed():
         )
 
 
+def test_broken_json_raises_feedback_failed_not_valueerror():
+    """Находка Codex: 200 с битым телом ронял прогон мимо FeedbackFailed.
+
+    Исключение, не являющееся FeedbackFailed, вылетает из
+    _collect_reactions(), а значит — из Runner.run() до finish(): отказ
+    необязательного контура гасил бы пинг сторожа.
+    """
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, text="<html>прокси вмешался</html>")
+
+    with pytest.raises(FeedbackFailed):
+        fetch_reactions(
+            bot_token="t", chat_id=CHAT, offset=None,
+            transport=httpx.MockTransport(handler),
+        )
+
+
+def test_unexpected_json_shape_raises_feedback_failed():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json="строка вместо объекта")
+
+    with pytest.raises(FeedbackFailed):
+        fetch_reactions(
+            bot_token="t", chat_id=CHAT, offset=None,
+            transport=httpx.MockTransport(handler),
+        )
+
+
+def test_garbage_updates_are_skipped_not_fatal():
+    """Мусорный элемент в result не имеет права ронять чтение соседей."""
+    states, offset = fetch_reactions(
+        bot_token="t", chat_id=CHAT, offset=None,
+        transport=telegram([
+            "мусор",
+            {"update_id": 10, "message_reaction": "не объект"},
+            reaction_update(11, 42, ["👍"]),
+        ]),
+    )
+    assert states == {42: ["👍"]}
+    assert offset == 12
+
+
 def test_token_never_appears_in_the_error():
     def handler(request: httpx.Request) -> httpx.Response:
         raise httpx.ConnectError("boom")

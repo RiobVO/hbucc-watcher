@@ -73,23 +73,39 @@ def fetch_reactions(
             f"getUpdates отверг запрос: HTTP {response.status_code} — {response.text[:200]}"
         )
 
-    updates = response.json().get("result") or []
+    # Разбор тела — тоже недоверенная операция: 200 с битым JSON или телом
+    # неожиданной формы (вмешался прокси) обязан стать FeedbackFailed, а не
+    # ValueError, вылетающим из прогона мимо finish() и гасящим пинг.
+    try:
+        data = response.json()
+    except ValueError as exc:
+        raise FeedbackFailed(f"ответ getUpdates не разбирается как JSON: {exc}") from exc
+    updates = data.get("result") if isinstance(data, dict) else None
+    if not isinstance(updates, list):
+        raise FeedbackFailed("ответ getUpdates неожиданной формы: нет списка result")
+
     states: dict[int, list[str]] = {}
     last_id = offset
 
     for update in updates:
+        if not isinstance(update, dict):
+            continue
         update_id = update.get("update_id")
         if isinstance(update_id, int):
             last_id = max(last_id or 0, update_id + 1)
         reaction = update.get("message_reaction")
-        if not reaction:
+        if not isinstance(reaction, dict):
             continue
-        if str(reaction.get("chat", {}).get("id", "")) != str(chat_id):
+        chat = reaction.get("chat")
+        if str(chat.get("id", "") if isinstance(chat, dict) else "") != str(chat_id):
             continue
         message_id = reaction.get("message_id")
         if not isinstance(message_id, int):
             continue
-        states[message_id] = [_emoji(item) for item in reaction.get("new_reaction") or []]
+        new_reaction = reaction.get("new_reaction")
+        states[message_id] = [
+            _emoji(item) for item in new_reaction if isinstance(item, dict)
+        ] if isinstance(new_reaction, list) else []
 
     if states:
         log.info("реакции: обновлений %d, сообщений %d", len(updates), len(states))
