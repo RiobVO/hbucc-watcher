@@ -172,6 +172,22 @@ def test_garbage_updates_are_skipped_not_fatal():
     assert offset == 12
 
 
+def test_corrupt_new_reaction_is_no_verdict_about_state():
+    """Мусор в new_reaction — не пустой список: пустой означает «сняли».
+
+    Ре-ревью Codex: строка вместо списка превращалась в [], и журнал
+    стирал настоящую реакцию на основании мусора. Не знаем состояния —
+    не выносим вердикта.
+    """
+    update = reaction_update(10, 42, [])
+    update["message_reaction"]["new_reaction"] = "corrupt"
+    states, offset = fetch_reactions(
+        bot_token="t", chat_id=CHAT, offset=None, transport=telegram([update])
+    )
+    assert states == {}
+    assert offset == 11, "offset двигается: перечитывать мусор незачем"
+
+
 def test_token_never_appears_in_the_error():
     def handler(request: httpx.Request) -> httpx.Response:
         raise httpx.ConnectError("boom")

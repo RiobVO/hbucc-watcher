@@ -102,10 +102,15 @@ def fetch_reactions(
         message_id = reaction.get("message_id")
         if not isinstance(message_id, int):
             continue
+        # Мусор вместо списка — не вердикт о состоянии: пустой список
+        # означает «реакцию сняли», и журнал стёр бы настоящую реакцию
+        # на основании мусора. Не знаем состояния — пропускаем.
         new_reaction = reaction.get("new_reaction")
+        if not isinstance(new_reaction, list):
+            continue
         states[message_id] = [
             _emoji(item) for item in new_reaction if isinstance(item, dict)
-        ] if isinstance(new_reaction, list) else []
+        ]
 
     if states:
         log.info("реакции: обновлений %d, сообщений %d", len(updates), len(states))
