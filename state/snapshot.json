@@ -1,6 +1,6 @@
 {
   "assumptions": {
-    "last_verified": "2026-07-30T08:20:53Z",
+    "last_verified": "2026-08-14T18:39:06Z",
     "new_parts_appended_at_end": true,
     "rss_absent": true,
     "single_document": true
@@ -2135,22 +2135,116 @@
       "order": 22,
       "title": "The New Rules of Context Engineering",
       "volume": 24
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-426177c0",
+          "hash": "sha256:e9951d78b1c702c1fcd4229bc037ec5d85ccae7eb51f5ef26b8308986995c54b",
+          "heading": "Claude Maintains the Apps",
+          "kind": "intro",
+          "links": [
+            "https://x.com/bcherny/status/2088014489438621990?s=51"
+          ],
+          "refs_parts": [
+            21
+          ],
+          "source_url": "https://x.com/bcherny/status/2088014489438621990?s=51",
+          "text": "Claude Maintains the Apps Part 21 argued that moving fixes out of prompts and into routines is the highest-leverage thing an engineer can do. This is the receipt. For a few weeks Boris has had Claude take over day-to-day maintenance of Anthropic's apps - a Slack channel, a dozen daily routines, and no one driving. The result: 388 PRs opened, 180 merged across iOS, Android, Desktop, web, CLI, and the Agent SDK. The interesting part isn't that it works. It's the specific list of jobs worth handing over, and the operating habits that keep the output mergeable. @bcherny · August 13, 2026 Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-9238d9c6",
+          "hash": "sha256:60dcf6de8a55369e1376b12f53f01d3dd7d4f24b5973bba95fd7b59e89f8de15",
+          "heading": "What to Actually Automate",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2088014489438621990?s=51"
+          ],
+          "refs_parts": [
+            10,
+            21
+          ],
+          "source_url": "https://x.com/bcherny/status/2088014489438621990?s=51",
+          "text": "1 What to Actually Automate Every guide tells you to set up routines. Almost none tell you what to point them at. Boris published his list - the daily jobs running against Anthropic's own apps - and it's the most concrete answer anyone has given: Routine What it does Crash fuzzer Finds real-app crashes and opens root-cause fixes Ant-only shipper Ships or deletes forgotten internal-only features based on usage Logic simplifier Simplifies convoluted business logic Logic bugfixer Models tricky logic to find and fix bugs Dup unifier Merges duplicated implementations into one Dead-code removal Deletes provably unreachable code Useless-test pruner Deletes tests that can't fail Shipped-feature inliner Removes flags for fully shipped features Flaky-test fixer Root-causes flaky CI tests Abstraction improver Flattens over-engineered abstractions Abstraction police Fixes layering violations Notice what they have in common: every one is mechanical, verifiable, and endless - the maintenance you keep meaning to get to. None of them are feature work. Each runs as a separate routine per app, across every surface: iOS Android Desktop web CLI Agent SDK Output lands in one Slack channel, proj-claude-maintains-apps , with a top-level thread per routine so a dozen parallel jobs stay readable. Picks up where Part 10 (Routines) and Part 21 (automation as infrastructure) left off. ← intro probe, then delete →"
+        },
+        {
+          "bid": "b-2082e86f",
+          "hash": "sha256:a0b064bbe98f63049a5ba5d477687a09494f3a757d5290328e1da9e43e2cee78",
+          "heading": "Probe, Then Delete",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2088014489438621990?s=51"
+          ],
+          "refs_parts": [
+            22
+          ],
+          "source_url": "https://x.com/bcherny/status/2088014489438621990?s=51",
+          "text": "2 Probe, Then Delete The dead-code routine is the cleverest thing in the thread, and it's easy to miss. Static analysis only proves the easy half - code nothing references. The code that's reachable but never actually runs is the stuff that accumulates for years, and no analyzer can tell you it's safe to cut. So the routine doesn't guess. It splits the job across two days. The obvious routine Delete what looks unreachable. Anything merely suspected dead stays forever, because nobody will risk it. ▸ What Boris runs Delete what's provably unreachable. For the rest, add logging , wait a day, and remove whatever never fired. Day one gathers evidence; day two acts on it. That's a shape worth stealing beyond dead code - any time a routine needs a fact it can't derive from a static read, have it instrument the codebase and read its own results on the next run. A routine that runs daily can afford to be patient. The whole thing was requested in eight words: also do one for dead code removal The two-phase design wasn't specified. Claude worked out that a probe was needed - which is what Part 22's \"give judgement, not rules\" looks like in production. ← what to automate truth tables →"
+        },
+        {
+          "bid": "b-bec94661",
+          "hash": "sha256:40561ed223fe9fa899a239a0b719994663b270e6670fa0ed3992517d3503eb8a",
+          "heading": "Make the Routine Prove It",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2088014489438621990?s=51"
+          ],
+          "refs_parts": [
+            19
+          ],
+          "source_url": "https://x.com/bcherny/status/2088014489438621990?s=51",
+          "text": "3 Make the Routine Prove It An autonomous routine opening PRs all day is only useful if reviewing each one is cheap. Boris solved that by demanding evidence in the prompt itself - every PR arrives carrying its own proof: each pr must run /verify and post a repro and truth table to the pr And for the logic routines, the bar goes further - model the behavior formally before touching it: From the routine prompt \"always verify e2e with truth table. for all of these, remember to formally model the logic also to spot gaps and duplication and to make sure all edge cases are well tested\" A truth table turns \"trust me, this refactor is equivalent\" into something a reviewer checks in seconds. It also does quiet double duty: enumerating the cases is how the routine finds the gaps and duplication it's supposed to fix. The verification artifact and the discovery method are the same work. Also in the prompt: run the real apps, no mocks . A crash fuzzer against a mock finds mock bugs. Extends the verification-as-a-skill idea from Part 19. ← probe, then delete tune the routine →"
+        },
+        {
+          "bid": "b-c47b44fc",
+          "hash": "sha256:bad0ad9b9324bc474c2d93e280e2adf6ff0a72ca934cfcd891eeafc500736124",
+          "heading": "Tune the Routine, Not the PR",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2088014489438621990?s=51"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2088014489438621990?s=51",
+          "text": "4 Tune the Routine, Not the PR The habit that makes the whole system compound. When a PR comes back wrong, the instinct is to fix the PR. Boris fixes the routine instead, and lets tomorrow's run produce a better PR on its own. fix the PR = one better PR · fix the routine = every future PR The corollary is a patience most people don't budget for. A routine isn't right on day one, and that's not a failure signal: Claude generally gets these PRs right on the first shot, and if it doesn't, we ask Claude to tune its routines so it's better the next day. Sometimes it takes a few days of tuning. - Boris Cherny Note who does the tuning. He doesn't rewrite the prompt himself - he asks Claude to tune its own routine. The routine is the artifact under development, and the daily cadence is its feedback loop. Judge a routine on its trend across a week, not its first PR. ← truth tables the yield →"
+        },
+        {
+          "bid": "b-c5abe356",
+          "hash": "sha256:ed8e1db6f64018799df3fcb229be59236230bf94fe4daa162bdbe36771c2fb70",
+          "heading": "Expect Half to Land",
+          "kind": "tip",
+          "links": [
+            "https://claude.ai/code/routines",
+            "https://x.com/bcherny/status/2088014489438621990?s=51"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2088014489438621990?s=51",
+          "text": "5 Expect Half to Land The number worth carrying around, because it sets expectations honestly. Over a few weeks of daily routines across six surfaces: 388 PRs opened → 180 merged = 46% Not 95%, and not 10%. Roughly half of autonomous maintenance work is good enough to keep - which is an excellent return on code nobody was going to write, and a terrible return if you were planning to merge on trust. Nothing lands unreviewed: Two gates, both kept Every PR passes Claude Code Review first, then human review . The automation generates the work; it doesn't approve it. Which locates the real bottleneck. With generation nearly free, the constraint moves to review throughput - and that's exactly where Boris says the work is heading next: \"We're now thinking about how to streamline this to make merging these kinds of mechanical changes easier.\" The routines aren't the hard part anymore. Merging is. To try it: ask Claude Code or Tag to set one up, or create routines directly at claude.ai/code/routines . Start with one routine on one repo - the eleven above took weeks of tuning to reach 46%. ← tune the routine back to intro →"
+        }
+      ],
+      "declared_tips": 5,
+      "hash": "sha256:acd938e8b770892cc178933364548fe1f6ba4d55c2f6ca308dee1ea9ec2de2a1",
+      "id": "part-23",
+      "number": 23,
+      "order": 23,
+      "title": "Claude Maintains the Apps",
+      "volume": 25
     }
   ],
   "schema_version": 1,
   "shape": {
-    "blocks_count": 149,
+    "blocks_count": 155,
     "parser_profile": "v2-volume-tab",
-    "parts_count": 22,
-    "text_chars": 117396,
-    "tips_count": 127
+    "parts_count": 23,
+    "text_chars": 123757,
+    "tips_count": 132
   },
   "source": {
-    "content_hash": "sha256:288731b8d1a9858fc85ec206689068969e13b64642ae26c1b9ec91e2b86cedc5",
-    "etag": "\"90bc9abed0b34f9c5845654c4c1e5364-ssl-df\"",
-    "fetched_at": "2026-07-30T08:20:53Z",
+    "content_hash": "sha256:564f95f682fb1e08ab59270263cb8a7caee1d1936e8e8aacb8b4a2617cb8ed5a",
+    "etag": "\"8f85c73f8bcf42bae1b691d52be877d3-ssl-df\"",
+    "fetched_at": "2026-08-14T18:39:06Z",
     "last_modified": null,
-    "raw_bytes": 546617,
+    "raw_bytes": 565305,
+    "site_author": "@CarolinaCherry",
     "url": "https://howborisusesclaudecode.com/"
   }
 }
