@@ -1,5 +1,18 @@
 {
-  "delivered": [],
+  "delivered": [
+    {
+      "bid": "",
+      "event_id": "sha256:d4f3b2ef6f005cdb830a2cb08b0f0292205bf5996fbcd5cb5b90d08bd972ef2b",
+      "kind": "part_added",
+      "message_ids": [
+        49
+      ],
+      "messages": 1,
+      "note": "",
+      "part": 23,
+      "sent_at": "2026-08-14T18:39:04Z"
+    }
+  ],
   "reactions_offset": 128437435,
   "schema_version": 1
 }
