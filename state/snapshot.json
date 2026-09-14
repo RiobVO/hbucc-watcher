@@ -2240,8 +2240,8 @@
   },
   "source": {
     "content_hash": "sha256:564f95f682fb1e08ab59270263cb8a7caee1d1936e8e8aacb8b4a2617cb8ed5a",
-    "etag": "\"73f9a493954b94762f72f58ff1d9c31d-ssl-df\"",
-    "fetched_at": "2026-08-22T12:11:59Z",
+    "etag": "\"be9d8b72ba971e29204da1983567c80d-ssl-df\"",
+    "fetched_at": "2026-08-30T20:07:58Z",
     "last_modified": null,
     "raw_bytes": 565305,
     "site_author": "@CarolinaCherry",
