@@ -11,6 +11,18 @@
       "note": "",
       "part": 23,
       "sent_at": "2026-08-14T18:39:04Z"
+    },
+    {
+      "bid": "",
+      "event_id": "sha256:c3179679c216d92d455f754bb43a6d6679ec13b8dc6e22062134d84fec1eb753",
+      "kind": "part_added",
+      "message_ids": [
+        51
+      ],
+      "messages": 1,
+      "note": "автопроверка: слоп «является» в поле how_to_verify",
+      "part": 24,
+      "sent_at": "2026-09-11T15:20:02Z"
     }
   ],
   "reactions_offset": 128437435,
