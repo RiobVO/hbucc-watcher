@@ -1,6 +1,6 @@
 {
   "assumptions": {
-    "last_verified": "2026-08-14T18:39:06Z",
+    "last_verified": "2026-09-11T15:20:04Z",
     "new_parts_appended_at_end": true,
     "rss_absent": true,
     "single_document": true
@@ -2228,22 +2228,96 @@
       "order": 23,
       "title": "Claude Maintains the Apps",
       "volume": 25
+    },
+    {
+      "blocks": [
+        {
+          "bid": "b-9b1b3e03",
+          "hash": "sha256:4855ba66089f2a384a679b8d13b8643eed34f28a7cf94827f80569bc9165d2c3",
+          "heading": "The Diff Pane, and Who Maintains It",
+          "kind": "intro",
+          "links": [
+            "https://x.com/bcherny/status/2098165206296011059"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2098165206296011059",
+          "text": "The Diff Pane, and Who Maintains It /diff stopped being a one-shot list and became a panel that stays open, scrolls, and updates live. The replies under the release covered three more things: which diffs Boris reads and which he skips, what to do when the terminal jumps or flickers, and how the library that draws the whole interface gets maintained. Claude has rewritten Ink multiple times , and the team runs it behind property-based tests without reading the implementation. @bcherny · September 10, 2026 Click the tabs above to explore each tip → or use ← → arrow keys"
+        },
+        {
+          "bid": "b-d6230ea3",
+          "hash": "sha256:388d61078c91397338a0dd97e1b8a4410e82a41332393fd3d9dc668597346dce",
+          "heading": "The Diff Pane",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2098165206296011059"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2098165206296011059",
+          "text": "1 The Diff Pane /diff already existed. In this release it stopped closing after you read it: before A one-shot list of uncommitted changes. You pick a file, read it, and press Esc to close . ▸ after A persistent pane beside the conversation. Scroll it, click into files, and it updates in real time as Claude writes. /diff What Boris says it's for: read the code without × switching windows Reviewing agent output used to mean switching to another window and back. Two related answers came out of the same thread: Also worth knowing When someone asked for a way to switch off the inline file-write diffs that fill the transcript, Boris's whole reply was /focus . It does a different job from /diff : one gives you somewhere to read changes, the other stops them appearing inline as Claude works. Claude Desktop already had a diff viewer, so this release brings the terminal in line with it. ← intro what to read →"
+        },
+        {
+          "bid": "b-9621f2f0",
+          "hash": "sha256:b06e967a809e1b9fda4b7570f91abe3a5d33da91c85395a34c0e89e1f16279b9",
+          "heading": "Read the Diffs That Matter",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2098210496109572123"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2098210496109572123",
+          "text": "2 Read the Diffs That Matter Someone asked under the release: \"If coding was solved, then why do we need to read the code?\" Boris answered with the two conditions that get him to open a diff: touching critical code important to get right He doesn't say which code meets either bar - that judgement stays with you. The second sentence of his reply carries as much as the first: I read diffs when it's touching critical code, or code that's important to get right. I don't write the code. - Boris Cherny The agent writes the code now. Choosing which of its changes to read is still your job, and that's the work you're doing when you open the pane. ← the diff pane /tui →"
+        },
+        {
+          "bid": "b-004bde34",
+          "hash": "sha256:8d8163c2c54065737dd90b19538f51f4d7687b3bb5bcfc271c296f2154f0582b",
+          "heading": "Fix a Misbehaving Terminal",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2098222529777480034"
+          ],
+          "refs_parts": [],
+          "source_url": "https://x.com/bcherny/status/2098222529777480034",
+          "text": "3 Fix a Misbehaving Terminal A user mentioned their TUI jumps around and flickers. Boris treated it as a bug report: the TUI shouldn't jump or flicker Boris's fix, in the order he gave it: claude update Boris's first step. /tui If updating doesn't fix it. ← what to read who maintains it →"
+        },
+        {
+          "bid": "b-e97f599a",
+          "hash": "sha256:9f1e35b1392954537166ae6945f281d9bb789ef12ff44f0cfe9afd5cd4f09480",
+          "heading": "Claude Maintains the Renderer",
+          "kind": "tip",
+          "links": [
+            "https://x.com/bcherny/status/2098210282464247871"
+          ],
+          "refs_parts": [
+            21,
+            23
+          ],
+          "source_url": "https://x.com/bcherny/status/2098210282464247871",
+          "text": "4 Claude Maintains the Renderer Someone asked how Claude Code handles scrollable views in Ink , the React-for-terminals library that draws the entire interface: Claude has re-written Ink multiple times. I don't actually know how this impl works - we treat it as a black box with a ton of property-based tests and benchmarks. Claude maintains it for us. - Boris Cherny Claude has rewritten the rendering layer of Claude Code repeatedly, and the person who created Claude Code does not know how the current version works. What he names in place of reading it: property-based tests benchmarks black box Property-based tests assert rules that must hold across many generated inputs, rather than checking specific cases a person wrote out. Boris doesn't say which properties Ink's suite asserts, only that there are \"a ton\" of them alongside benchmarks. The transferable rule You can hand over a component once the tests specify it well enough that you never need to read it. Writing those tests is the part that stays with you. Part 23 (Claude maintaining the apps) and Part 21 (encode knowledge as infrastructure) describe the same move at a larger scale. One reply in the thread called it \"both an engineering flex and mildly terrifying.\" Which one it is depends on how good the tests are. ← /tui back to intro →"
+        }
+      ],
+      "declared_tips": 4,
+      "hash": "sha256:1fbf43d97e3e743c7327b96a34b84a30b31f3403331ec09e8653a71bc3b9bda7",
+      "id": "part-24",
+      "number": 24,
+      "order": 24,
+      "title": "The Diff Pane, and Who Maintains It",
+      "volume": 26
     }
   ],
   "schema_version": 1,
   "shape": {
-    "blocks_count": 155,
+    "blocks_count": 160,
     "parser_profile": "v2-volume-tab",
-    "parts_count": 23,
-    "text_chars": 123757,
-    "tips_count": 132
+    "parts_count": 24,
+    "text_chars": 127511,
+    "tips_count": 136
   },
   "source": {
-    "content_hash": "sha256:564f95f682fb1e08ab59270263cb8a7caee1d1936e8e8aacb8b4a2617cb8ed5a",
-    "etag": "\"e4930d44559f435002d6d0defc5d097d-ssl-df\"",
-    "fetched_at": "2026-09-08T15:24:55Z",
+    "content_hash": "sha256:d472dc32afc3f56dd737a1bb866bf7803b77fb113a7b6463d1585cb6920b30c8",
+    "etag": "\"c883f5f726a8f7dd4d55e7abf1de2b3d-ssl-df\"",
+    "fetched_at": "2026-09-11T15:20:04Z",
     "last_modified": null,
-    "raw_bytes": 565305,
+    "raw_bytes": 578824,
     "site_author": "@CarolinaCherry",
     "url": "https://howborisusesclaudecode.com/"
   }
