@@ -2414,8 +2414,8 @@
   },
   "source": {
     "content_hash": "sha256:b4cb6a63d504ef819149e92335155ca10f8090ddf1c9de8805bdf92aca386d20",
-    "etag": "\"ebfabb575da2313e7e978088554f074a-ssl-df\"",
-    "fetched_at": "2026-09-27T20:31:30Z",
+    "etag": "\"fceb51acd8899c0cc3c6123e16b5e781-ssl-df\"",
+    "fetched_at": "2026-10-23T20:41:02Z",
     "last_modified": null,
     "raw_bytes": 602889,
     "site_author": "@CarolinaCherry",
